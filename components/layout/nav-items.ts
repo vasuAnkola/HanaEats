@@ -17,6 +17,8 @@ import {
   Clock,
   Truck,
   FlaskConical,
+  CalendarDays,
+  QrCode,
   type LucideIcon,
 } from "lucide-react";
 
@@ -70,6 +72,8 @@ export function getNavGroups(role: UserRole): NavGroup[] {
           { label: "POS", href: "/dashboard/pos", icon: MonitorCheck },
           { label: "Orders", href: "/dashboard/orders", icon: ShoppingCart },
           { label: "Tables", href: "/dashboard/tables", icon: Armchair },
+          { label: "Reservations", href: "/dashboard/reservations", icon: CalendarDays },
+          { label: "QR Codes", href: "/dashboard/qr", icon: QrCode },
           { label: "Payments", href: "/dashboard/payments", icon: Banknote },
           { label: "Shifts", href: "/dashboard/shifts", icon: Clock },
           { label: "Inventory", href: "/dashboard/inventory", icon: Package, children: INVENTORY_CHILDREN },
@@ -95,6 +99,8 @@ export function getNavGroups(role: UserRole): NavGroup[] {
           { label: "POS", href: "/dashboard/pos", icon: MonitorCheck },
           { label: "Orders", href: "/dashboard/orders", icon: ShoppingCart },
           { label: "Tables", href: "/dashboard/tables", icon: Armchair },
+          { label: "Reservations", href: "/dashboard/reservations", icon: CalendarDays },
+          { label: "QR Codes", href: "/dashboard/qr", icon: QrCode },
           { label: "Payments", href: "/dashboard/payments", icon: Banknote },
           { label: "Shifts", href: "/dashboard/shifts", icon: Clock },
           { label: "Inventory", href: "/dashboard/inventory", icon: Package, children: INVENTORY_CHILDREN },

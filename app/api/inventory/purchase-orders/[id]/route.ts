@@ -1,102 +1,103 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import { auth } from "@/lib/auth";
-import { queryOne } from "@/lib/db";
+import { query, queryOne } from "@/lib/db";
 import pool from "@/lib/db";
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const { id } = await params;
 
   const po = await queryOne(
-    `SELECT po.*, v.name as vendor_name
+    `SELECT po.*, v.name AS vendor_name, o.name AS outlet_name
      FROM purchase_orders po
      LEFT JOIN vendors v ON v.id = po.vendor_id
+     LEFT JOIN outlets o ON o.id = po.outlet_id
      WHERE po.id = $1 AND po.tenant_id = $2`,
-    [id, session.user.tenantId]
+    [params.id, session.user.tenantId]
   );
   if (!po) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const client = await pool.connect();
-  const itemsRes = await client.query(
-    `SELECT poi.*, i.name as ingredient_name, i.unit
+  const items = await query(
+    `SELECT poi.*, i.name AS ingredient_name, i.unit
      FROM purchase_order_items poi
      JOIN ingredients i ON i.id = poi.ingredient_id
-     WHERE poi.po_id = $1`,
-    [id]
+     WHERE poi.purchase_order_id = $1`,
+    [params.id]
   );
-  client.release();
-
-  return NextResponse.json({ ...po, items: itemsRes.rows });
+  return NextResponse.json({ ...po as object, items });
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const { id } = await params;
-
+  const tenantId = session.user.tenantId;
   const body = await req.json();
-  const { status, expected_date, notes } = body;
 
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-
-    const poRes = await client.query(
-      `SELECT * FROM purchase_orders WHERE id = $1 AND tenant_id = $2`,
-      [id, session.user.tenantId]
-    );
-    if (!poRes.rows[0]) {
-      await client.query("ROLLBACK");
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-    const po = poRes.rows[0];
-
-    if (status === "received" && po.status !== "received") {
-      const itemsRes = await client.query(
-        `SELECT * FROM purchase_order_items WHERE po_id = $1`,
-        [id]
+  // Receive PO: update stock for each item
+  if (body.action === "receive") {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const items = await query(
+        `SELECT poi.*, i.name AS ingredient_name FROM purchase_order_items poi
+         JOIN ingredients i ON i.id = poi.ingredient_id
+         WHERE poi.purchase_order_id = $1`,
+        [params.id]
       );
 
-      for (const item of itemsRes.rows) {
-        const qty = parseFloat(String(item.quantity_ordered));
+      for (const item of items) {
+        const receivedQty = parseFloat(String(item.quantity));
         await client.query(
-          `UPDATE ingredients SET current_stock = current_stock + $1, updated_at = NOW()
-           WHERE id = $2 AND tenant_id = $3`,
-          [qty, item.ingredient_id, session.user.tenantId]
+          `UPDATE ingredients SET stock_quantity = stock_quantity + $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3`,
+          [receivedQty, item.ingredient_id, tenantId]
         );
         await client.query(
-          `INSERT INTO stock_movements (ingredient_id, outlet_id, tenant_id, type, quantity, note, reference, created_by)
-           VALUES ($1, $2, $3, 'in', $4, $5, $6, $7)`,
-          [
-            item.ingredient_id, po.outlet_id, session.user.tenantId, qty,
-            `PO received: ${po.po_number}`, po.po_number, session.user.id,
-          ]
+          `UPDATE purchase_order_items SET received_qty = $1 WHERE id = $2`,
+          [receivedQty, item.id]
         );
         await client.query(
-          `UPDATE purchase_order_items SET quantity_received = quantity_ordered WHERE id = $1`,
-          [item.id]
+          `INSERT INTO stock_movements (tenant_id, ingredient_id, movement_type, quantity, unit_cost, reference_id, notes, created_by)
+           VALUES ($1,$2,'purchase',$3,$4,$5,$6,$7)`,
+          [tenantId, item.ingredient_id, receivedQty, item.unit_cost,
+           params.id, `PO received`, session.user.id || null]
         );
       }
+
+      await client.query(
+        `UPDATE purchase_orders SET status='received', received_at=NOW() WHERE id=$1 AND tenant_id=$2`,
+        [params.id, tenantId]
+      );
+      await client.query("COMMIT");
+      const updated = await queryOne(`SELECT * FROM purchase_orders WHERE id=$1`, [params.id]);
+      return NextResponse.json(updated);
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
     }
-
-    const updatedRes = await client.query(
-      `UPDATE purchase_orders SET
-        status = COALESCE($1, status),
-        expected_date = COALESCE($2, expected_date),
-        notes = COALESCE($3, notes),
-        updated_at = NOW()
-       WHERE id = $4 AND tenant_id = $5 RETURNING *`,
-      [status ?? null, expected_date ?? null, notes ?? null, id, session.user.tenantId]
-    );
-
-    await client.query("COMMIT");
-    return NextResponse.json(updatedRes.rows[0]);
-  } catch (e) {
-    await client.query("ROLLBACK");
-    const err = e as Error;
-    return NextResponse.json({ error: err.message }, { status: 500 });
-  } finally {
-    client.release();
   }
+
+  // Status change (draft→sent, cancel)
+  const { status, notes } = body;
+  const row = await queryOne(
+    `UPDATE purchase_orders SET
+       status = COALESCE($1, status),
+       notes = COALESCE($2, notes),
+       ordered_at = CASE WHEN $1 = 'sent' THEN NOW() ELSE ordered_at END
+     WHERE id = $3 AND tenant_id = $4 RETURNING *`,
+    [status || null, notes || null, params.id, tenantId]
+  );
+  return NextResponse.json(row);
+}
+
+export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  await queryOne(
+    `DELETE FROM purchase_orders WHERE id=$1 AND tenant_id=$2 AND status='draft'`,
+    [params.id, session.user.tenantId]
+  );
+  return NextResponse.json({ ok: true });
 }

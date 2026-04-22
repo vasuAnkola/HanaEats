@@ -1,24 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import { auth } from "@/lib/auth";
-import { query } from "@/lib/db";
-import pool from "@/lib/db";
+import { query, queryOne } from "@/lib/db";
+
+function genPoNumber() {
+  return "PO-" + Date.now().toString(36).toUpperCase();
+}
 
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
+  const tenantId = session.user.tenantId;
   const { searchParams } = new URL(req.url);
-  const outletId = searchParams.get("outlet_id");
-  if (!outletId) return NextResponse.json({ error: "outlet_id required" }, { status: 400 });
+  const status = searchParams.get("status");
 
   const rows = await query(
-    `SELECT po.*, v.name as vendor_name,
-      (SELECT COUNT(*)::int FROM purchase_order_items WHERE po_id = po.id) as items_count
+    `SELECT po.*, v.name AS vendor_name, o.name AS outlet_name,
+            u.name AS created_by_name
      FROM purchase_orders po
      LEFT JOIN vendors v ON v.id = po.vendor_id
-     WHERE po.outlet_id = $1 AND po.tenant_id = $2
+     LEFT JOIN outlets o ON o.id = po.outlet_id
+     LEFT JOIN users u ON u.id = po.created_by
+     WHERE po.tenant_id = $1 ${status ? "AND po.status = $2" : ""}
      ORDER BY po.created_at DESC`,
-    [outletId, session.user.tenantId]
+    status ? [tenantId, status] : [tenantId]
   );
   return NextResponse.json(rows);
 }
@@ -26,50 +31,27 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const tenantId = session.user.tenantId;
+  const { vendor_id, outlet_id, notes, items } = await req.json();
+  if (!items?.length) return NextResponse.json({ error: "items are required" }, { status: 400 });
 
-  const body = await req.json();
-  const { outlet_id, vendor_id, expected_date, notes, items } = body;
+  const total = items.reduce((sum: number, it: { quantity: number; unit_cost: number }) =>
+    sum + parseFloat(String(it.quantity)) * parseFloat(String(it.unit_cost)), 0);
 
-  if (!outlet_id || !items?.length) {
-    return NextResponse.json({ error: "outlet_id and items required" }, { status: 400 });
-  }
-
-  const poNumber = `PO-${Date.now().toString().slice(-10)}`;
-  const totalCost = (items as { quantity_ordered: number; unit_cost: number }[]).reduce(
-    (sum, item) => sum + parseFloat(String(item.quantity_ordered)) * parseFloat(String(item.unit_cost)),
-    0
+  const po = await queryOne(
+    `INSERT INTO purchase_orders (tenant_id, vendor_id, outlet_id, po_number, total_amount, notes, created_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+    [tenantId, vendor_id || null, outlet_id || null, genPoNumber(),
+     total, notes || null, session.user.id || null]
   );
 
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-
-    const poRes = await client.query(
-      `INSERT INTO purchase_orders (tenant_id, outlet_id, vendor_id, po_number, expected_date, notes, total_cost, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [
-        session.user.tenantId, outlet_id, vendor_id || null,
-        poNumber, expected_date || null, notes || null,
-        totalCost, session.user.id,
-      ]
+  for (const it of items) {
+    await queryOne(
+      `INSERT INTO purchase_order_items (purchase_order_id, ingredient_id, quantity, unit_cost)
+       VALUES ($1,$2,$3,$4)`,
+      [(po as Record<string, unknown>)?.id, it.ingredient_id,
+       parseFloat(String(it.quantity)), parseFloat(String(it.unit_cost))]
     );
-    const po = poRes.rows[0];
-
-    for (const item of items as { ingredient_id: number; quantity_ordered: number; unit_cost: number }[]) {
-      await client.query(
-        `INSERT INTO purchase_order_items (po_id, ingredient_id, quantity_ordered, unit_cost)
-         VALUES ($1, $2, $3, $4)`,
-        [po.id, item.ingredient_id, parseFloat(String(item.quantity_ordered)), parseFloat(String(item.unit_cost))]
-      );
-    }
-
-    await client.query("COMMIT");
-    return NextResponse.json(po, { status: 201 });
-  } catch (e) {
-    await client.query("ROLLBACK");
-    const err = e as Error;
-    return NextResponse.json({ error: err.message }, { status: 500 });
-  } finally {
-    client.release();
   }
+  return NextResponse.json(po, { status: 201 });
 }

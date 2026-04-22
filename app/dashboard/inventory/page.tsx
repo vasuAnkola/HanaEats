@@ -1,123 +1,74 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { Header } from "@/components/layout/header";
-import { Card, CardContent } from "@/components/ui/card";
-import { Package, Truck, ShoppingCart, ChefHat, AlertTriangle, Loader2 } from "lucide-react";
+import { FlaskConical, Truck, ShoppingCart, ChefHat, AlertTriangle } from "lucide-react";
+import Link from "next/link";
+import { Skeleton } from "@/components/ui/skeleton";
 
-interface Outlet { id: number; name: string; }
-interface Ingredient { id: number; current_stock: number; reorder_level: number; }
+interface IngredientRow { stock_quantity: string; low_stock_threshold: string; }
 
-const HUB_CARDS = [
-  {
-    title: "Ingredients",
-    description: "Manage ingredient catalog, stock levels and categories",
-    href: "/dashboard/inventory/ingredients",
-    icon: Package,
-    color: "bg-[#5C432B]/10 text-[#5C432B]",
-  },
-  {
-    title: "Purchase Orders",
-    description: "Create and receive purchase orders from vendors",
-    href: "/dashboard/inventory/purchase-orders",
-    icon: ShoppingCart,
-    color: "bg-amber-50 text-amber-600",
-  },
-  {
-    title: "Vendors",
-    description: "Manage supplier contacts and lead times",
-    href: "/dashboard/inventory/vendors",
-    icon: Truck,
-    color: "bg-emerald-50 text-emerald-600",
-  },
-  {
-    title: "Recipes",
-    description: "Link menu items to ingredient usage for cost tracking",
-    href: "/dashboard/inventory/recipes",
-    icon: ChefHat,
-    color: "bg-purple-50 text-purple-600",
-  },
-];
-
-export default function InventoryHubPage() {
-  const [outlets, setOutlets] = useState<Outlet[]>([]);
-  const [outletId, setOutletId] = useState("");
-  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  const [loading, setLoading] = useState(false);
+export default function InventoryPage() {
+  const [ingredients, setIngredients] = useState<IngredientRow[] | null>(null);
 
   useEffect(() => {
-    fetch("/api/outlets")
-      .then((r) => r.json())
-      .then((d) => {
-        const list = Array.isArray(d) ? d : [];
-        setOutlets(list);
-        if (list.length > 0) setOutletId(String(list[0].id));
-      });
+    fetch("/api/inventory/ingredients").then(r => r.json()).then((d) => {
+      setIngredients(Array.isArray(d) ? d : []);
+    });
   }, []);
 
-  useEffect(() => {
-    if (!outletId) return;
-    setLoading(true);
-    fetch(`/api/inventory/ingredients?outlet_id=${outletId}`)
-      .then((r) => r.json())
-      .then((d) => { setIngredients(Array.isArray(d) ? d : []); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, [outletId]);
+  const total = ingredients?.length ?? 0;
+  const lowStock = ingredients?.filter(i =>
+    parseFloat(String(i.stock_quantity)) <= parseFloat(String(i.low_stock_threshold)) &&
+    parseFloat(String(i.low_stock_threshold)) > 0
+  ).length ?? 0;
 
-  const lowStockCount = ingredients.filter(
-    (i) => parseFloat(String(i.current_stock)) <= parseFloat(String(i.reorder_level))
-  ).length;
+  const cards = [
+    { href: "/dashboard/inventory/ingredients", icon: FlaskConical, label: "Ingredients", desc: "Stock levels, cost per unit, adjustments", color: "text-indigo-600 bg-indigo-50 border-indigo-100", ring: "hover:border-indigo-300" },
+    { href: "/dashboard/inventory/purchase-orders", icon: ShoppingCart, label: "Purchase Orders", desc: "Create POs, track delivery, receive stock", color: "text-amber-600 bg-amber-50 border-amber-100", ring: "hover:border-amber-300" },
+    { href: "/dashboard/inventory/vendors", icon: Truck, label: "Vendors", desc: "Supplier contacts and details", color: "text-emerald-600 bg-emerald-50 border-emerald-100", ring: "hover:border-emerald-300" },
+    { href: "/dashboard/inventory/recipes", icon: ChefHat, label: "Recipes", desc: "Ingredient usage per menu item, cost per dish", color: "text-rose-600 bg-rose-50 border-rose-100", ring: "hover:border-rose-300" },
+  ];
 
   return (
     <div>
-      <Header />
+      <Header title="Inventory" subtitle="Stock management, vendors, purchase orders and recipes" />
       <div className="p-6 space-y-6">
-        {loading ? (
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <Loader2 className="w-4 h-4 animate-spin" /> Loading stock data...
+        {ingredients === null ? (
+          <Skeleton className="h-12 w-full rounded-xl" />
+        ) : lowStock > 0 ? (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-3">
+            <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+            <p className="text-sm text-amber-800 font-medium">
+              {lowStock} ingredient{lowStock > 1 ? "s" : ""} below low-stock threshold.{" "}
+              <Link href="/dashboard/inventory/ingredients" className="underline">View ingredients</Link>
+            </p>
           </div>
-        ) : (
-          <div className="flex flex-wrap gap-3">
-            {lowStockCount > 0 && (
-              <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-                <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
-                <span>
-                  <strong>{lowStockCount}</strong> ingredient{lowStockCount !== 1 ? "s" : ""} below reorder level
-                  {outlets.length > 1 && outletId && (
-                    <span className="ml-1 text-red-500">
-                      ({outlets.find((o) => String(o.id) === outletId)?.name})
-                    </span>
-                  )}
-                </span>
-              </div>
-            )}
-            <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-500">
-              <Package className="w-4 h-4 flex-shrink-0" />
-              <span>Expiry alerts — coming soon</span>
-            </div>
-          </div>
-        )}
+        ) : null}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {HUB_CARDS.map((card) => {
-            const Icon = card.icon;
-            return (
-              <Link key={card.href} href={card.href}>
-                <Card className="border-gray-200 shadow-none hover:border-[#5C432B]/30 hover:shadow-md transition-all cursor-pointer group">
-                  <CardContent className="p-6">
-                    <div className={`inline-flex p-3 rounded-xl mb-4 ${card.color}`}>
-                      <Icon className="w-6 h-6" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 group-hover:text-[#5C432B] transition-colors">
-                      {card.title}
-                    </h3>
-                    <p className="mt-1 text-sm text-gray-500">{card.description}</p>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
+          {cards.map(c => (
+            <Link key={c.href} href={c.href}
+              className={"border rounded-xl p-5 bg-white shadow-sm hover:shadow-md transition-all group " + c.ring}>
+              <div className={"w-11 h-11 rounded-xl flex items-center justify-center mb-4 border " + c.color}>
+                <c.icon className="w-5 h-5" />
+              </div>
+              <p className="font-semibold text-gray-900 group-hover:text-indigo-700 transition-colors">{c.label}</p>
+              <p className="text-xs text-gray-500 mt-1 leading-relaxed">{c.desc}</p>
+            </Link>
+          ))}
+        </div>
+
+        <div className="pt-4 border-t border-gray-100 flex items-center gap-6 text-sm text-gray-500">
+          {ingredients === null ? (
+            <><Skeleton className="h-4 w-32 rounded" /><Skeleton className="h-4 w-24 rounded" /></>
+          ) : (
+            <>
+              <span><strong className="text-gray-900">{total}</strong> ingredients tracked</span>
+              {lowStock > 0 && <span className="text-amber-600 font-medium"><strong>{lowStock}</strong> low stock</span>}
+              {lowStock === 0 && total > 0 && <span className="text-emerald-600 font-medium">All stock levels healthy</span>}
+            </>
+          )}
         </div>
       </div>
     </div>
