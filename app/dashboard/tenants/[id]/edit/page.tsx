@@ -79,7 +79,7 @@ export default function EditTenantPage({ params }: { params: Promise<{ id: strin
   if (fetching) {
     return (
       <div>
-        <Header title="Edit Tenant" />
+        <Header />
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-6 h-6 animate-spin text-gray-300" />
         </div>
@@ -89,7 +89,7 @@ export default function EditTenantPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div>
-      <Header title="Edit Tenant" subtitle={form.name} />
+      <Header />
       <div className="p-6 max-w-2xl">
         <Link href={`/dashboard/tenants/${id}`} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-6">
           <ArrowLeft className="w-4 h-4" /> Back to Tenant
@@ -149,7 +149,7 @@ export default function EditTenantPage({ params }: { params: Promise<{ id: strin
               )}
 
               <div className="flex gap-3 pt-2">
-                <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white" disabled={loading}>
+                <Button type="submit" disabled={loading}>
                   {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</> : "Save Changes"}
                 </Button>
                 <Link href={`/dashboard/tenants/${id}`}>

@@ -42,7 +42,7 @@ const STATUS_COLOR: Record<string, string> = {
   draft:     "bg-gray-100 text-gray-600",
   pending:   "bg-amber-100 text-amber-700",
   preparing: "bg-blue-100 text-blue-700",
-  ready:     "bg-indigo-100 text-indigo-700",
+  ready:     "bg-[#5C432B]/10 text-[#5C432B]",
   served:    "bg-purple-100 text-purple-700",
   closed:    "bg-emerald-100 text-emerald-700",
   cancelled: "bg-red-100 text-red-600",
@@ -325,12 +325,12 @@ export default function OrdersPage() {
       render: o => (
         <div className="flex items-center gap-1 justify-end">
           {STATUS_FLOW[o.status] && (
-            <Button size="sm" className="h-7 text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2" onClick={() => updateStatus(o.id, STATUS_FLOW[o.status])} disabled={updating === o.id}>
+            <Button size="sm" className="h-7 text-xs px-2" onClick={() => updateStatus(o.id, STATUS_FLOW[o.status])} disabled={updating === o.id}>
               {updating === o.id ? <Loader2 className="w-3 h-3 animate-spin" /> : `→ ${STATUS_FLOW[o.status]}`}
             </Button>
           )}
           {EDITABLE_STATUSES.includes(o.status) && (
-            <Button size="sm" variant="outline" className="h-7 text-xs px-2 gap-1 border-indigo-200 text-indigo-600 hover:bg-indigo-50" onClick={() => openEdit(o)}>
+            <Button size="sm" variant="outline" className="h-7 text-xs px-2 gap-1 border-[#5C432B]/20 text-[#5C432B] hover:bg-[#5C432B]/10" onClick={() => openEdit(o)}>
               <Pencil className="w-3 h-3" /> Edit
             </Button>
           )}
@@ -339,7 +339,7 @@ export default function OrdersPage() {
               <CreditCard className="w-3 h-3" /> Pay
             </Button>
           )}
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-indigo-600" onClick={() => viewDetail(o.id)}>
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-[#5C432B]" onClick={() => viewDetail(o.id)}>
             <Eye className="w-3.5 h-3.5" />
           </Button>
         </div>
@@ -408,12 +408,12 @@ export default function OrdersPage() {
                 <div className="flex justify-between font-semibold text-gray-900"><span>Total</span><span>{parseFloat(String(detail.total)).toFixed(2)}</span></div>
               </div>
               {EDITABLE_STATUSES.includes(detail.status) && (
-                <Button variant="outline" className="w-full gap-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50" onClick={() => { setDetailOpen(false); openEdit(detail); }}>
+                <Button variant="outline" className="w-full gap-2 border-[#5C432B]/20 text-[#5C432B] hover:bg-[#5C432B]/10" onClick={() => { setDetailOpen(false); openEdit(detail); }}>
                   <Pencil className="w-4 h-4" /> Edit Order
                 </Button>
               )}
               {STATUS_FLOW[detail.status] && (
-                <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white" onClick={() => updateStatus(detail.id, STATUS_FLOW[detail.status])}>
+                <Button className="w-full" onClick={() => updateStatus(detail.id, STATUS_FLOW[detail.status])}>
                   Move to {STATUS_FLOW[detail.status]}
                 </Button>
               )}
@@ -439,7 +439,7 @@ export default function OrdersPage() {
             {/* Left: menu picker */}
             <div className="flex-1 flex flex-col border-r border-gray-200 min-w-0">
               <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-                <UtensilsCrossed className="w-4 h-4 text-indigo-500" />
+                <UtensilsCrossed className="w-4 h-4 text-[#5C432B]" />
                 <p className="font-semibold text-sm text-gray-800">Add Items</p>
                 {editSaving && <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400 ml-auto" />}
               </div>
@@ -448,7 +448,7 @@ export default function OrdersPage() {
                 <div className="flex gap-1 py-2">
                   {categories.map(c => (
                     <button key={c.id} onClick={() => setSelectedCat(c.id)}
-                      className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${selectedCat === c.id ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                      className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${selectedCat === c.id ? "bg-[#5C432B] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
                       {c.name}
                     </button>
                   ))}
@@ -466,12 +466,12 @@ export default function OrdersPage() {
                 <div className="grid grid-cols-2 gap-2">
                   {filteredMenuItems.map(item => (
                     <button key={item.id} onClick={() => openCustomForEdit(item)} disabled={editSaving}
-                      className="bg-white border border-gray-200 rounded-xl p-3 text-left hover:border-indigo-300 hover:shadow-sm transition-all active:scale-95 disabled:opacity-50">
-                      <div className="w-full h-14 bg-indigo-50 rounded-lg flex items-center justify-center mb-2">
-                        <UtensilsCrossed className="w-6 h-6 text-indigo-300" />
+                      className="bg-white border border-gray-200 rounded-xl p-3 text-left hover:border-[#5C432B]/30 hover:shadow-sm transition-all active:scale-95 disabled:opacity-50">
+                      <div className="w-full h-14 bg-[#5C432B]/10 rounded-lg flex items-center justify-center mb-2">
+                        <UtensilsCrossed className="w-6 h-6 text-[#5C432B]/40" />
                       </div>
                       <p className="font-medium text-gray-900 text-xs leading-tight">{item.name}</p>
-                      <p className="text-indigo-600 font-semibold text-xs mt-0.5">{parseFloat(String(item.price)).toFixed(2)}</p>
+                      <p className="text-[#5C432B] font-semibold text-xs mt-0.5">{parseFloat(String(item.price)).toFixed(2)}</p>
                     </button>
                   ))}
                 </div>
@@ -505,12 +505,12 @@ export default function OrdersPage() {
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-1">
                         <button onClick={() => updateItemQty(item.id, item.quantity - 1)} disabled={editSaving || item.quantity <= 1}
-                          className="w-5 h-5 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center hover:border-indigo-300 disabled:opacity-40">
+                          className="w-5 h-5 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center hover:border-[#5C432B]/30 disabled:opacity-40">
                           <Minus className="w-2.5 h-2.5" />
                         </button>
                         <span className="w-5 text-center text-xs font-medium">{item.quantity}</span>
                         <button onClick={() => updateItemQty(item.id, item.quantity + 1)} disabled={editSaving}
-                          className="w-5 h-5 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center hover:border-indigo-300 disabled:opacity-40">
+                          className="w-5 h-5 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center hover:border-[#5C432B]/30 disabled:opacity-40">
                           <Plus className="w-2.5 h-2.5" />
                         </button>
                       </div>
@@ -525,8 +525,8 @@ export default function OrdersPage() {
                 {parseFloat(String(editOrder?.tax_amount ?? 0)) > 0 && (
                   <div className="flex justify-between text-xs text-gray-500"><span>Tax</span><span>{parseFloat(String(editOrder?.tax_amount ?? 0)).toFixed(2)}</span></div>
                 )}
-                <div className="flex justify-between font-semibold text-gray-900 text-sm"><span>Total</span><span className="text-indigo-700">{parseFloat(String(editOrder?.total ?? 0)).toFixed(2)}</span></div>
-                <Button className="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white h-9" onClick={() => setEditOpen(false)}>
+                <div className="flex justify-between font-semibold text-gray-900 text-sm"><span>Total</span><span className="text-[#5C432B]">{parseFloat(String(editOrder?.total ?? 0)).toFixed(2)}</span></div>
+                <Button className="w-full mt-2 h-9" onClick={() => setEditOpen(false)}>
                   Done
                 </Button>
               </div>
@@ -549,7 +549,7 @@ export default function OrdersPage() {
                       const sel = selVariants[group.id]?.option_name === opt.name;
                       return (
                         <button key={opt.id} onClick={() => setSelVariants(s => ({ ...s, [group.id]: { option_name: opt.name, price_modifier: parseFloat(String(opt.price_modifier)) || 0 } }))}
-                          className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${sel ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"}`}>
+                          className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${sel ? "bg-[#5C432B] text-white border-[#5C432B]" : "bg-white text-gray-600 border-gray-200 hover:border-[#5C432B]/30"}`}>
                           {opt.name}{parseFloat(String(opt.price_modifier)) !== 0 ? ` +${parseFloat(String(opt.price_modifier)).toFixed(2)}` : ""}
                         </button>
                       );
@@ -573,7 +573,7 @@ export default function OrdersPage() {
                             return { ...s, [group.id]: [...c, { name: addon.name, price: parseFloat(String(addon.price)) || 0 }] };
                           });
                         }}
-                          className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${sel ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"}`}>
+                          className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${sel ? "bg-[#5C432B] text-white border-[#5C432B]" : "bg-white text-gray-600 border-gray-200 hover:border-[#5C432B]/30"}`}>
                           {addon.name}{parseFloat(String(addon.price)) > 0 ? ` +${parseFloat(String(addon.price)).toFixed(2)}` : ""}
                         </button>
                       );
@@ -584,16 +584,16 @@ export default function OrdersPage() {
               <div className="flex items-center gap-3 pt-2">
                 <p className="text-xs font-medium text-gray-600">Quantity</p>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => setCustomQty(q => Math.max(1, q - 1))} className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center hover:border-indigo-300"><Minus className="w-3 h-3" /></button>
+                  <button onClick={() => setCustomQty(q => Math.max(1, q - 1))} className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center hover:border-[#5C432B]/30"><Minus className="w-3 h-3" /></button>
                   <span className="w-8 text-center text-sm font-semibold">{customQty}</span>
-                  <button onClick={() => setCustomQty(q => q + 1)} className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center hover:border-indigo-300"><Plus className="w-3 h-3" /></button>
+                  <button onClick={() => setCustomQty(q => q + 1)} className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center hover:border-[#5C432B]/30"><Plus className="w-3 h-3" /></button>
                 </div>
               </div>
             </div>
           )}
           <div className="flex gap-2 mt-2">
             <Button variant="outline" className="flex-1" onClick={() => setCustomDialog(false)}>Cancel</Button>
-            <Button className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white" onClick={confirmCustomForEdit}>Add to Order</Button>
+            <Button className="flex-1" onClick={confirmCustomForEdit}>Add to Order</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -613,21 +613,21 @@ export default function OrdersPage() {
                   <p className="text-2xl font-bold text-amber-800">{paySuccess.change.toFixed(2)}</p>
                 </div>
               )}
-              <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white mt-2" onClick={() => { setPayDialog(false); setPaySuccess(null); }}>Done</Button>
+              <Button className="w-full mt-2" onClick={() => { setPayDialog(false); setPaySuccess(null); }}>Done</Button>
             </div>
           ) : (
             <div className="space-y-4 py-2">
               {payError && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{payError}</p>}
-              <div className="bg-indigo-50 rounded-xl px-4 py-3 flex items-center justify-between">
-                <span className="text-sm text-indigo-700 font-medium">Order Total</span>
-                <span className="text-lg font-bold text-indigo-800">{parseFloat(String(payOrder?.total ?? 0)).toFixed(2)}</span>
+              <div className="bg-[#5C432B]/10 rounded-xl px-4 py-3 flex items-center justify-between">
+                <span className="text-sm text-[#5C432B] font-medium">Order Total</span>
+                <span className="text-lg font-bold text-[#5C432B]">{parseFloat(String(payOrder?.total ?? 0)).toFixed(2)}</span>
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-600 block mb-2">Payment Method</label>
                 <div className="grid grid-cols-3 gap-2">
                   {PAYMENT_METHODS.map(m => (
                     <button key={m.value} onClick={() => setPayMethod(m.value)}
-                      className={`py-2 px-1 rounded-lg text-xs font-medium border transition-colors ${payMethod === m.value ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"}`}>
+                      className={`py-2 px-1 rounded-lg text-xs font-medium border transition-colors ${payMethod === m.value ? "bg-[#5C432B] text-white border-[#5C432B]" : "bg-white text-gray-600 border-gray-200 hover:border-[#5C432B]/30"}`}>
                       {m.label}
                     </button>
                   ))}

@@ -172,7 +172,7 @@ export default function CountriesPage() {
                 className="h-6 text-xs w-14 px-2"
                 min="0" max="100" step="0.01"
               />
-              <Button size="sm" className="h-6 w-6 p-0 bg-indigo-600 hover:bg-indigo-700 text-white" onClick={() => saveEdit(c.id)} disabled={saving}>
+              <Button size="sm" className="h-6 w-6 p-0" onClick={() => saveEdit(c.id)} disabled={saving}>
                 {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
               </Button>
               <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={() => setEditId(null)}>
@@ -183,7 +183,7 @@ export default function CountriesPage() {
             <>
               <Button
                 variant="ghost" size="sm"
-                className="h-8 w-8 p-0 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50"
+                className="h-8 w-8 p-0 text-gray-400 hover:text-[#5C432B] hover:bg-[#5C432B]/10"
                 title="Edit tax"
                 onClick={() => startEdit(c)}
               >
@@ -212,7 +212,7 @@ export default function CountriesPage() {
 
   const toolbar = (
     <Button
-      className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 h-9"
+      className="gap-2 h-9"
       onClick={() => { setAddError(""); setAddForm(EMPTY_FORM); setShowAdd(true); }}
     >
       <Plus className="w-4 h-4" /> Add Country
@@ -221,7 +221,7 @@ export default function CountriesPage() {
 
   return (
     <div>
-      <Header title="Countries" subtitle="Supported markets — tax rates and currencies" />
+      <Header />
       <div className="p-6">
         {loading ? (
           <div className="flex items-center justify-center py-20">
@@ -314,7 +314,6 @@ export default function CountriesPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
             <Button
-              className="bg-indigo-600 hover:bg-indigo-700 text-white"
               onClick={addCountry}
               disabled={adding || !addForm.name || !addForm.code || !addForm.currency_code || !addForm.currency_symbol}
             >

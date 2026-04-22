@@ -180,7 +180,7 @@ export default function PurchaseOrdersPage() {
               </SelectContent>
             </Select>
           )}
-          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white h-9 ml-auto" onClick={() => { setForm({ ...EMPTY_FORM }); setLineItems([{ ingredient_id: "", quantity_ordered: "", unit_cost: "" }]); setCreateOpen(true); }}>
+          <Button className="h-9 ml-auto" onClick={() => { setForm({ ...EMPTY_FORM }); setLineItems([{ ingredient_id: "", quantity_ordered: "", unit_cost: "" }]); setCreateOpen(true); }}>
             <Plus className="w-4 h-4 mr-1" /> Create PO
           </Button>
         </div>
@@ -262,14 +262,14 @@ export default function PurchaseOrdersPage() {
               </div>
               {totalEstimate > 0 && (
                 <p className="text-sm font-medium text-gray-700 text-right">
-                  Estimated Total: <span className="text-indigo-700">${totalEstimate.toFixed(2)}</span>
+                  Estimated Total: <span className="text-[#5C432B]">${totalEstimate.toFixed(2)}</span>
                 </p>
               )}
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={handleCreate} disabled={saving}>
+            <Button onClick={handleCreate} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Create PO
             </Button>
           </DialogFooter>
@@ -318,7 +318,7 @@ export default function PurchaseOrdersPage() {
                   <tfoot>
                     <tr className="border-t border-gray-200 bg-gray-50">
                       <td colSpan={3} className="px-3 py-2 text-right font-semibold text-gray-700">Total</td>
-                      <td className="px-3 py-2 text-right font-semibold text-indigo-700">${parseFloat(String(viewTarget.total_cost)).toFixed(2)}</td>
+                      <td className="px-3 py-2 text-right font-semibold text-[#5C432B]">${parseFloat(String(viewTarget.total_cost)).toFixed(2)}</td>
                     </tr>
                   </tfoot>
                 </table>

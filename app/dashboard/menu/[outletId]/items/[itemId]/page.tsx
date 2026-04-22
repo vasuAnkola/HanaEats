@@ -180,7 +180,7 @@ export default function ItemDetailPage({ params }: Props) {
 
   return (
     <div>
-      <Header title={item.name} subtitle={item.category_name} />
+      <Header />
       <div className="p-6 max-w-3xl">
         <div className="flex items-center justify-between mb-4">
           <Link href={`/dashboard/menu/${outletId}`} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800">
@@ -264,7 +264,7 @@ export default function ItemDetailPage({ params }: Props) {
               <div className="flex flex-wrap gap-2">
                 {DIETARY_FIELDS.map(({ key, label }) => (
                   <button key={key} type="button" onClick={() => toggleDietary(key)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${dietary[key] ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"}`}>
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${dietary[key] ? "bg-[#5C432B] text-white border-[#5C432B]" : "bg-white text-gray-600 border-gray-200 hover:border-[#5C432B]/30"}`}>
                     {label}
                   </button>
                 ))}
@@ -273,7 +273,7 @@ export default function ItemDetailPage({ params }: Props) {
           </Card>
 
           <div className="flex gap-3">
-            <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2" disabled={saving}>
+            <Button type="submit" className="gap-2" disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               <Save className="w-4 h-4" /> Save Changes
             </Button>
@@ -406,7 +406,7 @@ export default function ItemDetailPage({ params }: Props) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setVariantDialog(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={saveVariant} disabled={variantSaving || !variantForm.name}>
+            <Button onClick={saveVariant} disabled={variantSaving || !variantForm.name}>
               {variantSaving && <Loader2 className="w-4 h-4 animate-spin mr-1" />} Add Variant
             </Button>
           </DialogFooter>
@@ -458,7 +458,7 @@ export default function ItemDetailPage({ params }: Props) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddonDialog(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={saveAddon} disabled={addonSaving || !addonForm.name}>
+            <Button onClick={saveAddon} disabled={addonSaving || !addonForm.name}>
               {addonSaving && <Loader2 className="w-4 h-4 animate-spin mr-1" />} Add Group
             </Button>
           </DialogFooter>

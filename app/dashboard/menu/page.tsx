@@ -46,7 +46,7 @@ export default function MenuHubPage() {
               <p className="text-gray-500 font-medium">No outlets yet</p>
               <p className="text-sm text-gray-400 mt-1">Create an outlet first before managing menus.</p>
               <Link href="/dashboard/outlets/new">
-                <Button className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white">Add Outlet</Button>
+                <Button className="mt-4">Add Outlet</Button>
               </Link>
             </CardContent>
           </Card>
@@ -54,11 +54,11 @@ export default function MenuHubPage() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {outlets.map((o) => (
               <Link key={o.id} href={`/dashboard/menu/${o.id}`}>
-                <Card className="border-gray-200 shadow-none hover:border-indigo-300 hover:shadow-sm transition-all cursor-pointer group">
+                <Card className="border-gray-200 shadow-none hover:border-[#5C432B]/30 hover:shadow-sm transition-all cursor-pointer group">
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between mb-4">
-                      <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
-                        <Store className="w-5 h-5 text-indigo-600" />
+                      <div className="w-10 h-10 bg-[#5C432B]/10 rounded-xl flex items-center justify-center">
+                        <Store className="w-5 h-5 text-[#5C432B]" />
                       </div>
                       <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${o.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
                         {o.is_active ? "Active" : "Inactive"}
@@ -66,7 +66,7 @@ export default function MenuHubPage() {
                     </div>
                     <p className="font-semibold text-gray-900">{o.name}</p>
                     <p className="text-xs text-gray-400 mt-0.5">{TYPE_LABEL[o.outlet_type] ?? o.outlet_type}</p>
-                    <div className="mt-4 flex items-center gap-1 text-xs font-medium text-indigo-600 group-hover:gap-2 transition-all">
+                    <div className="mt-4 flex items-center gap-1 text-xs font-medium text-[#5C432B] group-hover:gap-2 transition-all">
                       Manage Menu <ArrowRight className="w-3.5 h-3.5" />
                     </div>
                   </CardContent>

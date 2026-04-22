@@ -48,7 +48,7 @@ interface User {
 const ROLE_COLOR: Record<string, string> = {
   admin: "bg-blue-100 text-blue-700",
   manager: "bg-green-100 text-green-700",
-  cashier: "bg-indigo-100 text-indigo-700",
+  cashier: "bg-[#5C432B]/10 text-[#5C432B]",
   waiter: "bg-yellow-100 text-yellow-700",
   kitchen: "bg-red-100 text-red-700",
 };
@@ -89,14 +89,14 @@ export default async function TenantDetailPage({ params }: Props) {
 
   return (
     <div>
-      <Header title={tenant.name} subtitle={`/${tenant.slug} · ${tenant.country_name}`} />
+      <Header />
       <div className="p-6 space-y-5 max-w-4xl">
         <div className="flex items-center justify-between">
           <Link href="/dashboard/tenants" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800">
             <ArrowLeft className="w-4 h-4" /> Back to Tenants
           </Link>
           <Link href={`/dashboard/tenants/${id}/edit`}>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2" size="sm">
+            <Button className="gap-2" size="sm">
               <Pencil className="w-4 h-4" /> Edit Tenant
             </Button>
           </Link>

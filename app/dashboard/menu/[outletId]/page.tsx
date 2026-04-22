@@ -165,7 +165,7 @@ export default function OutletMenuPage({ params }: Props) {
 
   return (
     <div>
-      <Header title={outletName || "Menu"} subtitle="Categories & Items" />
+      <Header />
       <div className="p-6">
         <div className="mb-4">
           <Link href="/dashboard/menu" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800">
@@ -187,7 +187,7 @@ export default function OutletMenuPage({ params }: Props) {
             ) : categories.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-sm text-gray-400">No categories yet</p>
-                <Button size="sm" className="mt-3 bg-indigo-600 hover:bg-indigo-700 text-white gap-1 text-xs" onClick={openAddCat}>
+                <Button size="sm" className="mt-3 gap-1 text-xs" onClick={openAddCat}>
                   <Plus className="w-3 h-3" /> Add Category
                 </Button>
               </div>
@@ -198,7 +198,7 @@ export default function OutletMenuPage({ params }: Props) {
                     key={c.id}
                     className={`group flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer border transition-colors ${
                       selectedCat?.id === c.id
-                        ? "bg-indigo-50 border-indigo-200 text-indigo-700"
+                        ? "bg-[#5C432B]/10 border-[#5C432B]/30 text-[#5C432B]"
                         : "bg-white border-gray-100 hover:border-gray-200 text-gray-700"
                     }`}
                     onClick={() => setSelectedCat(c)}
@@ -243,7 +243,7 @@ export default function OutletMenuPage({ params }: Props) {
                     <p className="text-xs text-gray-400">{selectedCat.item_count} items</p>
                   </div>
                   <Link href={`/dashboard/menu/${outletId}/items/new?category=${selectedCat.id}`}>
-                    <Button className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 h-9">
+                    <Button className="gap-2 h-9">
                       <Plus className="w-4 h-4" /> Add Item
                     </Button>
                   </Link>
@@ -257,7 +257,7 @@ export default function OutletMenuPage({ params }: Props) {
                       <UtensilsCrossed className="w-10 h-10 text-gray-200 mx-auto mb-2" />
                       <p className="text-sm text-gray-400">No items in this category yet</p>
                       <Link href={`/dashboard/menu/${outletId}/items/new?category=${selectedCat.id}`}>
-                        <Button size="sm" className="mt-3 bg-indigo-600 hover:bg-indigo-700 text-white gap-1">
+                        <Button size="sm" className="mt-3 gap-1">
                           <Plus className="w-3.5 h-3.5" /> Add First Item
                         </Button>
                       </Link>
@@ -267,7 +267,7 @@ export default function OutletMenuPage({ params }: Props) {
                   <div className="overflow-y-auto flex-1 space-y-2">
                     {items.map((item) => (
                       <div key={item.id} className={`flex items-center gap-4 p-4 bg-white border rounded-xl transition-colors ${item.is_available ? "border-gray-200 hover:border-indigo-200" : "border-gray-100 bg-gray-50/50"}`}>
-                        <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 bg-[#5C432B]/10 rounded-lg flex items-center justify-center flex-shrink-0">
                           <UtensilsCrossed className={`w-5 h-5 ${item.is_available ? "text-indigo-500" : "text-gray-300"}`} />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -291,7 +291,7 @@ export default function OutletMenuPage({ params }: Props) {
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
                           <Link href={`/dashboard/menu/${outletId}/items/${item.id}`}>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50">
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-[#5C432B] hover:bg-[#5C432B]/10">
                               <Pencil className="w-4 h-4" />
                             </Button>
                           </Link>
@@ -340,7 +340,7 @@ export default function OutletMenuPage({ params }: Props) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCatDialog(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={saveCat} disabled={catSaving || !catForm.name}>
+            <Button onClick={saveCat} disabled={catSaving || !catForm.name}>
               {catSaving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               {catEdit ? "Save" : "Add Category"}
             </Button>

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   title: "HANAEats — Southeast Asia POS",
@@ -12,8 +13,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} h-full`}>
-      <body className="min-h-full bg-gray-50 text-gray-900 antialiased font-sans">
-        {children}
+      <body className="min-h-full bg-background text-foreground antialiased">
+        <TooltipProvider>
+          {children}
+        </TooltipProvider>
       </body>
     </html>
   );

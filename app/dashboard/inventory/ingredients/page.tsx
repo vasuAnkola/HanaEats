@@ -198,7 +198,7 @@ export default function IngredientsPage() {
               </SelectContent>
             </Select>
           )}
-          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white h-9 ml-auto" onClick={() => { setForm({ ...EMPTY_FORM }); setAddOpen(true); }}>
+          <Button className="h-9 ml-auto" onClick={() => { setForm({ ...EMPTY_FORM }); setAddOpen(true); }}>
             <Plus className="w-4 h-4 mr-1" /> Add Ingredient
           </Button>
         </div>
@@ -224,7 +224,7 @@ export default function IngredientsPage() {
           <IngredientForm form={form} setForm={setForm} categories={categories} />
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={handleAdd} disabled={saving}>
+            <Button onClick={handleAdd} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Save
             </Button>
           </DialogFooter>
@@ -237,7 +237,7 @@ export default function IngredientsPage() {
           <IngredientForm form={form} setForm={setForm} categories={categories} />
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={handleEdit} disabled={saving}>
+            <Button onClick={handleEdit} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Save Changes
             </Button>
           </DialogFooter>
@@ -281,7 +281,7 @@ export default function IngredientsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAdjustOpen(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={handleAdjust} disabled={saving}>
+            <Button onClick={handleAdjust} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Apply
             </Button>
           </DialogFooter>

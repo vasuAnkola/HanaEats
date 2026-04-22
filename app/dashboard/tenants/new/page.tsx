@@ -90,7 +90,7 @@ export default function NewTenantPage() {
           <Card className="border-gray-200 shadow-none">
             <CardHeader className="pb-4">
               <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-indigo-600" />
+                <Building2 className="w-4 h-4 text-[#5C432B]" />
                 Business Details
               </CardTitle>
             </CardHeader>
@@ -190,7 +190,7 @@ export default function NewTenantPage() {
           <Card className="border-gray-200 shadow-none">
             <CardHeader className="pb-4">
               <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <UserCog className="w-4 h-4 text-indigo-600" />
+                <UserCog className="w-4 h-4 text-[#5C432B]" />
                 Admin Account
               </CardTitle>
               <p className="text-xs text-gray-400">
@@ -233,8 +233,8 @@ export default function NewTenantPage() {
                 </div>
               </div>
 
-              <div className="bg-indigo-50 border border-orange-100 rounded-lg px-3 py-2">
-                <p className="text-xs text-indigo-700">
+              <div className="bg-[#5C432B]/10 border border-[#5C432B]/20 rounded-lg px-3 py-2">
+                <p className="text-xs text-[#5C432B]">
                   Share these credentials with the business owner. They can change the password after first login.
                 </p>
               </div>
@@ -249,11 +249,7 @@ export default function NewTenantPage() {
           )}
 
           <div className="flex gap-3">
-            <Button
-              type="submit"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white"
-              disabled={loading}
-            >
+            <Button type="submit" disabled={loading}>
               {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating...</> : "Create Tenant & Admin"}
             </Button>
             <Link href="/dashboard/tenants">

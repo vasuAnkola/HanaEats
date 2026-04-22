@@ -96,20 +96,20 @@ export function DataTable<T extends object>({
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-gray-200 overflow-hidden bg-white">
+      <div className="rounded-xl border border-gray-100 overflow-hidden bg-white shadow-sm">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50 hover:bg-gray-50">
+            <TableRow className="bg-gray-50/80 hover:bg-gray-50/80 border-gray-100">
               {columns.map((col) => (
                 <TableHead
                   key={col.key}
-                  className={`text-xs font-semibold text-gray-500 uppercase tracking-wide h-10 ${col.sortable ? "cursor-pointer select-none hover:text-gray-800" : ""} ${col.className ?? ""}`}
+                  className={`text-[11px] font-semibold text-gray-400 uppercase tracking-wider h-10 ${col.sortable ? "cursor-pointer select-none hover:text-gray-700" : ""} ${col.className ?? ""}`}
                   onClick={() => col.sortable && handleSort(col.key)}
                 >
                   <span className="flex items-center gap-1">
                     {col.label}
                     {col.sortable && sortKey === col.key && (
-                      <span className="text-indigo-600">{sortDir === "asc" ? "↑" : "↓"}</span>
+                      <span className="text-indigo-500">{sortDir === "asc" ? "↑" : "↓"}</span>
                     )}
                   </span>
                 </TableHead>
@@ -119,13 +119,13 @@ export function DataTable<T extends object>({
           <TableBody>
             {paginated.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-12 text-sm text-gray-400">
+                <TableCell colSpan={columns.length} className="text-center py-16 text-sm text-gray-400">
                   {emptyMessage}
                 </TableCell>
               </TableRow>
             ) : (
               paginated.map((row, i) => (
-                <TableRow key={i} className="hover:bg-indigo-50/30 transition-colors border-gray-100">
+                <TableRow key={i} className="hover:bg-gray-50/60 transition-colors border-gray-50">
                   {columns.map((col) => (
                     <TableCell key={col.key} className={`py-3 text-sm ${col.className ?? ""}`}>
                       {col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? "—")}

@@ -123,7 +123,7 @@ export default function NewUserPage() {
               )}
 
               <div className="flex gap-3 pt-2">
-                <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white" disabled={loading}>
+                <Button type="submit" disabled={loading}>
                   {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating...</> : "Create User"}
                 </Button>
                 <Link href="/dashboard/users">

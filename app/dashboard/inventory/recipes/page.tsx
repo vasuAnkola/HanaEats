@@ -169,7 +169,7 @@ export default function RecipesPage() {
               </SelectContent>
             </Select>
           )}
-          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white h-9 ml-auto" onClick={() => openBuilder()}>
+          <Button className="h-9 ml-auto" onClick={() => openBuilder()}>
             <Plus className="w-4 h-4 mr-1" /> New Recipe
           </Button>
         </div>
@@ -198,7 +198,7 @@ export default function RecipesPage() {
                   {menuItems.map((item) => {
                     const recipe = recipes.find((r) => r.menu_item_id === item.id);
                     return (
-                      <tr key={item.id} className="border-t border-gray-100 hover:bg-indigo-50/30 transition-colors">
+                      <tr key={item.id} className="border-t border-gray-100 hover:bg-[#5C432B]/5 transition-colors">
                         <td className="px-4 py-3 font-medium text-gray-900">{item.name}</td>
                         <td className="px-4 py-3 text-gray-600">${parseFloat(String(item.price)).toFixed(2)}</td>
                         <td className="px-4 py-3">
@@ -230,7 +230,7 @@ export default function RecipesPage() {
                                 </Button>
                               </>
                             ) : (
-                              <Button size="sm" variant="outline" className="h-7 px-2 text-xs text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50" onClick={() => openBuilder(item.id)}>
+                              <Button size="sm" variant="outline" className="h-7 px-2 text-xs text-[#5C432B] hover:text-[#5C432B] hover:bg-[#5C432B]/10" onClick={() => openBuilder(item.id)}>
                                 <Plus className="w-3 h-3 mr-1" /> Add Recipe
                               </Button>
                             )}
@@ -321,7 +321,7 @@ export default function RecipesPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setBuilderOpen(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={handleSaveRecipe} disabled={saving}>
+            <Button onClick={handleSaveRecipe} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Save Recipe
             </Button>
           </DialogFooter>
@@ -361,7 +361,7 @@ export default function RecipesPage() {
                   <tfoot>
                     <tr className="border-t border-gray-200 bg-gray-50">
                       <td colSpan={2} className="px-3 py-2 text-right font-semibold text-gray-700">Recipe Cost</td>
-                      <td className="px-3 py-2 text-right font-semibold text-indigo-700">${recipeIngredientCost.toFixed(4)}</td>
+                      <td className="px-3 py-2 text-right font-semibold text-[#5C432B]">${recipeIngredientCost.toFixed(4)}</td>
                     </tr>
                     {parseFloat(String(viewTarget.menu_item_price)) > 0 && (
                       <tr className="border-t border-gray-100">

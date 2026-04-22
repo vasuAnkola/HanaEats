@@ -85,7 +85,7 @@ export default function NewItemPage({ params }: Props) {
 
   return (
     <div>
-      <Header title="Add Menu Item" subtitle="Fill in the item details" />
+      <Header />
       <div className="p-6 max-w-2xl">
         <div className="mb-4">
           <Link href={`/dashboard/menu/${outletId}`} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800">
@@ -174,8 +174,8 @@ export default function NewItemPage({ params }: Props) {
                     onClick={() => toggleDietary(key)}
                     className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                       dietary[key]
-                        ? "bg-indigo-600 text-white border-indigo-600"
-                        : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"
+                        ? "bg-[#5C432B] text-white border-[#5C432B]"
+                        : "bg-white text-gray-600 border-gray-200 hover:border-[#5C432B]/30"
                     }`}
                   >
                     {label}
@@ -186,7 +186,7 @@ export default function NewItemPage({ params }: Props) {
           </Card>
 
           <div className="flex gap-3">
-            <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2" disabled={saving || !form.name || !form.category_id || !form.price}>
+            <Button type="submit" className="gap-2" disabled={saving || !form.name || !form.category_id || !form.price}>
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               <Save className="w-4 h-4" /> Save Item
             </Button>

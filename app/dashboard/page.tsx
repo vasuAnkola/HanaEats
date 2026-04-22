@@ -42,7 +42,7 @@ export default async function DashboardPage() {
     const stats = await getSuperAdminStats();
     return (
       <div>
-        <Header title="Platform Overview" subtitle="HANAEats SaaS — All tenants" />
+        <Header />
         <div className="p-6 space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard icon={Building2} label="Active Tenants" value={stats.tenants} color="blue" />
@@ -63,7 +63,7 @@ export default async function DashboardPage() {
     const stats = await getAdminStats(session.user.tenantId);
     return (
       <div>
-        <Header title="Business Dashboard" subtitle="Your restaurant operations" />
+        <Header />
         <div className="p-6 space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <StatCard icon={Store} label="Outlets" value={stats.outlets} color="green" />
@@ -81,7 +81,7 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <Header title="Dashboard" />
+      <Header />
       <div className="p-6">
         <p className="text-gray-500">Welcome to HANAEats.</p>
       </div>

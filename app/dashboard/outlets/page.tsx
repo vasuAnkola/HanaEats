@@ -73,8 +73,8 @@ export default function OutletsPage() {
       sortable: true,
       render: (o) => (
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center flex-shrink-0">
-            <Store className="w-4 h-4 text-indigo-600" />
+          <div className="w-8 h-8 bg-[#5C432B]/10 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Store className="w-4 h-4 text-[#5C432B]" />
           </div>
           <div>
             <p className="font-medium text-gray-900">{o.name}</p>
@@ -127,7 +127,7 @@ export default function OutletsPage() {
       render: (o) => (
         <div className="flex items-center gap-1 justify-end">
           <Link href={`/dashboard/outlets/${o.id}/edit`}>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50" title="Edit">
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-[#5C432B] hover:bg-[#5C432B]/10" title="Edit">
               <Pencil className="w-4 h-4" />
             </Button>
           </Link>
@@ -152,7 +152,7 @@ export default function OutletsPage() {
 
   const toolbar = canCreate ? (
     <Link href="/dashboard/outlets/new">
-      <Button className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 h-9">
+      <Button className="gap-2 h-9">
         <Plus className="w-4 h-4" /> Add Outlet
       </Button>
     </Link>

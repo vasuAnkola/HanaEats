@@ -125,7 +125,7 @@ export default function VendorsPage() {
       <Header title="Vendors" subtitle="Manage your suppliers and contacts" />
       <div className="p-6 space-y-4">
         <div className="flex justify-end">
-          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white h-9" onClick={() => { setForm({ ...EMPTY_FORM }); setAddOpen(true); }}>
+          <Button className="h-9" onClick={() => { setForm({ ...EMPTY_FORM }); setAddOpen(true); }}>
             <Plus className="w-4 h-4 mr-1" /> Add Vendor
           </Button>
         </div>
@@ -151,7 +151,7 @@ export default function VendorsPage() {
           <VendorForm form={form} setForm={setForm} />
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={handleAdd} disabled={saving}>
+            <Button onClick={handleAdd} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Save
             </Button>
           </DialogFooter>
@@ -164,7 +164,7 @@ export default function VendorsPage() {
           <VendorForm form={form} setForm={setForm} />
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={handleEdit} disabled={saving}>
+            <Button onClick={handleEdit} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Save Changes
             </Button>
           </DialogFooter>

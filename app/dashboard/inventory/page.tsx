@@ -15,7 +15,7 @@ const HUB_CARDS = [
     description: "Manage ingredient catalog, stock levels and categories",
     href: "/dashboard/inventory/ingredients",
     icon: Package,
-    color: "bg-indigo-50 text-indigo-600",
+    color: "bg-[#5C432B]/10 text-[#5C432B]",
   },
   {
     title: "Purchase Orders",
@@ -71,7 +71,7 @@ export default function InventoryHubPage() {
 
   return (
     <div>
-      <Header title="Inventory" subtitle="Manage stock, purchases, vendors and recipes" />
+      <Header />
       <div className="p-6 space-y-6">
         {loading ? (
           <div className="flex items-center gap-2 text-sm text-gray-400">
@@ -104,12 +104,12 @@ export default function InventoryHubPage() {
             const Icon = card.icon;
             return (
               <Link key={card.href} href={card.href}>
-                <Card className="border-gray-200 shadow-none hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer group">
+                <Card className="border-gray-200 shadow-none hover:border-[#5C432B]/30 hover:shadow-md transition-all cursor-pointer group">
                   <CardContent className="p-6">
                     <div className={`inline-flex p-3 rounded-xl mb-4 ${card.color}`}>
                       <Icon className="w-6 h-6" />
                     </div>
-                    <h3 className="font-semibold text-gray-900 group-hover:text-indigo-700 transition-colors">
+                    <h3 className="font-semibold text-gray-900 group-hover:text-[#5C432B] transition-colors">
                       {card.title}
                     </h3>
                     <p className="mt-1 text-sm text-gray-500">{card.description}</p>

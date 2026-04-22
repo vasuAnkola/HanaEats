@@ -144,7 +144,7 @@ export default function TablesPage() {
               <RefreshCw className="w-4 h-4" />
             </button>
             <span className="text-[10px] text-gray-400">Auto-refreshes every 30s</span>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5 h-9 ml-2" onClick={() => { setError(""); setDialog(true); }}>
+            <Button className="gap-1.5 h-9 ml-2" onClick={() => { setError(""); setDialog(true); }}>
               <Plus className="w-4 h-4" /> Add Table
             </Button>
           </div>
@@ -241,7 +241,7 @@ export default function TablesPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialog(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={addTable} disabled={saving || !form.table_number}>
+            <Button onClick={addTable} disabled={saving || !form.table_number}>
               {saving && <Loader2 className="w-4 h-4 animate-spin mr-1" />} Add Table
             </Button>
           </DialogFooter>

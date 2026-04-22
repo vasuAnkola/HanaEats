@@ -160,7 +160,7 @@ export default function KDSPage() {
     <div className="flex flex-col h-screen">
       <Header title="Kitchen Display" subtitle="Live order queue" />
       <div className="px-6 py-3 border-b border-gray-200 flex items-center gap-3 bg-white">
-        <ChefHat className="w-4 h-4 text-indigo-500" />
+        <ChefHat className="w-4 h-4 text-[#5C432B]" />
         <Select value={outletId} onValueChange={(v) => v && setOutletId(v)}>
           <SelectTrigger className="w-44 h-8 text-sm"><SelectValue placeholder="Select outlet" /></SelectTrigger>
           <SelectContent>{outlets.map(o => <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>)}</SelectContent>

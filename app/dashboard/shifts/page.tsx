@@ -150,7 +150,7 @@ export default function ShiftsPage() {
                 <Square className="w-3.5 h-3.5" /> Close Shift
               </Button>
             ) : (
-              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 h-9" onClick={() => { setError(""); setOpenDialog(true); }}>
+              <Button className="gap-2 h-9" onClick={() => { setError(""); setOpenDialog(true); }}>
                 <Play className="w-3.5 h-3.5" /> Open Shift
               </Button>
             )}
@@ -188,7 +188,7 @@ export default function ShiftsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpenDialog(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={startShift} disabled={saving}>
+            <Button onClick={startShift} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 animate-spin mr-1" />} Open Shift
             </Button>
           </DialogFooter>
@@ -226,9 +226,9 @@ export default function ShiftsPage() {
           {selectedShift && (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-indigo-50 rounded-xl p-3 text-center">
-                  <p className="text-2xl font-bold text-indigo-700">{Number(selectedShift.order_count ?? 0)}</p>
-                  <p className="text-xs text-indigo-500 mt-0.5">Orders</p>
+                <div className="bg-[#5C432B]/10 rounded-xl p-3 text-center">
+                  <p className="text-2xl font-bold text-[#5C432B]">{Number(selectedShift.order_count ?? 0)}</p>
+                  <p className="text-xs text-[#5C432B]/60 mt-0.5">Orders</p>
                 </div>
                 <div className="bg-emerald-50 rounded-xl p-3 text-center">
                   <p className="text-2xl font-bold text-emerald-700">{parseFloat(String(selectedShift.total_sales ?? 0)).toFixed(2)}</p>

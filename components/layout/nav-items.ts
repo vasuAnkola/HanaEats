@@ -15,6 +15,8 @@ import {
   MonitorCheck,
   Banknote,
   Clock,
+  Truck,
+  FlaskConical,
   type LucideIcon,
 } from "lucide-react";
 
@@ -22,12 +24,20 @@ export interface NavItem {
   label: string;
   href: string;
   icon: LucideIcon;
+  children?: NavItem[];
 }
 
 export interface NavGroup {
   title: string;
   items: NavItem[];
 }
+
+const INVENTORY_CHILDREN: NavItem[] = [
+  { label: "Ingredients", href: "/dashboard/inventory/ingredients", icon: FlaskConical },
+  { label: "Purchase Orders", href: "/dashboard/inventory/purchase-orders", icon: ShoppingCart },
+  { label: "Vendors", href: "/dashboard/inventory/vendors", icon: Truck },
+  { label: "Recipes", href: "/dashboard/inventory/recipes", icon: ChefHat },
+];
 
 export function getNavGroups(role: UserRole): NavGroup[] {
   if (role === "super_admin") {
@@ -62,7 +72,7 @@ export function getNavGroups(role: UserRole): NavGroup[] {
           { label: "Tables", href: "/dashboard/tables", icon: Armchair },
           { label: "Payments", href: "/dashboard/payments", icon: Banknote },
           { label: "Shifts", href: "/dashboard/shifts", icon: Clock },
-          { label: "Inventory", href: "/dashboard/inventory", icon: Package },
+          { label: "Inventory", href: "/dashboard/inventory", icon: Package, children: INVENTORY_CHILDREN },
           { label: "Reports", href: "/dashboard/reports", icon: BarChart3 },
         ],
       },
@@ -87,7 +97,7 @@ export function getNavGroups(role: UserRole): NavGroup[] {
           { label: "Tables", href: "/dashboard/tables", icon: Armchair },
           { label: "Payments", href: "/dashboard/payments", icon: Banknote },
           { label: "Shifts", href: "/dashboard/shifts", icon: Clock },
-          { label: "Inventory", href: "/dashboard/inventory", icon: Package },
+          { label: "Inventory", href: "/dashboard/inventory", icon: Package, children: INVENTORY_CHILDREN },
           { label: "Team", href: "/dashboard/users", icon: Users },
           { label: "Reports", href: "/dashboard/reports", icon: BarChart3 },
         ],
