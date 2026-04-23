@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Loader2, ShoppingCart, Plus, Minus, X, CheckCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface QrSessionInfo {
   valid: boolean;
@@ -202,17 +203,14 @@ export default function QrMenuPage({ params }: { params: Promise<{ token: string
       {/* Category tabs */}
       <div className="flex gap-2 px-4 py-3 overflow-x-auto border-b border-gray-100 bg-white sticky top-0 z-10">
         {menu.map(cat => (
-          <button
+          <Button
             key={cat.id}
             onClick={() => setActiveCategory(cat.id)}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              activeCategory === cat.id
-                ? "bg-indigo-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
+            variant={activeCategory === cat.id ? "default" : "outline"}
+            className="flex-shrink-0 rounded-full text-sm font-medium"
           >
             {cat.name}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -248,27 +246,31 @@ export default function QrMenuPage({ params }: { params: Promise<{ token: string
                   </span>
                   {cartItem ? (
                     <div className="flex items-center gap-2">
-                      <button
+                      <Button
                         onClick={() => updateQty(item.id, -1)}
-                        className="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600"
+                        size="icon"
+                        variant="outline"
+                        className="w-6 h-6 rounded-full"
                       >
                         <Minus className="w-3 h-3" />
-                      </button>
+                      </Button>
                       <span className="text-sm font-bold w-4 text-center">{cartItem.quantity}</span>
-                      <button
+                      <Button
                         onClick={() => updateQty(item.id, 1)}
-                        className="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-600 text-white"
+                        size="icon"
+                        className="w-6 h-6 rounded-full"
                       >
                         <Plus className="w-3 h-3" />
-                      </button>
+                      </Button>
                     </div>
                   ) : (
-                    <button
+                    <Button
                       onClick={() => addToCart(item)}
-                      className="flex items-center gap-1 bg-indigo-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg"
+                      size="sm"
+                      className="gap-1 text-xs"
                     >
                       <Plus className="w-3 h-3" /> Add
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -280,16 +282,16 @@ export default function QrMenuPage({ params }: { params: Promise<{ token: string
       {/* Floating cart button */}
       {cartCount > 0 && !cartOpen && (
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pb-6 z-20">
-          <button
+          <Button
             onClick={() => setCartOpen(true)}
-            className="w-full bg-indigo-600 text-white rounded-2xl py-4 flex items-center justify-between px-5 shadow-lg"
+            className="w-full rounded-2xl py-4 flex items-center justify-between px-5 shadow-lg"
           >
             <div className="flex items-center gap-2">
               <ShoppingCart className="w-5 h-5" />
               <span className="font-semibold">{cartCount} item{cartCount > 1 ? "s" : ""}</span>
             </div>
             <span className="font-bold">{cartTotal.toFixed(2)}</span>
-          </button>
+          </Button>
         </div>
       )}
 
@@ -300,9 +302,9 @@ export default function QrMenuPage({ params }: { params: Promise<{ token: string
           <div className="relative bg-white rounded-t-2xl max-h-[80vh] flex flex-col max-w-md w-full mx-auto">
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
               <h2 className="font-bold text-lg">Your Order</h2>
-              <button onClick={() => setCartOpen(false)}>
+              <Button onClick={() => setCartOpen(false)} variant="ghost" size="icon">
                 <X className="w-5 h-5 text-gray-400" />
-              </button>
+              </Button>
             </div>
             <div className="overflow-y-auto flex-1 px-4 py-3 space-y-3">
               {cart.map(item => (
@@ -312,19 +314,22 @@ export default function QrMenuPage({ params }: { params: Promise<{ token: string
                     <p className="text-xs text-gray-500">{item.price.toFixed(2)} each</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button
+                    <Button
                       onClick={() => updateQty(item.id, -1)}
-                      className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100"
+                      size="icon"
+                      variant="outline"
+                      className="w-7 h-7 rounded-full"
                     >
                       <Minus className="w-3 h-3" />
-                    </button>
+                    </Button>
                     <span className="text-sm font-bold w-5 text-center">{item.quantity}</span>
-                    <button
+                    <Button
                       onClick={() => updateQty(item.id, 1)}
-                      className="w-7 h-7 flex items-center justify-center rounded-full bg-indigo-600 text-white"
+                      size="icon"
+                      className="w-7 h-7 rounded-full"
                     >
                       <Plus className="w-3 h-3" />
-                    </button>
+                    </Button>
                   </div>
                   <span className="text-sm font-semibold text-right w-16">
                     {(item.price * item.quantity).toFixed(2)}
@@ -337,12 +342,12 @@ export default function QrMenuPage({ params }: { params: Promise<{ token: string
                 <span>Total</span>
                 <span className="text-indigo-600">{cartTotal.toFixed(2)}</span>
               </div>
-              <button
+              <Button
                 onClick={() => setNameDialog(true)}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition-colors"
+                className="w-full font-semibold py-3 rounded-xl"
               >
                 Place Order
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -364,20 +369,21 @@ export default function QrMenuPage({ params }: { params: Promise<{ token: string
               autoFocus
             />
             <div className="flex gap-3">
-              <button
+              <Button
                 onClick={() => setNameDialog(false)}
-                className="flex-1 border border-gray-200 rounded-xl py-3 text-sm font-medium"
+                variant="outline"
+                className="flex-1 rounded-xl text-sm font-medium"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={placeOrder}
                 disabled={placing || !customerName.trim()}
-                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+                className="flex-1 rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
               >
                 {placing && <Loader2 className="w-4 h-4 animate-spin" />}
                 Confirm Order
-              </button>
+              </Button>
             </div>
           </div>
         </div>

@@ -182,10 +182,42 @@ export default function POSPage() {
   }
   function removeItem(key: string) { setCart(c => c.filter(i => i.key !== key)); }
 
+  async function editCartItem(cartItem: CartItem) {
+    // Re-fetch item detail and open customization dialog with existing selections pre-filled
+    const res = await fetch("/api/menu/items/" + cartItem.item_id);
+    if (!res.ok) return;
+    const detail: ItemDetail = await res.json();
+    setCustomItem(detail);
+    setCustomQty(cartItem.quantity);
+    // Pre-fill selected variants from cart item
+    const preVariants: Record<number, { option_name: string; price_modifier: number }> = {};
+    detail.variants.forEach(g => {
+      const existing = cartItem.variants.find(v => v.variant_name === g.name);
+      if (existing) {
+        preVariants[g.id] = { option_name: existing.option_name, price_modifier: existing.price_modifier };
+      }
+    });
+    setSelectedVariants(preVariants);
+    // Pre-fill addons
+    const preAddons: Record<number, { name: string; price: number }[]> = {};
+    detail.addons.forEach(g => {
+      const matches = cartItem.addons.filter(a => g.add_ons.some(ao => ao.name === a.addon_name));
+      if (matches.length) preAddons[g.id] = matches.map(a => ({ name: a.addon_name, price: a.price }));
+    });
+    setSelectedAddons(preAddons);
+    // Remove old cart item, confirmCustom will re-add
+    setCart(c => c.filter(i => i.key !== cartItem.key));
+    setCustomDialog(true);
+  }
+
   const subtotal = cart.reduce((s, i) => {
-    const varTotal = i.variants.reduce((a, v) => a + (parseFloat(String(v.price_modifier)) || 0), 0);
+    const base = parseFloat(String(i.unit_price)) || 0;
+    // If a variant has a non-zero price_modifier it represents the item price for that variant;
+    // pick the highest (primary) variant price, otherwise fall back to base price.
+    const varPrices = i.variants.map(v => parseFloat(String(v.price_modifier)) || 0).filter(p => p > 0);
+    const effectiveBase = varPrices.length > 0 ? varPrices[0] : base;
     const addonTotal = i.addons.reduce((a, ad) => a + (parseFloat(String(ad.price)) || 0), 0);
-    return s + ((parseFloat(String(i.unit_price)) || 0) + varTotal + addonTotal) * i.quantity;
+    return s + (effectiveBase + addonTotal) * i.quantity;
   }, 0);
   const taxAmt = (subtotal * taxRate) / 100;
   const total = subtotal + taxAmt;
@@ -324,9 +356,9 @@ export default function POSPage() {
         {/* Left — Menu */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
-            <button onClick={doneEditing} className="flex items-center gap-1.5 text-sm text-[#5C432B] hover:text-[#5C432B]/80 font-medium">
-              <ArrowLeft className="w-4 h-4" /> Back
-            </button>
+          <Button onClick={doneEditing} variant="ghost" className="flex items-center gap-1.5 text-sm text-[#5C432B] hover:text-[#5C432B]/80 font-medium">
+            <ArrowLeft className="w-4 h-4" /> Back
+          </Button>
             <span className="text-gray-300">|</span>
             <p className="text-sm font-semibold text-gray-800">Editing <span className="font-mono text-[#5C432B]">{orderNum}</span></p>
             {editSaving && <Loader2 className="w-4 h-4 animate-spin text-gray-400 ml-auto" />}
@@ -334,10 +366,14 @@ export default function POSPage() {
           <div className="bg-white border-b border-gray-200 px-4 overflow-x-auto">
             <div className="flex gap-1 py-2">
               {categories.map(c => (
-                <button key={c.id} onClick={() => setSelectedCat(c.id)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${selectedCat === c.id ? "bg-[#5C432B] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                <Button
+                  key={c.id}
+                  onClick={() => setSelectedCat(c.id)}
+                  variant={selectedCat === c.id ? "default" : "outline"}
+                  className="rounded-full text-xs font-medium whitespace-nowrap"
+                >
                   {c.name}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -353,14 +389,19 @@ export default function POSPage() {
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {filteredItems.map(item => (
-                  <button key={item.id} onClick={() => openCustom(item)} disabled={editSaving}
-                    className="bg-white border border-gray-200 rounded-xl p-3 text-left hover:border-[#5C432B]/30 hover:shadow-sm transition-all active:scale-95 disabled:opacity-50">
+                  <Button
+                    key={item.id}
+                    onClick={() => openCustom(item)}
+                    disabled={editSaving}
+                    variant="outline"
+                    className="h-auto flex flex-col items-start justify-start p-3 rounded-xl"
+                  >
                     <div className="w-full h-16 bg-[#5C432B]/10 rounded-lg flex items-center justify-center mb-2">
                       <UtensilsCrossed className="w-7 h-7 text-[#5C432B]/40" />
                     </div>
-                    <p className="font-medium text-gray-900 text-xs leading-tight">{item.name}</p>
+                    <p className="font-medium text-gray-900 text-xs leading-tight text-left">{item.name}</p>
                     <p className="text-[#5C432B] font-semibold text-xs mt-0.5">{parseFloat(String(item.price)).toFixed(2)}</p>
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}
@@ -380,9 +421,15 @@ export default function POSPage() {
               <div key={item.id} className="bg-gray-50 rounded-lg p-2.5">
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-sm font-medium text-gray-900 leading-tight flex-1">{item.item_name}</p>
-                  <button onClick={() => removeEditItem(item.id)} disabled={editSaving} className="text-gray-300 hover:text-red-500 transition-colors disabled:opacity-40">
+                  <Button
+                    onClick={() => removeEditItem(item.id)}
+                    disabled={editSaving}
+                    variant="ghost"
+                    size="icon"
+                    className="text-gray-300 hover:text-red-500 h-auto w-auto p-0"
+                  >
                     <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  </Button>
                 </div>
                 {item.variants?.map((v, i) => (
                   <p key={i} className="text-[10px] text-gray-400">{v.variant_name}: {v.option_name}</p>
@@ -392,15 +439,25 @@ export default function POSPage() {
                 ))}
                 <div className="flex items-center justify-between mt-2">
                   <div className="flex items-center gap-1">
-                    <button onClick={() => updateEditQty(item.id, item.quantity - 1)} disabled={editSaving || item.quantity <= 1}
-                      className="w-5 h-5 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:border-[#5C432B]/30 disabled:opacity-40">
+                    <Button
+                      onClick={() => updateEditQty(item.id, item.quantity - 1)}
+                      disabled={editSaving || item.quantity <= 1}
+                      variant="outline"
+                      size="icon"
+                      className="w-5 h-5 rounded-full"
+                    >
                       <Minus className="w-2.5 h-2.5" />
-                    </button>
+                    </Button>
                     <span className="w-6 text-center text-xs font-medium">{item.quantity}</span>
-                    <button onClick={() => updateEditQty(item.id, item.quantity + 1)} disabled={editSaving}
-                      className="w-5 h-5 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:border-[#5C432B]/30 disabled:opacity-40">
+                    <Button
+                      onClick={() => updateEditQty(item.id, item.quantity + 1)}
+                      disabled={editSaving}
+                      variant="outline"
+                      size="icon"
+                      className="w-5 h-5 rounded-full"
+                    >
                       <Plus className="w-2.5 h-2.5" />
-                    </button>
+                    </Button>
                   </div>
                   <p className="text-xs font-semibold text-gray-800">{parseFloat(String(item.total_price)).toFixed(2)}</p>
                 </div>
@@ -433,10 +490,14 @@ export default function POSPage() {
                       {group.options.map(opt => {
                         const sel = selectedVariants[group.id]?.option_name === opt.name;
                         return (
-                          <button key={opt.id} onClick={() => setSelectedVariants(s => ({ ...s, [group.id]: { option_name: opt.name, price_modifier: parseFloat(String(opt.price_modifier)) || 0 } }))}
-                            className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${sel ? "bg-[#5C432B] text-white border-[#5C432B]" : "bg-white text-gray-600 border-gray-200 hover:border-[#5C432B]/30"}`}>
+                          <Button
+                            key={opt.id}
+                            onClick={() => setSelectedVariants(s => ({ ...s, [group.id]: { option_name: opt.name, price_modifier: parseFloat(String(opt.price_modifier)) || 0 } }))}
+                            variant={sel ? "default" : "outline"}
+                            className="rounded-full text-xs"
+                          >
                             {opt.name}{parseFloat(String(opt.price_modifier)) !== 0 ? ` +${parseFloat(String(opt.price_modifier)).toFixed(2)}` : ""}
-                          </button>
+                          </Button>
                         );
                       })}
                     </div>
@@ -450,17 +511,21 @@ export default function POSPage() {
                         const groupSel = selectedAddons[group.id] ?? [];
                         const sel = groupSel.some(a => a.name === addon.name);
                         return (
-                          <button key={addon.id} onClick={() => {
-                            setSelectedAddons(s => {
-                              const cur = s[group.id] ?? [];
-                              if (sel) return { ...s, [group.id]: cur.filter(a => a.name !== addon.name) };
-                              if (group.max_select && cur.length >= group.max_select) return s;
-                              return { ...s, [group.id]: [...cur, { name: addon.name, price: parseFloat(String(addon.price)) || 0 }] };
-                            });
-                          }}
-                            className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${sel ? "bg-[#5C432B] text-white border-[#5C432B]" : "bg-white text-gray-600 border-gray-200 hover:border-[#5C432B]/30"}`}>
+                          <Button
+                            key={addon.id}
+                            onClick={() => {
+                              setSelectedAddons(s => {
+                                const cur = s[group.id] ?? [];
+                                if (sel) return { ...s, [group.id]: cur.filter(a => a.name !== addon.name) };
+                                if (group.max_select && cur.length >= group.max_select) return s;
+                                return { ...s, [group.id]: [...cur, { name: addon.name, price: parseFloat(String(addon.price)) || 0 }] };
+                              });
+                            }}
+                            variant={sel ? "default" : "outline"}
+                            className="rounded-full text-xs"
+                          >
                             {addon.name}{parseFloat(String(addon.price)) > 0 ? ` +${parseFloat(String(addon.price)).toFixed(2)}` : ""}
-                          </button>
+                          </Button>
                         );
                       })}
                     </div>
@@ -469,9 +534,23 @@ export default function POSPage() {
                 <div className="flex items-center gap-3 pt-2">
                   <p className="text-xs font-medium text-gray-600">Quantity</p>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => setCustomQty(q => Math.max(1, q - 1))} className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center hover:border-[#5C432B]/30"><Minus className="w-3 h-3" /></button>
+                    <Button
+                      onClick={() => setCustomQty(q => Math.max(1, q - 1))}
+                      variant="outline"
+                      size="icon"
+                      className="w-7 h-7 rounded-full"
+                    >
+                      <Minus className="w-3 h-3" />
+                    </Button>
                     <span className="w-8 text-center text-sm font-semibold">{customQty}</span>
-                    <button onClick={() => setCustomQty(q => q + 1)} className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center hover:border-[#5C432B]/30"><Plus className="w-3 h-3" /></button>
+                    <Button
+                      onClick={() => setCustomQty(q => q + 1)}
+                      variant="outline"
+                      size="icon"
+                      className="w-7 h-7 rounded-full"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -592,16 +671,23 @@ export default function POSPage() {
               <p className="text-sm">Cart is empty</p>
             </div>
           ) : cart.map(item => {
-            const varTotal = item.variants.reduce((a, v) => a + (parseFloat(String(v.price_modifier)) || 0), 0);
+            const _base = parseFloat(String(item.unit_price)) || 0;
+            const _varPrices = item.variants.map(v => parseFloat(String(v.price_modifier)) || 0).filter(p => p > 0);
+            const _effectiveBase = _varPrices.length > 0 ? _varPrices[0] : _base;
             const addonTotal = item.addons.reduce((a, ad) => a + (parseFloat(String(ad.price)) || 0), 0);
-            const linePrice = ((parseFloat(String(item.unit_price)) || 0) + varTotal + addonTotal) * item.quantity;
+            const linePrice = (_effectiveBase + addonTotal) * item.quantity;
             return (
               <div key={item.key} className="bg-gray-50 rounded-lg p-2.5">
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-sm font-medium text-gray-900 leading-tight flex-1">{item.item_name}</p>
-                  <button onClick={() => removeItem(item.key)} className="text-gray-300 hover:text-red-500 transition-colors flex-shrink-0">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button onClick={() => editCartItem(item)} className="text-gray-300 hover:text-indigo-500 transition-colors">
+                      <Pencil className="w-3 h-3" />
+                    </button>
+                    <button onClick={() => removeItem(item.key)} className="text-gray-300 hover:text-red-500 transition-colors">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
                 {item.variants.map((v, i) => (
                   <p key={i} className="text-[10px] text-gray-400">{v.variant_name}: {v.option_name}{parseFloat(String(v.price_modifier)) ? ` +${parseFloat(String(v.price_modifier)).toFixed(2)}` : ""}</p>

@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
+import { apiErrorMessage, readJson } from "@/lib/api-client";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Loader2, Plus, Pencil, Trash2, Phone, Mail } from "lucide-react";
 
 interface Vendor {
@@ -24,14 +26,19 @@ export default function VendorsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState(empty);
+  const [confirmId, setConfirmId] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/inventory/vendors");
-    const data = await res.json();
+    const data = await readJson(res);
     setVendors(Array.isArray(data) ? data : []);
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    fetch("/api/inventory/vendors")
+      .then(readJson)
+      .then((data) => setVendors(Array.isArray(data) ? data : []));
+  }, []);
 
   function openAdd() { setForm(empty); setError(""); setDialog("add"); }
   function openEdit(v: Vendor) {
@@ -44,14 +51,19 @@ export default function VendorsPage() {
     setSaving(true); setError("");
     const url = dialog === "edit" ? "/api/inventory/vendors/" + selected!.id : "/api/inventory/vendors";
     const res = await fetch(url, { method: dialog === "edit" ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-    const data = await res.json();
-    if (!res.ok) { setError(data.error ?? "Failed"); setSaving(false); return; }
+    const data = await readJson(res);
+    if (!res.ok) { setError(apiErrorMessage(data)); setSaving(false); return; }
     setDialog(null); setSaving(false); load();
   }
 
   async function del(id: number) {
-    if (!confirm("Delete this vendor?")) return;
-    await fetch("/api/inventory/vendors/" + id, { method: "DELETE" });
+    setConfirmId(id);
+  }
+
+  async function confirmDel() {
+    if (confirmId === null) return;
+    await fetch("/api/inventory/vendors/" + confirmId, { method: "DELETE" });
+    setConfirmId(null);
     load();
   }
 
@@ -99,7 +111,7 @@ export default function VendorsPage() {
       <Header title="Vendors" subtitle="Manage suppliers and contact details" />
       <div className="p-6">
         <div className="flex justify-end mb-6">
-          <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white" onClick={openAdd}>
+          <Button className="gap-2" onClick={openAdd}>
             <Plus className="w-4 h-4" /> Add Vendor
           </Button>
         </div>
@@ -110,6 +122,8 @@ export default function VendorsPage() {
           <DataTable data={vendors} columns={columns} searchKeys={["name","contact_name","email"]} searchPlaceholder="Search vendors..." pageSize={25} emptyMessage="No vendors yet. Add your first supplier." />
         )}
       </div>
+
+      <ConfirmDialog open={confirmId !== null} description="Delete this vendor? This cannot be undone." onConfirm={confirmDel} onCancel={() => setConfirmId(null)} />
 
       <Dialog open={!!dialog} onOpenChange={(o) => !o && setDialog(null)}>
         <DialogContent className="sm:max-w-sm">
@@ -145,7 +159,7 @@ export default function VendorsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialog(null)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={save} disabled={saving || !form.name}>
+            <Button onClick={save} disabled={saving || !form.name}>
               {saving && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />} {dialog === "edit" ? "Save Changes" : "Add Vendor"}
             </Button>
           </DialogFooter>

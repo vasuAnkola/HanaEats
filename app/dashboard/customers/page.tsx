@@ -102,7 +102,7 @@ export default function CustomersPage() {
         <div className="flex items-center gap-3 mb-6 flex-wrap">
           <Input placeholder="Search by name, email or phone..." value={search} onChange={e => setSearch(e.target.value)} className="w-72" />
           <div className="ml-auto">
-            <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white" onClick={openAdd}><Plus className="w-4 h-4" /> Add Customer</Button>
+            <Button className="gap-2" onClick={openAdd}><Plus className="w-4 h-4" /> Add Customer</Button>
           </div>
         </div>
         {customers === null ? <TableSkeleton rows={7} cols={6} /> : (
@@ -133,7 +133,7 @@ export default function CustomersPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialog(null)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={save} disabled={saving||!form.name}>
+            <Button onClick={save} disabled={saving||!form.name}>
               {saving && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}{dialog==="edit"?"Save Changes":"Add Customer"}</Button>
           </DialogFooter>
         </DialogContent>
@@ -162,7 +162,7 @@ export default function CustomersPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialog(null)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={adjustPoints} disabled={saving}>
+            <Button onClick={adjustPoints} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}Apply</Button>
           </DialogFooter>
         </DialogContent>

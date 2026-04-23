@@ -9,6 +9,7 @@ import { getNavGroups } from "./nav-items";
 import type { UserRole } from "@/lib/auth";
 import { LogOut, ChevronsUpDown, ChevronDown } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -183,7 +184,7 @@ export function AppSidebar({ userName, userEmail, userRole }: AppSidebarProps) {
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <button className="flex items-center gap-2.5 w-full px-2 py-2 rounded-lg hover:bg-sidebar-accent transition-colors group-data-[collapsible=icon]:justify-center" />
+              <Button variant="ghost" className="flex items-center gap-2.5 w-full px-2 py-2 rounded-lg group-data-[collapsible=icon]:justify-center" />
             }
           >
             <Avatar className="w-7 h-7 flex-shrink-0">
@@ -219,14 +220,15 @@ export function AppSidebar({ userName, userEmail, userRole }: AppSidebarProps) {
         </DropdownMenu>
 
         {/* Always-visible sign out button */}
-        <button
+        <Button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex items-center gap-2.5 w-full px-2 py-2 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors group-data-[collapsible=icon]:justify-center"
+          variant="ghost"
+          className="flex items-center gap-2.5 w-full px-2 py-2 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-600 group-data-[collapsible=icon]:justify-center"
           title="Sign out"
         >
           <LogOut className="w-4 h-4 flex-shrink-0" />
           <span className="text-xs font-medium group-data-[collapsible=icon]:hidden">Sign out</span>
-        </button>
+        </Button>
       </SidebarFooter>
 
       <SidebarRail />

@@ -90,9 +90,9 @@ export default function QrPage() {
             <SelectTrigger className="w-48 h-9"><SelectValue placeholder="Select outlet" /></SelectTrigger>
             <SelectContent>{outlets.map(o => <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>)}</SelectContent>
           </Select>
-          <button onClick={loadTables} className="text-gray-400 hover:text-indigo-600 transition-colors">
+          <Button onClick={loadTables} variant="ghost" size="icon" className="text-gray-400 hover:text-indigo-600">
             <RefreshCw className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
 
         {loading ? (
@@ -166,7 +166,6 @@ export default function QrPage() {
                         <QrCode className="w-8 h-8 text-gray-300" />
                       </div>
                       <Button
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white w-full"
                         size="sm"
                         onClick={() => generateQr(table.id)}
                         disabled={isGenerating}

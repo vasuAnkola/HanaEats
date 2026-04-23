@@ -17,6 +17,7 @@ import Link from "next/link";
 import {
   ArrowLeft, Loader2, Save, Plus, Trash2, ChevronDown, ChevronUp,
 } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface Category { id: number; name: string; }
 interface VariantOption { id: number; name: string; price_modifier: number; display_order: number; }
@@ -63,6 +64,7 @@ export default function ItemDetailPage({ params }: Props) {
   const [addonDialog, setAddonDialog] = useState(false);
   const [addonForm, setAddonForm] = useState({ name: "", is_required: false, max_select: "", add_ons: [{ name: "", price: "0" }] });
   const [addonSaving, setAddonSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<{ label: string; onConfirm: () => void } | null>(null);
 
   const load = useCallback(async () => {
     const [itemRes, catRes] = await Promise.all([
@@ -123,9 +125,11 @@ export default function ItemDetailPage({ params }: Props) {
   }
 
   async function deleteItem() {
-    if (!confirm("Delete this menu item permanently?")) return;
-    await fetch(`/api/menu/items/${itemId}`, { method: "DELETE" });
-    router.push(`/dashboard/menu/${outletId}`);
+    setConfirmDelete({ label: "Delete this menu item permanently?", onConfirm: async () => {
+      await fetch(`/api/menu/items/${itemId}`, { method: "DELETE" });
+      setConfirmDelete(null);
+      router.push(`/dashboard/menu/${outletId}`);
+    }});
   }
 
   async function deleteVariant(id: number) {
@@ -180,6 +184,7 @@ export default function ItemDetailPage({ params }: Props) {
 
   return (
     <div>
+      <ConfirmDialog open={confirmDelete !== null} description={confirmDelete?.label ?? ""} onConfirm={() => confirmDelete?.onConfirm()} onCancel={() => setConfirmDelete(null)} />
       <Header />
       <div className="p-6 max-w-3xl">
         <div className="flex items-center justify-between mb-4">

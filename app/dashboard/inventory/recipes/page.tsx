@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
+import { apiErrorMessage, readJson } from "@/lib/api-client";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Loader2, Plus, Eye, Pencil, Trash2, X, ChefHat } from "lucide-react";
 
 interface MenuItem { id: number; name: string; }
@@ -31,19 +33,35 @@ export default function RecipesPage() {
   const [detail, setDetail] = useState<RecipeDetail | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [confirmId, setConfirmId] = useState<number | null>(null);
   const [form, setForm] = useState({ name: "", menu_item_id: "", yield_qty: "1", yield_unit: "serving", instructions: "" });
   const [lines, setLines] = useState<IngLine[]>([{ ingredient_id: "", quantity: "0", unit: "g" }]);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/inventory/recipes");
-    const data = await res.json();
+    const data = await readJson(res);
     setRecipes(Array.isArray(data) ? data : []);
   }, []);
 
-  useEffect(() => { load(); }, [load]);
   useEffect(() => {
-    fetch("/api/menu/items").then(r => r.json()).then(d => setMenuItems(Array.isArray(d) ? d : []));
-    fetch("/api/inventory/ingredients").then(r => r.json()).then(d => setIngredients(Array.isArray(d) ? d : []));
+    fetch("/api/inventory/recipes")
+      .then(readJson)
+      .then((data) => setRecipes(Array.isArray(data) ? data : []));
+  }, []);
+  useEffect(() => {
+    // Fetch menu items via outlets → first outlet's items
+    fetch("/api/outlets").then(r => r.json()).then(async (outlets) => {
+      if (!Array.isArray(outlets) || !outlets.length) return;
+      const allItems: MenuItem[] = [];
+      for (const o of outlets) {
+        const d = await fetch(`/api/menu/items?outlet_id=${o.id}`).then(r => r.json());
+        if (Array.isArray(d)) allItems.push(...d);
+      }
+      // deduplicate by id
+      const seen = new Set<number>();
+      setMenuItems(allItems.filter(m => { if (seen.has(m.id)) return false; seen.add(m.id); return true; }));
+    });
+    fetch("/api/inventory/ingredients").then(readJson).then(d => setIngredients(Array.isArray(d) ? d : []));
   }, []);
 
   function openAdd() {
@@ -55,7 +73,8 @@ export default function RecipesPage() {
   async function openEdit(r: Recipe) {
     setSelected(r);
     const res = await fetch("/api/inventory/recipes/" + r.id);
-    const data: RecipeDetail = await res.json();
+    const data = await readJson<RecipeDetail>(res);
+    if (!res.ok || !data) { setError(apiErrorMessage(data)); return; }
     setForm({ name: data.name, menu_item_id: data.menu_item_id ? String(data.menu_item_id) : "", yield_qty: String(data.yield_qty), yield_unit: data.yield_unit, instructions: data.instructions ?? "" });
     setLines(data.ingredients.map(i => ({ ingredient_id: String(i.ingredient_id ?? i.id), quantity: String(i.quantity), unit: i.unit })));
     setError(""); setDialog("edit");
@@ -63,7 +82,11 @@ export default function RecipesPage() {
 
   async function viewDetail(r: Recipe) {
     const res = await fetch("/api/inventory/recipes/" + r.id);
-    setDetail(await res.json()); setDialog("detail");
+    const data = await readJson<RecipeDetail>(res);
+    if (res.ok && data) {
+      setDetail(data);
+      setDialog("detail");
+    }
   }
 
   function addLine() { setLines(l => [...l, { ingredient_id: "", quantity: "0", unit: "g" }]); }
@@ -88,14 +111,20 @@ export default function RecipesPage() {
         ingredients: validLines.map(l => ({ ingredient_id: parseInt(l.ingredient_id), quantity: parseFloat(l.quantity), unit: l.unit })),
       }),
     });
-    const data = await res.json();
-    if (!res.ok) { setError(data.error ?? "Failed"); setSaving(false); return; }
+    const data = await readJson(res);
+    if (!res.ok) { setError(apiErrorMessage(data)); setSaving(false); return; }
     setDialog(null); setSaving(false); load();
   }
 
   async function del(id: number) {
-    if (!confirm("Delete this recipe?")) return;
-    await fetch("/api/inventory/recipes/" + id, { method: "DELETE" }); load();
+    setConfirmId(id);
+  }
+
+  async function confirmDel() {
+    if (confirmId === null) return;
+    await fetch("/api/inventory/recipes/" + confirmId, { method: "DELETE" });
+    setConfirmId(null);
+    load();
   }
 
   const columns: Column<Recipe>[] = [
@@ -164,7 +193,7 @@ export default function RecipesPage() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-xs font-medium text-gray-600">Ingredients</label>
-              <Button type="button" variant="ghost" size="sm" className="h-7 text-xs text-indigo-600" onClick={addLine}>+ Add Row</Button>
+              <Button type="button" size="sm" variant="outline" className="h-7 text-xs" onClick={addLine}>+ Add Row</Button>
             </div>
             <div className="space-y-2">
               {lines.map((line, i) => (
@@ -190,7 +219,7 @@ export default function RecipesPage() {
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setDialog(null)}>Cancel</Button>
-          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={save} disabled={saving || !form.name}>
+          <Button onClick={save} disabled={saving || !form.name}>
             {saving && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />} {dialog === "edit" ? "Save Changes" : "Create Recipe"}
           </Button>
         </DialogFooter>
@@ -200,10 +229,11 @@ export default function RecipesPage() {
 
   return (
     <div>
+      <ConfirmDialog open={confirmId !== null} description="Delete this recipe? This cannot be undone." onConfirm={confirmDel} onCancel={() => setConfirmId(null)} />
       <Header title="Recipes" subtitle="Ingredient usage per dish and cost tracking" />
       <div className="p-6">
         <div className="flex justify-end mb-6">
-          <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white" onClick={openAdd}>
+          <Button className="gap-2" onClick={openAdd}>
             <Plus className="w-4 h-4" /> New Recipe
           </Button>
         </div>

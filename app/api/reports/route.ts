@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     const [sales, topItems, byOutlet, hourly] = await Promise.all([
       // Daily sales in range
       query(`
-        SELECT DATE(p.created_at AT TIME ZONE 'UTC') AS date,
+        SELECT DATE(p.created_at) AS date,
                COUNT(*)::int AS order_count,
                SUM(p.total_amount)::numeric AS revenue,
                SUM(p.tax_amount)::numeric AS tax,
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
         FROM payments p
         WHERE p.tenant_id = $1 AND p.status = 'completed'
           AND DATE(p.created_at) BETWEEN $2 AND $3 ${outletFilter}
-        GROUP BY DATE(p.created_at AT TIME ZONE 'UTC')
+        GROUP BY DATE(p.created_at)
         ORDER BY date`, [tenantId, from, to]),
 
       // Top selling items
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
 
       // Hourly heatmap
       query(`
-        SELECT EXTRACT(HOUR FROM p.created_at AT TIME ZONE 'UTC')::int AS hour,
+        SELECT EXTRACT(HOUR FROM p.created_at)::int AS hour,
                COUNT(*)::int AS order_count,
                SUM(p.total_amount)::numeric AS revenue
         FROM payments p

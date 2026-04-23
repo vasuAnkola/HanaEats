@@ -106,10 +106,10 @@ export default function NewUserPage() {
 
                 <div className="space-y-1.5">
                   <Label>Outlet</Label>
-                  <Select value={form.outlet_id} onValueChange={(v) => setForm((f) => ({ ...f, outlet_id: v ?? "" }))}>
+                  <Select value={form.outlet_id || "none"} onValueChange={(v) => setForm((f) => ({ ...f, outlet_id: v === "none" ? "" : v }))}>
                     <SelectTrigger><SelectValue placeholder="All outlets" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All outlets</SelectItem>
+                      <SelectItem value="none">All outlets</SelectItem>
                       {outlets.map((o) => <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>)}
                     </SelectContent>
                   </Select>

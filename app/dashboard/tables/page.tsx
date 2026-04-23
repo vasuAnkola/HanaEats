@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Loader2, Trash2, Users, RefreshCw, Sparkles, Utensils, Clock, Ban } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface Outlet { id: number; name: string; }
 interface TableRow {
@@ -55,6 +56,7 @@ export default function TablesPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [changingId, setChangingId] = useState<number | null>(null);
+  const [confirmId, setConfirmId] = useState<number | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -94,8 +96,13 @@ export default function TablesPage() {
   }
 
   async function deleteTable(id: number) {
-    if (!confirm("Delete this table?")) return;
-    await fetch(`/api/tables/${id}`, { method: "DELETE" });
+    setConfirmId(id);
+  }
+
+  async function confirmDelete() {
+    if (confirmId === null) return;
+    await fetch(`/api/tables/${confirmId}`, { method: "DELETE" });
+    setConfirmId(null);
     await loadTables();
   }
 
@@ -118,6 +125,7 @@ export default function TablesPage() {
 
   return (
     <div>
+      <ConfirmDialog open={confirmId !== null} description="Delete this table? This cannot be undone." onConfirm={confirmDelete} onCancel={() => setConfirmId(null)} />
       <Header title="Tables" subtitle="Floor layout and live table status" />
       <div className="p-6">
 

@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
+import { apiErrorMessage, readJson } from "@/lib/api-client";
 import { Loader2, Plus, Eye, CheckCircle, X } from "lucide-react";
 
 interface Vendor { id: number; name: string; }
@@ -46,14 +47,19 @@ export default function PurchaseOrdersPage() {
     setPos(null);
     const url = "/api/inventory/purchase-orders" + (statusFilter !== "all" ? "?status=" + statusFilter : "");
     const res = await fetch(url);
-    const data = await res.json();
+    const data = await readJson(res);
     setPos(Array.isArray(data) ? data : []);
   }, [statusFilter]);
 
-  useEffect(() => { load(); }, [load]);
   useEffect(() => {
-    fetch("/api/inventory/vendors").then(r => r.json()).then(d => setVendors(Array.isArray(d) ? d : []));
-    fetch("/api/inventory/ingredients").then(r => r.json()).then(d => setIngredients(Array.isArray(d) ? d : []));
+    const url = "/api/inventory/purchase-orders" + (statusFilter !== "all" ? "?status=" + statusFilter : "");
+    fetch(url)
+      .then(readJson)
+      .then((data) => setPos(Array.isArray(data) ? data : []));
+  }, [statusFilter]);
+  useEffect(() => {
+    fetch("/api/inventory/vendors").then(readJson).then(d => setVendors(Array.isArray(d) ? d : []));
+    fetch("/api/inventory/ingredients").then(readJson).then(d => setIngredients(Array.isArray(d) ? d : []));
   }, []);
 
   function openAdd() {
@@ -64,7 +70,11 @@ export default function PurchaseOrdersPage() {
 
   async function viewDetail(id: number) {
     const res = await fetch("/api/inventory/purchase-orders/" + id);
-    setDetail(await res.json()); setDialog("detail");
+    const data = await readJson<PODetail>(res);
+    if (res.ok && data) {
+      setDetail(data);
+      setDialog("detail");
+    }
   }
 
   function addLine() { setLines(l => [...l, { ingredient_id: "", quantity: "1", unit_cost: "0" }]); }
@@ -87,8 +97,8 @@ export default function PurchaseOrdersPage() {
         items: validLines.map(l => ({ ingredient_id: parseInt(l.ingredient_id), quantity: parseFloat(l.quantity), unit_cost: parseFloat(l.unit_cost) })),
       }),
     });
-    const data = await res.json();
-    if (!res.ok) { setError(data.error ?? "Failed"); setSaving(false); return; }
+    const data = await readJson(res);
+    if (!res.ok) { setError(apiErrorMessage(data)); setSaving(false); return; }
     setDialog(null); setSaving(false); load();
   }
 
@@ -148,7 +158,7 @@ export default function PurchaseOrdersPage() {
             </SelectContent>
           </Select>
           <div className="ml-auto">
-            <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white" onClick={openAdd}>
+            <Button className="gap-2" onClick={openAdd}>
               <Plus className="w-4 h-4" /> New Purchase Order
             </Button>
           </div>
@@ -210,7 +220,7 @@ export default function PurchaseOrdersPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialog(null)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={savePO} disabled={saving}>
+            <Button onClick={savePO} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />} Create Purchase Order
             </Button>
           </DialogFooter>
@@ -255,7 +265,7 @@ export default function PurchaseOrdersPage() {
               <div className="flex gap-2 flex-wrap pt-1">
                 {detail.status === "draft" && (
                   <>
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => updateStatus(detail.id, "sent")}>
+                    <Button size="sm" onClick={() => updateStatus(detail.id, "sent")}>
                       Mark as Sent
                     </Button>
                     <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => updateStatus(detail.id, "cancelled")}>

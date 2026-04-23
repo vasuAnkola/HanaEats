@@ -263,13 +263,13 @@ export default function ReservationsPage() {
             </SelectContent>
           </Select>
 
-          <button onClick={loadReservations} className="text-gray-400 hover:text-indigo-600 transition-colors">
+          <Button onClick={loadReservations} variant="ghost" size="icon" className="text-gray-400 hover:text-indigo-600">
             <RefreshCw className="w-4 h-4" />
-          </button>
+          </Button>
 
           <div className="ml-auto">
             <Button
-              className="gap-1.5 h-9 bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="gap-1.5 h-9"
               onClick={() => { setFormError(""); setNewDialog(true); }}
               disabled={!outletId}
             >

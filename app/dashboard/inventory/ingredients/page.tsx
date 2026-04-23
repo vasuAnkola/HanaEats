@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
+import { apiErrorMessage, readJson } from "@/lib/api-client";
 import { AlertTriangle, History, Pencil, Plus } from "lucide-react";
 import { Loader2 } from "lucide-react";
 
@@ -35,11 +36,15 @@ export default function IngredientsPage() {
 
   const load = useCallback(async () => {
     const res = await fetch("/api/inventory/ingredients");
-    const data = await res.json();
+    const data = await readJson(res);
     setIngredients(Array.isArray(data) ? data : []);
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    fetch("/api/inventory/ingredients")
+      .then(readJson)
+      .then((data) => setIngredients(Array.isArray(data) ? data : []));
+  }, []);
 
   function openAdd() {
     setForm({ name: "", unit: "kg", cost_per_unit: "0", stock_quantity: "0", low_stock_threshold: "0" });
@@ -57,7 +62,8 @@ export default function IngredientsPage() {
   async function openHistory(i: Ingredient) {
     setSelected(i);
     const res = await fetch("/api/inventory/movements?ingredient_id=" + i.id);
-    setMovements(Array.isArray(await res.json()) ? await (await fetch("/api/inventory/movements?ingredient_id=" + i.id)).json() : []);
+    const data = await readJson(res);
+    setMovements(Array.isArray(data) ? data : []);
     setDialog("history");
   }
 
@@ -69,8 +75,8 @@ export default function IngredientsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: form.name, unit: form.unit, cost_per_unit: parseFloat(form.cost_per_unit) || 0, stock_quantity: parseFloat(form.stock_quantity) || 0, low_stock_threshold: parseFloat(form.low_stock_threshold) || 0 }),
     });
-    const data = await res.json();
-    if (!res.ok) { setError(data.error ?? "Failed"); setSaving(false); return; }
+    const data = await readJson(res);
+    if (!res.ok) { setError(apiErrorMessage(data)); setSaving(false); return; }
     setDialog(null); setSaving(false); load();
   }
 
@@ -80,8 +86,8 @@ export default function IngredientsPage() {
       method: "PATCH", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "adjust", quantity: parseFloat(adjForm.quantity) || 0, movement_type: adjForm.movement_type, notes: adjForm.notes }),
     });
-    const data = await res.json();
-    if (!res.ok) { setError(data.error ?? "Failed"); setSaving(false); return; }
+    const data = await readJson(res);
+    if (!res.ok) { setError(apiErrorMessage(data)); setSaving(false); return; }
     setDialog(null); setSaving(false); load();
   }
 
@@ -149,7 +155,7 @@ export default function IngredientsPage() {
               </div>
             )}
           </div>
-          <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white" onClick={openAdd}>
+          <Button className="gap-2" onClick={openAdd}>
             <Plus className="w-4 h-4" /> Add Ingredient
           </Button>
         </div>
@@ -197,7 +203,7 @@ export default function IngredientsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialog(null)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={save} disabled={saving || !form.name}>
+            <Button onClick={save} disabled={saving || !form.name}>
               {saving && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />} {dialog === "edit" ? "Save Changes" : "Add Ingredient"}
             </Button>
           </DialogFooter>
@@ -232,7 +238,7 @@ export default function IngredientsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialog(null)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={adjust} disabled={saving}>
+            <Button onClick={adjust} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />} Apply Adjustment
             </Button>
           </DialogFooter>

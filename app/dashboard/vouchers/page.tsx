@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { Loader2, Plus, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface Voucher {
   id: number; code: string; name: string; discount_type: string;
@@ -29,6 +30,7 @@ export default function VouchersPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState(empty);
+  const [confirmId, setConfirmId] = useState<number | null>(null);
 
   const load = () => fetch("/api/vouchers").then(r=>r.json()).then(d=>setVouchers(Array.isArray(d)?d:[]));
   useEffect(() => { load(); }, []);
@@ -50,8 +52,14 @@ export default function VouchersPage() {
   }
 
   async function del(id: number) {
-    if (!confirm("Delete this voucher?")) return;
-    await fetch("/api/vouchers/" + id, { method:"DELETE" }); load();
+    setConfirmId(id);
+  }
+
+  async function confirmDel() {
+    if (confirmId === null) return;
+    await fetch("/api/vouchers/" + confirmId, { method: "DELETE" });
+    setConfirmId(null);
+    load();
   }
 
   const columns: Column<Voucher>[] = [
@@ -92,10 +100,11 @@ export default function VouchersPage() {
 
   return (
     <div>
+      <ConfirmDialog open={confirmId !== null} description="Delete this voucher? This cannot be undone." onConfirm={confirmDel} onCancel={() => setConfirmId(null)} />
       <Header title="Vouchers" subtitle="Discount codes and coupons" />
       <div className="p-6">
         <div className="flex justify-end mb-6">
-          <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white" onClick={() => { setForm(empty); setError(""); setDialog(true); }}>
+          <Button className="gap-2" onClick={() => { setForm(empty); setError(""); setDialog(true); }}>
             <Plus className="w-4 h-4" /> Add Voucher
           </Button>
         </div>
@@ -142,7 +151,7 @@ export default function VouchersPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialog(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={save} disabled={saving||!form.code||!form.name}>
+            <Button onClick={save} disabled={saving||!form.code||!form.name}>
               {saving && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}Create Voucher</Button>
           </DialogFooter>
         </DialogContent>

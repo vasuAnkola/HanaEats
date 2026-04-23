@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/header";
 import { FlaskConical, Truck, ShoppingCart, ChefHat, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
+import { readJson } from "@/lib/api-client";
 
 interface IngredientRow { stock_quantity: string; low_stock_threshold: string; }
 
@@ -12,7 +13,7 @@ export default function InventoryPage() {
   const [ingredients, setIngredients] = useState<IngredientRow[] | null>(null);
 
   useEffect(() => {
-    fetch("/api/inventory/ingredients").then(r => r.json()).then((d) => {
+    fetch("/api/inventory/ingredients").then(readJson).then((d) => {
       setIngredients(Array.isArray(d) ? d : []);
     });
   }, []);

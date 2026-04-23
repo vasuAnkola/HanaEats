@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { Loader2, Plus, Trash2, Pencil } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface Promotion {
   id: number; name: string; discount_type: string; discount_value: number;
@@ -35,6 +36,7 @@ export default function PromotionsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState(empty);
+  const [confirmId, setConfirmId] = useState<number | null>(null);
 
   const load = () => fetch("/api/promotions").then(r=>r.json()).then(d=>setPromotions(Array.isArray(d)?d:[]));
   useEffect(() => { load(); }, []);
@@ -64,8 +66,14 @@ export default function PromotionsPage() {
   }
 
   async function del(id: number) {
-    if (!confirm("Delete this promotion?")) return;
-    await fetch("/api/promotions/"+id, { method:"DELETE" }); load();
+    setConfirmId(id);
+  }
+
+  async function confirmDel() {
+    if (confirmId === null) return;
+    await fetch("/api/promotions/" + confirmId, { method: "DELETE" });
+    setConfirmId(null);
+    load();
   }
 
   const columns: Column<Promotion>[] = [
@@ -141,7 +149,7 @@ export default function PromotionsPage() {
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setDialog(null)}>Cancel</Button>
-          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={save} disabled={saving||!form.name||!form.start_date||!form.end_date}>
+          <Button onClick={save} disabled={saving||!form.name||!form.start_date||!form.end_date}>
             {saving && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}{dialog==="edit"?"Save Changes":"Create Promotion"}</Button>
         </DialogFooter>
       </DialogContent>
@@ -150,10 +158,11 @@ export default function PromotionsPage() {
 
   return (
     <div>
+      <ConfirmDialog open={confirmId !== null} description="Delete this promotion? This cannot be undone." onConfirm={confirmDel} onCancel={() => setConfirmId(null)} />
       <Header title="Promotions" subtitle="Seasonal and festival promotions" />
       <div className="p-6">
         <div className="flex justify-end mb-6">
-          <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white" onClick={openAdd}><Plus className="w-4 h-4" /> New Promotion</Button>
+          <Button className="gap-2" onClick={openAdd}><Plus className="w-4 h-4" /> New Promotion</Button>
         </div>
         {promotions === null ? <TableSkeleton rows={5} cols={5} /> : (
           <DataTable data={promotions} columns={columns} searchKeys={["name","festival_tag"]} searchPlaceholder="Search promotions..." pageSize={25} emptyMessage="No promotions yet." />

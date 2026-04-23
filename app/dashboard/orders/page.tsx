@@ -447,10 +447,14 @@ export default function OrdersPage() {
               <div className="border-b border-gray-100 px-3 overflow-x-auto">
                 <div className="flex gap-1 py-2">
                   {categories.map(c => (
-                    <button key={c.id} onClick={() => setSelectedCat(c.id)}
-                      className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${selectedCat === c.id ? "bg-[#5C432B] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                    <Button
+                      key={c.id}
+                      onClick={() => setSelectedCat(c.id)}
+                      variant={selectedCat === c.id ? "default" : "outline"}
+                      className="rounded-full text-xs font-medium whitespace-nowrap"
+                    >
                       {c.name}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>
@@ -465,14 +469,19 @@ export default function OrdersPage() {
               <div className="flex-1 overflow-y-auto p-3">
                 <div className="grid grid-cols-2 gap-2">
                   {filteredMenuItems.map(item => (
-                    <button key={item.id} onClick={() => openCustomForEdit(item)} disabled={editSaving}
-                      className="bg-white border border-gray-200 rounded-xl p-3 text-left hover:border-[#5C432B]/30 hover:shadow-sm transition-all active:scale-95 disabled:opacity-50">
+                    <Button
+                      key={item.id}
+                      onClick={() => openCustomForEdit(item)}
+                      disabled={editSaving}
+                      variant="outline"
+                      className="h-auto flex flex-col items-start justify-start p-3 rounded-xl"
+                    >
                       <div className="w-full h-14 bg-[#5C432B]/10 rounded-lg flex items-center justify-center mb-2">
                         <UtensilsCrossed className="w-6 h-6 text-[#5C432B]/40" />
                       </div>
-                      <p className="font-medium text-gray-900 text-xs leading-tight">{item.name}</p>
+                      <p className="font-medium text-gray-900 text-xs leading-tight text-left">{item.name}</p>
                       <p className="text-[#5C432B] font-semibold text-xs mt-0.5">{parseFloat(String(item.price)).toFixed(2)}</p>
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>
@@ -491,10 +500,15 @@ export default function OrdersPage() {
                   <div key={item.id} className="bg-white rounded-xl p-3 border border-gray-100">
                     <div className="flex items-start justify-between gap-1 mb-1">
                       <p className="text-xs font-semibold text-gray-900 leading-tight flex-1">{item.item_name}</p>
-                      <button onClick={() => removeOrderItem(item.id)} disabled={editSaving}
-                        className="text-gray-300 hover:text-red-500 transition-colors flex-shrink-0 disabled:opacity-40">
+                      <Button
+                        onClick={() => removeOrderItem(item.id)}
+                        disabled={editSaving}
+                        variant="ghost"
+                        size="icon"
+                        className="text-gray-300 hover:text-red-500 h-auto w-auto p-0 flex-shrink-0"
+                      >
                         <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      </Button>
                     </div>
                     {item.variants?.map((v, i) => (
                       <p key={i} className="text-[10px] text-gray-400">{v.variant_name}: {v.option_name}</p>
@@ -504,15 +518,25 @@ export default function OrdersPage() {
                     ))}
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-1">
-                        <button onClick={() => updateItemQty(item.id, item.quantity - 1)} disabled={editSaving || item.quantity <= 1}
-                          className="w-5 h-5 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center hover:border-[#5C432B]/30 disabled:opacity-40">
+                        <Button
+                          onClick={() => updateItemQty(item.id, item.quantity - 1)}
+                          disabled={editSaving || item.quantity <= 1}
+                          variant="outline"
+                          size="icon"
+                          className="w-5 h-5 rounded-full"
+                        >
                           <Minus className="w-2.5 h-2.5" />
-                        </button>
+                        </Button>
                         <span className="w-5 text-center text-xs font-medium">{item.quantity}</span>
-                        <button onClick={() => updateItemQty(item.id, item.quantity + 1)} disabled={editSaving}
-                          className="w-5 h-5 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center hover:border-[#5C432B]/30 disabled:opacity-40">
+                        <Button
+                          onClick={() => updateItemQty(item.id, item.quantity + 1)}
+                          disabled={editSaving}
+                          variant="outline"
+                          size="icon"
+                          className="w-5 h-5 rounded-full"
+                        >
                           <Plus className="w-2.5 h-2.5" />
-                        </button>
+                        </Button>
                       </div>
                       <p className="text-xs font-semibold text-gray-800">{parseFloat(String(item.total_price)).toFixed(2)}</p>
                     </div>
@@ -548,10 +572,14 @@ export default function OrdersPage() {
                     {group.options.map(opt => {
                       const sel = selVariants[group.id]?.option_name === opt.name;
                       return (
-                        <button key={opt.id} onClick={() => setSelVariants(s => ({ ...s, [group.id]: { option_name: opt.name, price_modifier: parseFloat(String(opt.price_modifier)) || 0 } }))}
-                          className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${sel ? "bg-[#5C432B] text-white border-[#5C432B]" : "bg-white text-gray-600 border-gray-200 hover:border-[#5C432B]/30"}`}>
+                        <Button
+                          key={opt.id}
+                          onClick={() => setSelVariants(s => ({ ...s, [group.id]: { option_name: opt.name, price_modifier: parseFloat(String(opt.price_modifier)) || 0 } }))}
+                          variant={sel ? "default" : "outline"}
+                          className="rounded-full text-xs"
+                        >
                           {opt.name}{parseFloat(String(opt.price_modifier)) !== 0 ? ` +${parseFloat(String(opt.price_modifier)).toFixed(2)}` : ""}
-                        </button>
+                        </Button>
                       );
                     })}
                   </div>
@@ -565,17 +593,21 @@ export default function OrdersPage() {
                       const cur = selAddons[group.id] ?? [];
                       const sel = cur.some(a => a.name === addon.name);
                       return (
-                        <button key={addon.id} onClick={() => {
-                          setSelAddons(s => {
-                            const c = s[group.id] ?? [];
-                            if (sel) return { ...s, [group.id]: c.filter(a => a.name !== addon.name) };
-                            if (group.max_select && c.length >= group.max_select) return s;
-                            return { ...s, [group.id]: [...c, { name: addon.name, price: parseFloat(String(addon.price)) || 0 }] };
-                          });
-                        }}
-                          className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${sel ? "bg-[#5C432B] text-white border-[#5C432B]" : "bg-white text-gray-600 border-gray-200 hover:border-[#5C432B]/30"}`}>
+                        <Button
+                          key={addon.id}
+                          onClick={() => {
+                            setSelAddons(s => {
+                              const c = s[group.id] ?? [];
+                              if (sel) return { ...s, [group.id]: c.filter(a => a.name !== addon.name) };
+                              if (group.max_select && c.length >= group.max_select) return s;
+                              return { ...s, [group.id]: [...c, { name: addon.name, price: parseFloat(String(addon.price)) || 0 }] };
+                            });
+                          }}
+                          variant={sel ? "default" : "outline"}
+                          className="rounded-full text-xs"
+                        >
                           {addon.name}{parseFloat(String(addon.price)) > 0 ? ` +${parseFloat(String(addon.price)).toFixed(2)}` : ""}
-                        </button>
+                        </Button>
                       );
                     })}
                   </div>
@@ -584,9 +616,23 @@ export default function OrdersPage() {
               <div className="flex items-center gap-3 pt-2">
                 <p className="text-xs font-medium text-gray-600">Quantity</p>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => setCustomQty(q => Math.max(1, q - 1))} className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center hover:border-[#5C432B]/30"><Minus className="w-3 h-3" /></button>
+                  <Button
+                    onClick={() => setCustomQty(q => Math.max(1, q - 1))}
+                    variant="outline"
+                    size="icon"
+                    className="w-7 h-7 rounded-full"
+                  >
+                    <Minus className="w-3 h-3" />
+                  </Button>
                   <span className="w-8 text-center text-sm font-semibold">{customQty}</span>
-                  <button onClick={() => setCustomQty(q => q + 1)} className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center hover:border-[#5C432B]/30"><Plus className="w-3 h-3" /></button>
+                  <Button
+                    onClick={() => setCustomQty(q => q + 1)}
+                    variant="outline"
+                    size="icon"
+                    className="w-7 h-7 rounded-full"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </Button>
                 </div>
               </div>
             </div>
@@ -626,10 +672,14 @@ export default function OrdersPage() {
                 <label className="text-xs font-medium text-gray-600 block mb-2">Payment Method</label>
                 <div className="grid grid-cols-3 gap-2">
                   {PAYMENT_METHODS.map(m => (
-                    <button key={m.value} onClick={() => setPayMethod(m.value)}
-                      className={`py-2 px-1 rounded-lg text-xs font-medium border transition-colors ${payMethod === m.value ? "bg-[#5C432B] text-white border-[#5C432B]" : "bg-white text-gray-600 border-gray-200 hover:border-[#5C432B]/30"}`}>
+                    <Button
+                      key={m.value}
+                      onClick={() => setPayMethod(m.value)}
+                      variant={payMethod === m.value ? "default" : "outline"}
+                      className="rounded-lg text-xs font-medium"
+                    >
                       {m.label}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>

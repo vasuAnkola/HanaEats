@@ -13,6 +13,7 @@ import {
   ArrowLeft, Plus, Pencil, Trash2, Loader2, UtensilsCrossed,
   ToggleLeft, ToggleRight, ChevronRight, GripVertical,
 } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface Category {
   id: number;
@@ -64,6 +65,7 @@ export default function OutletMenuPage({ params }: Props) {
   const [catForm, setCatForm] = useState({ name: "", description: "" });
   const [catSaving, setCatSaving] = useState(false);
   const [catError, setCatError] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState<{ description: string; onConfirm: () => void } | null>(null);
 
   const loadCategories = useCallback(async () => {
     setLoadingCats(true);
@@ -133,10 +135,12 @@ export default function OutletMenuPage({ params }: Props) {
   }
 
   async function deleteCat(id: number) {
-    if (!confirm("Delete this category and all its items?")) return;
-    await fetch(`/api/menu/categories/${id}`, { method: "DELETE" });
-    if (selectedCat?.id === id) setSelectedCat(null);
-    await loadCategories();
+    setConfirmDialog({ description: "Delete this category and all its items? This cannot be undone.", onConfirm: async () => {
+      await fetch(`/api/menu/categories/${id}`, { method: "DELETE" });
+      if (selectedCat?.id === id) setSelectedCat(null);
+      setConfirmDialog(null);
+      await loadCategories();
+    }});
   }
 
   async function toggleCat(c: Category) {
@@ -158,13 +162,16 @@ export default function OutletMenuPage({ params }: Props) {
   }
 
   async function deleteItem(id: number) {
-    if (!confirm("Delete this menu item?")) return;
-    await fetch(`/api/menu/items/${id}`, { method: "DELETE" });
-    if (selectedCat) await loadItems(selectedCat.id);
+    setConfirmDialog({ description: "Delete this menu item? This cannot be undone.", onConfirm: async () => {
+      await fetch(`/api/menu/items/${id}`, { method: "DELETE" });
+      setConfirmDialog(null);
+      if (selectedCat) await loadItems(selectedCat.id);
+    }});
   }
 
   return (
     <div>
+      <ConfirmDialog open={confirmDialog !== null} description={confirmDialog?.description ?? ""} onConfirm={() => confirmDialog?.onConfirm()} onCancel={() => setConfirmDialog(null)} />
       <Header />
       <div className="p-6">
         <div className="mb-4">
@@ -209,15 +216,15 @@ export default function OutletMenuPage({ params }: Props) {
                       <p className="text-[10px] text-gray-400">{c.item_count} item{c.item_count !== 1 ? "s" : ""}</p>
                     </div>
                     <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="p-1 rounded hover:bg-white/80" onClick={(e) => { e.stopPropagation(); openEditCat(c); }}>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); openEditCat(c); }}>
                         <Pencil className="w-3 h-3 text-gray-400" />
-                      </button>
-                      <button className="p-1 rounded hover:bg-white/80" onClick={(e) => { e.stopPropagation(); toggleCat(c); }}>
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); toggleCat(c); }}>
                         {c.is_active ? <ToggleRight className="w-4 h-4 text-green-500" /> : <ToggleLeft className="w-4 h-4 text-gray-300" />}
-                      </button>
-                      <button className="p-1 rounded hover:bg-white/80" onClick={(e) => { e.stopPropagation(); deleteCat(c.id); }}>
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); deleteCat(c.id); }}>
                         <Trash2 className="w-3 h-3 text-red-400" />
-                      </button>
+                      </Button>
                     </div>
                     {selectedCat?.id === c.id && <ChevronRight className="w-3 h-3 text-indigo-400 flex-shrink-0" />}
                   </div>

@@ -181,7 +181,7 @@ export default function StaffPage() {
               <span className="text-sm font-medium text-gray-700">Week of {fmtShort(week)}</span>
               <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={() => setWeek(w => addDays(w,7))}><ChevronRight className="w-4 h-4" /></Button>
               <div className="ml-auto">
-                <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white h-8 text-sm" onClick={() => { setShiftForm({ user_id:"", shift_date:fmtDate(week), start_time:"09:00", end_time:"17:00", role_label:"", notes:"" }); setError(""); setShiftDialog(true); }}>
+                <Button className="gap-2 h-8 text-sm" onClick={() => { setShiftForm({ user_id:"", shift_date:fmtDate(week), start_time:"09:00", end_time:"17:00", role_label:"", notes:"" }); setError(""); setShiftDialog(true); }}>
                   <Plus className="w-3.5 h-3.5" /> Add Shift
                 </Button>
               </div>
@@ -224,7 +224,7 @@ export default function StaffPage() {
           {/* ATTENDANCE TAB */}
           <TabsContent value="attendance">
             <div className="flex justify-end mb-4">
-              <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white" onClick={() => { setClockUserId(""); setError(""); setClockDialog(true); }}>
+              <Button className="gap-2" onClick={() => { setClockUserId(""); setError(""); setClockDialog(true); }}>
                 <Clock className="w-4 h-4" /> Clock In Staff
               </Button>
             </div>
@@ -236,7 +236,7 @@ export default function StaffPage() {
           {/* COMMISSIONS TAB */}
           <TabsContent value="commissions">
             <div className="flex justify-end mb-4">
-              <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white" onClick={() => { setCommForm({ user_id:"", period_start:"", period_end:"", commission_rate:"5" }); setError(""); setCommDialog(true); }}>
+              <Button className="gap-2" onClick={() => { setCommForm({ user_id:"", period_start:"", period_end:"", commission_rate:"5" }); setError(""); setCommDialog(true); }}>
                 <Plus className="w-4 h-4" /> Calculate Commission
               </Button>
             </div>
@@ -271,7 +271,7 @@ export default function StaffPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShiftDialog(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={addShift} disabled={saving||!shiftForm.user_id||!shiftForm.shift_date}>
+            <Button onClick={addShift} disabled={saving||!shiftForm.user_id||!shiftForm.shift_date}>
               {saving && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}Add Shift</Button>
           </DialogFooter>
         </DialogContent>
@@ -291,7 +291,7 @@ export default function StaffPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setClockDialog(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={clockIn} disabled={saving||!clockUserId}>
+            <Button onClick={clockIn} disabled={saving||!clockUserId}>
               {saving && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}Clock In</Button>
           </DialogFooter>
         </DialogContent>
@@ -319,7 +319,7 @@ export default function StaffPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCommDialog(false)}>Cancel</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={calcCommission} disabled={saving||!commForm.user_id||!commForm.period_start||!commForm.period_end}>
+            <Button onClick={calcCommission} disabled={saving||!commForm.user_id||!commForm.period_start||!commForm.period_end}>
               {saving && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}Calculate</Button>
           </DialogFooter>
         </DialogContent>
