@@ -4,9 +4,10 @@ import { auth } from "@/lib/auth";
 import { query, queryOne } from "@/lib/db";
 import pool from "@/lib/db";
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { id } = await params;
 
   const po = await queryOne(
     `SELECT po.*, v.name AS vendor_name, o.name AS outlet_name
@@ -14,7 +15,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
      LEFT JOIN vendors v ON v.id = po.vendor_id
      LEFT JOIN outlets o ON o.id = po.outlet_id
      WHERE po.id = $1 AND po.tenant_id = $2`,
-    [params.id, session.user.tenantId]
+    [id, session.user.tenantId]
   );
   if (!po) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -23,14 +24,15 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
      FROM purchase_order_items poi
      JOIN ingredients i ON i.id = poi.ingredient_id
      WHERE poi.purchase_order_id = $1`,
-    [params.id]
+    [(await params).id]
   );
   return NextResponse.json({ ...po as object, items });
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { id } = await params;
   const tenantId = session.user.tenantId;
   const body = await req.json();
 
@@ -43,7 +45,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         `SELECT poi.*, i.name AS ingredient_name FROM purchase_order_items poi
          JOIN ingredients i ON i.id = poi.ingredient_id
          WHERE poi.purchase_order_id = $1`,
-        [params.id]
+        [(await params).id]
       );
 
       for (const item of items) {
@@ -60,16 +62,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
           `INSERT INTO stock_movements (tenant_id, ingredient_id, movement_type, quantity, unit_cost, reference_id, notes, created_by)
            VALUES ($1,$2,'purchase',$3,$4,$5,$6,$7)`,
           [tenantId, item.ingredient_id, receivedQty, item.unit_cost,
-           params.id, `PO received`, session.user.id || null]
+           id, `PO received`, session.user.id || null]
         );
       }
 
       await client.query(
         `UPDATE purchase_orders SET status='received', received_at=NOW() WHERE id=$1 AND tenant_id=$2`,
-        [params.id, tenantId]
+        [id, tenantId]
       );
       await client.query("COMMIT");
-      const updated = await queryOne(`SELECT * FROM purchase_orders WHERE id=$1`, [params.id]);
+      const updated = await queryOne(`SELECT * FROM purchase_orders WHERE id=$1`, [(await params).id]);
       return NextResponse.json(updated);
     } catch (e) {
       await client.query("ROLLBACK");
@@ -87,17 +89,18 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
        notes = COALESCE($2, notes),
        ordered_at = CASE WHEN $1 = 'sent' THEN NOW() ELSE ordered_at END
      WHERE id = $3 AND tenant_id = $4 RETURNING *`,
-    [status || null, notes || null, params.id, tenantId]
+    [status || null, notes || null, id, tenantId]
   );
   return NextResponse.json(row);
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { id } = await params;
   await queryOne(
     `DELETE FROM purchase_orders WHERE id=$1 AND tenant_id=$2 AND status='draft'`,
-    [params.id, session.user.tenantId]
+    [id, session.user.tenantId]
   );
   return NextResponse.json({ ok: true });
 }

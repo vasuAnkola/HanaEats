@@ -4,22 +4,24 @@ import { auth } from "@/lib/auth";
 import { queryOne } from "@/lib/db";
 import pool from "@/lib/db";
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { id } = await params;
   const row = await queryOne(
     `SELECT i.*, ic.name AS category_name FROM ingredients i
      LEFT JOIN ingredient_categories ic ON ic.id = i.category_id
      WHERE i.id = $1 AND i.tenant_id = $2`,
-    [params.id, session.user.tenantId]
+    [id, session.user.tenantId]
   );
   if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(row);
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { id } = await params;
   const tenantId = session.user.tenantId;
   const body = await req.json();
 
@@ -31,17 +33,17 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       const qty = parseFloat(String(body.quantity || 0));
       await client.query(
         `UPDATE ingredients SET stock_quantity = stock_quantity + $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3`,
-        [qty, params.id, tenantId]
+        [qty, id, tenantId]
       );
       await client.query(
         `INSERT INTO stock_movements (tenant_id, ingredient_id, movement_type, quantity, unit_cost, notes, created_by)
          VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-        [tenantId, params.id, body.movement_type || "adjustment", qty,
+        [tenantId, id, body.movement_type || "adjustment", qty,
          body.unit_cost ? parseFloat(String(body.unit_cost)) : null,
          body.notes || null, session.user.id || null]
       );
       await client.query("COMMIT");
-      const updated = await queryOne(`SELECT * FROM ingredients WHERE id = $1`, [params.id]);
+      const updated = await queryOne(`SELECT * FROM ingredients WHERE id = $1`, [id]);
       return NextResponse.json(updated);
     } catch (e) {
       await client.query("ROLLBACK");
@@ -68,14 +70,15 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
      low_stock_threshold != null ? parseFloat(String(low_stock_threshold)) : null,
      category_id || null,
      is_active != null ? is_active : null,
-     params.id, tenantId]
+     id, tenantId]
   );
   return NextResponse.json(row);
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  await queryOne(`DELETE FROM ingredients WHERE id = $1 AND tenant_id = $2`, [params.id, session.user.tenantId]);
+  const { id } = await params;
+  await queryOne(`DELETE FROM ingredients WHERE id = $1 AND tenant_id = $2`, [id, session.user.tenantId]);
   return NextResponse.json({ ok: true });
 }
