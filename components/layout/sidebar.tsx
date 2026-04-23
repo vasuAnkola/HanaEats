@@ -77,12 +77,12 @@ export function AppSidebar({ userName, userEmail, userRole }: AppSidebarProps) {
       {/* Logo only — no text */}
       <SidebarHeader className="border-b border-sidebar-border flex items-center justify-center py-3 px-2">
         <Link href="/dashboard" className="flex items-center justify-center">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden bg-white ring-1 ring-gray-200 shadow-sm">
+          <div className=" flex items-center justify-center overflow-hidden  shadow-sm">
             <Image
-              src="/logo.png"
+              src="/mainlogo2.png"
               alt="HANAEats"
-              width={40}
-              height={40}
+              width={140}
+              height={20}
               className="w-full h-full object-contain"
             />
           </div>

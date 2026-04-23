@@ -7,29 +7,37 @@ import { Building2, Store, Users, Globe, TrendingUp, Activity } from "lucide-rea
 import type { UserRole } from "@/lib/auth";
 
 async function getSuperAdminStats() {
-  const [tenants, outlets, users, countries] = await Promise.all([
-    query<{ count: string }>("SELECT COUNT(*) as count FROM tenants WHERE is_active = true"),
-    query<{ count: string }>("SELECT COUNT(*) as count FROM outlets WHERE is_active = true"),
-    query<{ count: string }>("SELECT COUNT(*) as count FROM users WHERE is_active = true AND role != 'super_admin'"),
-    query<{ count: string }>("SELECT COUNT(*) as count FROM countries WHERE is_active = true"),
-  ]);
-  return {
-    tenants: Number(tenants[0].count),
-    outlets: Number(outlets[0].count),
-    users: Number(users[0].count),
-    countries: Number(countries[0].count),
-  };
+  try {
+    const [tenants, outlets, users, countries] = await Promise.all([
+      query<{ count: string }>("SELECT COUNT(*) as count FROM tenants WHERE is_active = true"),
+      query<{ count: string }>("SELECT COUNT(*) as count FROM outlets WHERE is_active = true"),
+      query<{ count: string }>("SELECT COUNT(*) as count FROM users WHERE is_active = true AND role != 'super_admin'"),
+      query<{ count: string }>("SELECT COUNT(*) as count FROM countries WHERE is_active = true"),
+    ]);
+    return {
+      tenants: Number(tenants[0].count),
+      outlets: Number(outlets[0].count),
+      users: Number(users[0].count),
+      countries: Number(countries[0].count),
+    };
+  } catch {
+    return { tenants: 0, outlets: 0, users: 0, countries: 0 };
+  }
 }
 
 async function getAdminStats(tenantId: string) {
-  const [outlets, users] = await Promise.all([
-    query<{ count: string }>("SELECT COUNT(*) as count FROM outlets WHERE tenant_id = $1 AND is_active = true", [tenantId]),
-    query<{ count: string }>("SELECT COUNT(*) as count FROM users WHERE tenant_id = $1 AND is_active = true", [tenantId]),
-  ]);
-  return {
-    outlets: Number(outlets[0].count),
-    users: Number(users[0].count),
-  };
+  try {
+    const [outlets, users] = await Promise.all([
+      query<{ count: string }>("SELECT COUNT(*) as count FROM outlets WHERE tenant_id = $1 AND is_active = true", [tenantId]),
+      query<{ count: string }>("SELECT COUNT(*) as count FROM users WHERE tenant_id = $1 AND is_active = true", [tenantId]),
+    ]);
+    return {
+      outlets: Number(outlets[0].count),
+      users: Number(users[0].count),
+    };
+  } catch {
+    return { outlets: 0, users: 0 };
+  }
 }
 
 export default async function DashboardPage() {

@@ -5,19 +5,24 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
   max: 10,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
+  connectionTimeoutMillis: 15000,
+  query_timeout: 20000,
 });
 
 export async function query<T = Record<string, unknown>>(
   sql: string,
   params?: unknown[]
 ): Promise<T[]> {
-  const client = await pool.connect();
+  let client;
   try {
+    client = await pool.connect();
     const result = await client.query(sql, params);
     return result.rows as T[];
+  } catch (err) {
+    console.error("DB query error:", err);
+    throw err;
   } finally {
-    client.release();
+    client?.release();
   }
 }
 
