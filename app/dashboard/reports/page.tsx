@@ -103,7 +103,8 @@ export default function ReportsPage() {
       fetch(`/api/reports${base}&type=customers`).then(r => r.json()),
       fetch(`/api/reports${base}&type=inventory`).then(r => r.json()),
     ]);
-    setOverview(ov);
+    if (ov.error) console.error("[reports/overview]", ov.error);
+    setOverview(ov.sales ? ov : { sales: [], topItems: [], byOutlet: [], hourly: [] });
     setStaff(Array.isArray(st) ? st : []);
     setCustomers(cu.summary ? cu : null);
     setInventory(Array.isArray(inv) ? inv : []);
@@ -113,9 +114,9 @@ export default function ReportsPage() {
   useEffect(() => { load(); }, [load]);
 
   // KPIs from overview.sales
-  const totalRevenue = overview?.sales.reduce((s, r) => s + parseFloat(String(r.revenue || 0)), 0) ?? 0;
-  const totalOrders  = overview?.sales.reduce((s, r) => s + (r.order_count || 0), 0) ?? 0;
-  const totalTax     = overview?.sales.reduce((s, r) => s + parseFloat(String(r.tax || 0)), 0) ?? 0;
+  const totalRevenue = (overview?.sales ?? []).reduce((s, r) => s + parseFloat(String(r.revenue || 0)), 0);
+  const totalOrders  = (overview?.sales ?? []).reduce((s, r) => s + (r.order_count || 0), 0);
+  const totalTax     = (overview?.sales ?? []).reduce((s, r) => s + parseFloat(String(r.tax || 0)), 0);
   const avgOrder     = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
   const maxHourly = Math.max(...(overview?.hourly.map(h => h.order_count) ?? [0]));

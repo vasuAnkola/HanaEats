@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { query } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
+  try {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const tenantId = session.user.tenantId;
@@ -108,4 +109,9 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ error: "Unknown report type" }, { status: 400 });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("[reports]", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 }
