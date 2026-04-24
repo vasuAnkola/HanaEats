@@ -21,10 +21,24 @@ interface Country {
   is_active: boolean;
 }
 
+const SE_ASIA_COUNTRIES = [
+  { name: "Vietnam",       code: "VN", currency_code: "VND", currency_symbol: "₫",  tax_name: "VAT", tax_rate: 10 },
+  { name: "Thailand",      code: "TH", currency_code: "THB", currency_symbol: "฿",  tax_name: "VAT", tax_rate: 7  },
+  { name: "Indonesia",     code: "ID", currency_code: "IDR", currency_symbol: "Rp", tax_name: "PPN", tax_rate: 11 },
+  { name: "Philippines",   code: "PH", currency_code: "PHP", currency_symbol: "₱",  tax_name: "VAT", tax_rate: 12 },
+  { name: "Malaysia",      code: "MY", currency_code: "MYR", currency_symbol: "RM", tax_name: "SST", tax_rate: 8  },
+  { name: "Myanmar",       code: "MM", currency_code: "MMK", currency_symbol: "K",  tax_name: null,  tax_rate: 0  },
+  { name: "Cambodia",      code: "KH", currency_code: "KHR", currency_symbol: "៛",  tax_name: "VAT", tax_rate: 10 },
+  { name: "Laos",          code: "LA", currency_code: "LAK", currency_symbol: "₭",  tax_name: "VAT", tax_rate: 10 },
+  { name: "Singapore",     code: "SG", currency_code: "SGD", currency_symbol: "S$", tax_name: "GST", tax_rate: 9  },
+  { name: "Brunei",        code: "BN", currency_code: "BND", currency_symbol: "B$", tax_name: null,  tax_rate: 0  },
+  { name: "Timor-Leste",   code: "TL", currency_code: "USD", currency_symbol: "$",  tax_name: null,  tax_rate: 0  },
+];
+
 const FLAG: Record<string, string> = {
   SG: "🇸🇬", MY: "🇲🇾", TH: "🇹🇭", ID: "🇮🇩",
   PH: "🇵🇭", VN: "🇻🇳", MM: "🇲🇲", KH: "🇰🇭",
-  LA: "🇱🇦", BN: "🇧🇳",
+  LA: "🇱🇦", BN: "🇧🇳", TL: "🇹🇱",
 };
 
 const EMPTY_FORM = { name: "", code: "", currency_code: "", currency_symbol: "", tax_name: "", tax_rate: "0" };
@@ -40,6 +54,21 @@ export default function CountriesPage() {
   const [addForm, setAddForm] = useState(EMPTY_FORM);
   const [addError, setAddError] = useState("");
   const [adding, setAdding] = useState(false);
+
+  const [seeding, setSeeding] = useState(false);
+
+  async function seedSEAsia() {
+    setSeeding(true);
+    for (const c of SE_ASIA_COUNTRIES) {
+      await fetch("/api/countries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(c),
+      });
+    }
+    setSeeding(false);
+    await load();
+  }
 
   async function load() {
     const res = await fetch("/api/countries?all=1");
@@ -211,12 +240,22 @@ export default function CountriesPage() {
   ];
 
   const toolbar = (
-    <Button
-      className="gap-2 h-9"
-      onClick={() => { setAddError(""); setAddForm(EMPTY_FORM); setShowAdd(true); }}
-    >
-      <Plus className="w-4 h-4" /> Add Country
-    </Button>
+    <div className="flex items-center gap-2">
+      <Button
+        variant="outline"
+        className="gap-2 h-9"
+        onClick={seedSEAsia}
+        disabled={seeding}
+      >
+        {seeding ? <Loader2 className="w-4 h-4 animate-spin" /> : "🌏"} Seed SE Asia
+      </Button>
+      <Button
+        className="gap-2 h-9"
+        onClick={() => { setAddError(""); setAddForm(EMPTY_FORM); setShowAdd(true); }}
+      >
+        <Plus className="w-4 h-4" /> Add Country
+      </Button>
+    </div>
   );
 
   return (

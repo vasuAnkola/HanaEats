@@ -5,7 +5,7 @@ import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import Link from "next/link";
-import { Plus, Store, Loader2, MapPin, Phone, ToggleLeft, ToggleRight, Pencil } from "lucide-react";
+import { Plus, Store, Loader2, MapPin, Phone, Pencil } from "lucide-react";
 
 interface Outlet {
   id: number;
@@ -105,7 +105,12 @@ export default function OutletsPage() {
       key: "is_active",
       label: "Status",
       render: (o) => (
-        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${o.is_active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
+        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${
+          o.is_active
+            ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+            : "bg-red-50 text-red-600 ring-1 ring-red-200"
+        }`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${o.is_active ? "bg-emerald-500" : "bg-red-400"}`} />
           {o.is_active ? "Active" : "Inactive"}
         </span>
       ),
@@ -125,26 +130,25 @@ export default function OutletsPage() {
       label: "",
       className: "w-24",
       render: (o) => (
-        <div className="flex items-center gap-1 justify-end">
+        <div className="flex items-center gap-2 justify-end">
           <Link href={`/dashboard/outlets/${o.id}/edit`}>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-[#5C432B] hover:bg-[#5C432B]/10" title="Edit">
-              <Pencil className="w-4 h-4" />
+            <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 text-xs">
+              <Pencil className="w-3.5 h-3.5" /> Edit
             </Button>
           </Link>
-          <Button
-            variant="ghost" size="sm"
-            className="h-8 w-8 p-0 text-gray-400 hover:text-green-600 hover:bg-green-50"
-            title={o.is_active ? "Deactivate" : "Activate"}
+          <button
             onClick={() => toggleActive(o)}
             disabled={actionId === o.id}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
+              o.is_active ? "bg-emerald-500" : "bg-gray-300"
+            }`}
           >
-            {actionId === o.id
-              ? <Loader2 className="w-4 h-4 animate-spin" />
-              : o.is_active
-                ? <ToggleRight className="w-4 h-4 text-green-500" />
-                : <ToggleLeft className="w-4 h-4" />
-            }
-          </Button>
+            <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${
+              o.is_active ? "translate-x-5" : "translate-x-0.5"
+            }`}>
+              {actionId === o.id && <Loader2 className="w-3 h-3 animate-spin text-gray-400" />}
+            </span>
+          </button>
         </div>
       ),
     },

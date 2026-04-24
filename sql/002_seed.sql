@@ -11,7 +11,8 @@ INSERT INTO countries (name, code, currency_code, currency_symbol, tax_name, tax
   ('Myanmar',      'MM', 'MMK', 'K',   NULL,   0.00),
   ('Cambodia',     'KH', 'KHR', '៛',   'VAT', 10.00),
   ('Laos',         'LA', 'LAK', '₭',   'VAT', 10.00),
-  ('Brunei',       'BN', 'BND', 'B$',  NULL,   0.00)
+  ('Brunei',       'BN', 'BND', 'B$',  NULL,   0.00),
+  ('Timor-Leste',  'TL', 'USD', '$',   NULL,   0.00)
 ON CONFLICT (code) DO NOTHING;
 
 -- ─── SUPER ADMIN USER ─────────────────────────────────────────────────────────

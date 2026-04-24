@@ -48,13 +48,13 @@ export default function LoginPage() {
       <div className="w-full max-w-sm relative">
         {/* Logo & Brand */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-20 h-20 rounded-2xl bg-white flex items-center justify-center mb-5 shadow-2xl shadow-indigo-500/20 ring-1 ring-white/10">
+          <div className=" rounded-2xl flex items-center justify-center mb-5 shadow-2xl shadow-indigo-500/20 ring-1 ring-white/10">
             <Image
-              src="/logo.png"
+              src="/mainlogo2.png"
               alt="HANAEats"
-              width={64}
-              height={64}
-              className="w-14 h-14 object-contain"
+              width={164}
+              height={164}
+              className="w-24 h-24 object-contain"
               priority
             />
           </div>

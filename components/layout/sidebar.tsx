@@ -74,18 +74,24 @@ export function AppSidebar({ userName, userEmail, userRole }: AppSidebarProps) {
 
   return (
     <Sidebar collapsible="icon">
-      {/* Logo only — no text */}
       <SidebarHeader className="border-b border-sidebar-border flex items-center justify-center py-3 px-2">
         <Link href="/dashboard" className="flex items-center justify-center">
-          <div className=" flex items-center justify-center overflow-hidden  shadow-sm">
-            <Image
-              src="/mainlogo2.png"
-              alt="HANAEats"
-              width={140}
-              height={20}
-              className="w-full h-full object-contain"
-            />
-          </div>
+          {/* Full logo when expanded */}
+          <Image
+            src="/mainlogo2.png"
+            alt="HANAEats"
+            width={140}
+            height={20}
+            className="object-contain group-data-[collapsible=icon]:hidden"
+          />
+          {/* Icon only when collapsed */}
+          <Image
+            src="/iconwhite.png"
+            alt="HANAEats"
+            width={32}
+            height={32}
+            className="object-contain hidden group-data-[collapsible=icon]:block w-8 h-8"
+          />
         </Link>
       </SidebarHeader>
 
@@ -120,7 +126,7 @@ export function AppSidebar({ userName, userEmail, userRole }: AppSidebarProps) {
                                   "rounded-lg font-medium transition-colors",
                                   isOpen
                                     ? "bg-sidebar-accent !text-white hover:bg-sidebar-accent hover:!text-white"
-                                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground"
+                                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
                                 )}
                               />
                             }
@@ -163,7 +169,7 @@ export function AppSidebar({ userName, userEmail, userRole }: AppSidebarProps) {
                           "rounded-lg font-medium transition-colors",
                           active
                             ? "bg-sidebar-accent !text-white hover:bg-sidebar-accent hover:!text-white"
-                            : "text-sidebar-foreground/70 hover:text-sidebar-foreground"
+                            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
                         )}
                       >
                         <item.icon className={cn("w-4 h-4", active ? "!text-white" : "text-sidebar-foreground/50")} />
@@ -184,7 +190,7 @@ export function AppSidebar({ userName, userEmail, userRole }: AppSidebarProps) {
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <Button variant="ghost" className="flex items-center gap-2.5 w-full px-2 py-2 rounded-lg group-data-[collapsible=icon]:justify-center" />
+              <Button variant="ghost" className="flex items-center gap-2.5 w-full px-2 py-2 rounded-lg group-data-[collapsible=icon]:justify-center hover:bg-white/30 hover:!text-black" />
             }
           >
             <Avatar className="w-7 h-7 flex-shrink-0">
