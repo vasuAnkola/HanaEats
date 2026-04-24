@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { Store, UtensilsCrossed, Loader2, ArrowRight } from "lucide-react";
+import { Store, UtensilsCrossed, Loader2, ArrowRight, ChefHat } from "lucide-react";
 
 interface Outlet {
   id: number;
@@ -34,43 +33,52 @@ export default function MenuHubPage() {
   return (
     <div>
       <Header title="Menu" subtitle="Select an outlet to manage its menu" />
-      <div className="p-6">
+      <div className="p-6 space-y-6">
+
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-300" />
+          <div className="flex items-center justify-center py-24">
+            <Loader2 className="w-6 h-6 animate-spin text-blue-300" />
           </div>
         ) : outlets.length === 0 ? (
-          <Card className="border-gray-200 shadow-none">
-            <CardContent className="py-16 text-center">
-              <UtensilsCrossed className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 font-medium">No outlets yet</p>
-              <p className="text-sm text-gray-400 mt-1">Create an outlet first before managing menus.</p>
-              <Link href="/dashboard/outlets/new">
-                <Button className="mt-4">Add Outlet</Button>
-              </Link>
-            </CardContent>
-          </Card>
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm flex flex-col items-center justify-center py-20 text-center px-6">
+            <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
+              <UtensilsCrossed className="w-8 h-8 text-blue-300" />
+            </div>
+            <p className="text-gray-700 font-semibold text-base">No outlets yet</p>
+            <p className="text-sm text-gray-400 mt-1 mb-5">Create an outlet first before managing menus.</p>
+            <Link href="/dashboard/outlets/new">
+              <Button className="gap-2"><Store className="w-4 h-4" /> Add Outlet</Button>
+            </Link>
+          </div>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {outlets.map((o) => (
               <Link key={o.id} href={`/dashboard/menu/${o.id}`}>
-                <Card className="border-gray-200 shadow-none hover:border-[#5C432B]/30 hover:shadow-sm transition-all cursor-pointer group">
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="w-10 h-10 bg-[#5C432B]/10 rounded-xl flex items-center justify-center">
-                        <Store className="w-5 h-5 text-[#5C432B]" />
-                      </div>
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${o.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
-                        {o.is_active ? "Active" : "Inactive"}
-                      </span>
+                <div className="bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-pointer group p-5">
+                  <div className="flex items-start justify-between mb-5">
+                    <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-sm">
+                      <Store className="w-6 h-6 text-white" />
                     </div>
-                    <p className="font-semibold text-gray-900">{o.name}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{TYPE_LABEL[o.outlet_type] ?? o.outlet_type}</p>
-                    <div className="mt-4 flex items-center gap-1 text-xs font-medium text-[#5C432B] group-hover:gap-2 transition-all">
-                      Manage Menu <ArrowRight className="w-3.5 h-3.5" />
+                    <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full ring-1 ${
+                      o.is_active
+                        ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                        : "bg-gray-100 text-gray-500 ring-gray-200"
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${o.is_active ? "bg-emerald-500" : "bg-gray-400"}`} />
+                      {o.is_active ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+                  <p className="font-bold text-gray-900 text-base">{o.name}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{TYPE_LABEL[o.outlet_type] ?? o.outlet_type}</p>
+                  <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 group-hover:gap-2.5 transition-all">
+                      <ChefHat className="w-3.5 h-3.5" /> Manage Menu
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className="w-7 h-7 rounded-full bg-blue-50 group-hover:bg-blue-600 flex items-center justify-center transition-colors">
+                      <ArrowRight className="w-3.5 h-3.5 text-blue-400 group-hover:text-white transition-colors" />
+                    </div>
+                  </div>
+                </div>
               </Link>
             ))}
           </div>

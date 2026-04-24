@@ -186,7 +186,7 @@ export default function ItemDetailPage({ params }: Props) {
     <div>
       <ConfirmDialog open={confirmDelete !== null} description={confirmDelete?.label ?? ""} onConfirm={() => confirmDelete?.onConfirm()} onCancel={() => setConfirmDelete(null)} />
       <Header />
-      <div className="p-6 max-w-3xl">
+      <div className="p-6 max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-4">
           <Link href={`/dashboard/menu/${outletId}`} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800">
             <ArrowLeft className="w-4 h-4" /> Back to Menu

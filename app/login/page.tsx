@@ -4,16 +4,16 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -21,13 +21,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
+    const result = await signIn("credentials", { email, password, redirect: false });
     if (result?.error) {
       setError("Invalid email or password.");
       setLoading(false);
@@ -38,115 +32,129 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex flex-col items-center justify-center p-4">
-      {/* Background blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 sm:w-96 sm:h-96 bg-indigo-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 sm:w-96 sm:h-96 bg-violet-500/10 rounded-full blur-3xl" />
+    <div className="min-h-screen flex">
+      {/* Left panel — branding */}
+      <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-[#1E3A5F] to-[#2563EB] flex-col items-center justify-center p-12 relative overflow-hidden">
+        {/* dot grid */}
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
+        {/* glow blobs */}
+        <div className="absolute top-0 right-0 w-72 h-72 bg-blue-400/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-[#1E3A5F]/40 rounded-full blur-3xl" />
+
+        <div className="relative z-10 flex flex-col items-center text-center">
+          <div className="mb-8">
+            <Image src="/mainlogo2.png" alt="HANAEats" width={200} height={60} className="object-contain brightness-0 invert" priority />
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-3">Welcome to HANAEats</h1>
+          <p className="text-blue-200 text-base max-w-xs leading-relaxed">
+            The all-in-one POS & restaurant management platform built for Southeast Asia.
+          </p>
+
+          <div className="mt-12 grid grid-cols-2 gap-4 w-full max-w-xs">
+            {[
+              { label: "Outlets", value: "Multi-branch" },
+              { label: "Languages", value: "5 SE Asian" },
+              { label: "Payment", value: "9 Methods" },
+              { label: "Reports", value: "Real-time" },
+            ].map(item => (
+              <div key={item.label} className="bg-white/10 rounded-xl px-4 py-3 text-left backdrop-blur-sm">
+                <p className="text-white font-bold text-sm">{item.value}</p>
+                <p className="text-blue-200 text-xs mt-0.5">{item.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="w-full max-w-sm relative">
-        {/* Logo & Brand */}
-        <div className="flex flex-col items-center mb-8">
-          <div className=" rounded-2xl flex items-center justify-center mb-5 shadow-2xl shadow-indigo-500/20 ring-1 ring-white/10">
-            <Image
-              src="/mainlogo2.png"
-              alt="HANAEats"
-              width={164}
-              height={164}
-              className="w-24 h-24 object-contain"
-              priority
-            />
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">HANAEats</h1>
-          <p className="text-sm text-slate-400 mt-1.5">Southeast Asia POS Platform</p>
-        </div>
+      {/* Right panel — form */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6 bg-white">
+        <div className="w-full max-w-sm">
 
-        <Card className="bg-white/[0.06] border-white/10 backdrop-blur-md shadow-2xl">
-          <CardContent className="p-6 sm:p-7">
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-white">Welcome back</h2>
-              <p className="text-sm text-slate-400 mt-0.5">Sign in to your account to continue</p>
+          {/* Mobile logo */}
+          <div className="flex justify-center mb-8 lg:hidden">
+            <Image src="/mainlogo2.png" alt="HANAEats" width={160} height={48} className="object-contain" priority />
+          </div>
+
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-[#1E3A5F]">Sign in</h2>
+            <p className="text-sm text-gray-500 mt-1">Enter your credentials to access the dashboard</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email address</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                className="h-11 rounded-xl border-gray-200 focus:border-[#2563EB] focus:ring-[#2563EB]/20"
+              />
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-slate-300 text-sm font-medium">
-                  Email address
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                  className="h-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:ring-indigo-400/20 rounded-lg"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="password" className="text-slate-300 text-sm font-medium">
-                  Password
-                </Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="text-sm font-medium text-gray-700">Password</Label>
+              <div className="relative">
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="h-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:ring-indigo-400/20 rounded-lg"
+                  className="h-11 rounded-xl border-gray-200 focus:border-[#2563EB] focus:ring-[#2563EB]/20 pr-10"
                 />
-              </div>
-
-              {error && (
-                <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2.5">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  {error}
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full h-10 bg-indigo-500 hover:bg-indigo-400 text-white font-semibold shadow-lg shadow-indigo-500/25 transition-all rounded-lg mt-1"
-                disabled={loading}
-              >
-                {loading ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Signing in...
-                  </span>
-                ) : (
-                  "Sign in"
-                )}
-              </Button>
-            </form>
-
-            {/* Demo credentials */}
-            <div className="mt-5 p-3.5 bg-white/[0.04] rounded-xl border border-white/[0.08]">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2.5">
-                Demo credentials
-              </p>
-              <div className="text-xs text-slate-400 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Email</span>
-                  <span className="text-slate-300 font-medium">superadmin@hanaeats.com</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Password</span>
-                  <span className="text-slate-300 font-medium">admin123456</span>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(s => !s)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
-          </CardContent>
-        </Card>
 
-        <p className="text-center text-xs text-slate-600 mt-6">
-          © 2024 HANAEats · Built for Southeast Asia
-        </p>
+            {error && (
+              <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                {error}
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full h-11 rounded-xl font-semibold text-base shadow-md shadow-blue-500/20"
+              disabled={loading}
+            >
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Signing in...
+                </span>
+              ) : "Sign in"}
+            </Button>
+          </form>
+
+          {/* Demo credentials */}
+          {/* <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+            <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2.5">Demo credentials</p>
+            <div className="text-xs space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500">Email</span>
+                <span className="text-[#1E3A5F] font-semibold">superadmin@hanaeats.com</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500">Password</span>
+                <span className="text-[#1E3A5F] font-semibold">admin123456</span>
+              </div>
+            </div>
+          </div> */}
+
+          <p className="text-center text-xs text-gray-400 mt-6">© 2025 HANAEats · Built for Southeast Asia</p>
+        </div>
       </div>
     </div>
   );

@@ -31,12 +31,12 @@ interface Reservation {
 }
 
 const STATUS_BADGE: Record<string, string> = {
-  pending:   "bg-amber-100 text-amber-700",
-  confirmed: "bg-blue-100 text-blue-700",
-  seated:    "bg-emerald-100 text-emerald-700",
-  completed: "bg-gray-100 text-gray-600",
-  cancelled: "bg-red-100 text-red-600",
-  no_show:   "bg-red-100 text-red-600",
+  pending:   "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
+  confirmed: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
+  seated:    "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
+  completed: "bg-gray-100 text-gray-600 ring-1 ring-gray-200",
+  cancelled: "bg-red-50 text-red-600 ring-1 ring-red-200",
+  no_show:   "bg-red-50 text-red-600 ring-1 ring-red-200",
 };
 
 const STATUS_OPTIONS = ["all", "pending", "confirmed", "seated", "completed", "cancelled", "no_show"];
@@ -169,7 +169,14 @@ export default function ReservationsPage() {
       key: "status",
       label: "Status",
       render: (r) => (
-        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${STATUS_BADGE[r.status] ?? "bg-gray-100 text-gray-600"}`}>
+        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${STATUS_BADGE[r.status] ?? "bg-gray-100 text-gray-600"}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${
+            r.status === "pending" ? "bg-amber-500" :
+            r.status === "confirmed" ? "bg-blue-500" :
+            r.status === "seated" ? "bg-emerald-500" :
+            r.status === "completed" ? "bg-gray-400" :
+            "bg-red-500"
+          }`} />
           {r.status.replace("_", " ")}
         </span>
       ),
@@ -180,57 +187,34 @@ export default function ReservationsPage() {
       render: (r) => (
         <div className="flex items-center gap-1">
           {r.status === "pending" && (
-            <button
-              onClick={() => quickAction(r.id, "confirmed")}
-              disabled={updating === r.id}
-              className="text-[10px] px-2 py-0.5 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold"
-            >
+            <Button size="sm" variant="outline" className="h-7 text-xs px-2.5 border-blue-200 text-blue-600 hover:bg-blue-50" onClick={() => quickAction(r.id, "confirmed")} disabled={updating === r.id}>
               Confirm
-            </button>
+            </Button>
           )}
           {r.status === "confirmed" && (
-            <button
-              onClick={() => quickAction(r.id, "seated")}
-              disabled={updating === r.id}
-              className="text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200 font-semibold"
-            >
+            <Button size="sm" variant="outline" className="h-7 text-xs px-2.5 border-emerald-200 text-emerald-600 hover:bg-emerald-50" onClick={() => quickAction(r.id, "seated")} disabled={updating === r.id}>
               Seat
-            </button>
+            </Button>
           )}
           {r.status === "seated" && (
-            <button
-              onClick={() => quickAction(r.id, "completed")}
-              disabled={updating === r.id}
-              className="text-[10px] px-2 py-0.5 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 font-semibold"
-            >
+            <Button size="sm" variant="outline" className="h-7 text-xs px-2.5 border-gray-200 text-gray-600 hover:bg-gray-50" onClick={() => quickAction(r.id, "completed")} disabled={updating === r.id}>
               Complete
-            </button>
+            </Button>
           )}
           {(r.status === "pending" || r.status === "confirmed") && (
-            <button
-              onClick={() => quickAction(r.id, "no_show")}
-              disabled={updating === r.id}
-              className="text-[10px] px-2 py-0.5 rounded bg-red-100 text-red-600 hover:bg-red-200 font-semibold"
-            >
+            <Button size="sm" variant="outline" className="h-7 text-xs px-2.5 border-red-200 text-red-500 hover:bg-red-50" onClick={() => quickAction(r.id, "no_show")} disabled={updating === r.id}>
               No-show
-            </button>
+            </Button>
           )}
           {(r.status === "pending" || r.status === "confirmed") && (
-            <button
-              onClick={() => quickAction(r.id, "cancelled")}
-              disabled={updating === r.id}
-              className="text-[10px] px-2 py-0.5 rounded bg-red-50 text-red-500 hover:bg-red-100 font-semibold"
-            >
+            <Button size="sm" variant="outline" className="h-7 text-xs px-2.5 border-red-200 text-red-500 hover:bg-red-50" onClick={() => quickAction(r.id, "cancelled")} disabled={updating === r.id}>
               Cancel
-            </button>
+            </Button>
           )}
-          <button
-            onClick={() => { setDetailRes(r); setDetailOpen(true); }}
-            className="p-1 hover:bg-gray-100 rounded"
-          >
-            <Eye className="w-3.5 h-3.5 text-gray-400" />
-          </button>
-          {updating === r.id && <Loader2 className="w-3 h-3 animate-spin text-gray-400" />}
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50" onClick={() => { setDetailRes(r); setDetailOpen(true); }}>
+            <Eye className="w-3.5 h-3.5" />
+          </Button>
+          {updating === r.id && <Loader2 className="w-3 h-3 animate-spin text-blue-400" />}
         </div>
       ),
     },
@@ -263,8 +247,8 @@ export default function ReservationsPage() {
             </SelectContent>
           </Select>
 
-          <Button onClick={loadReservations} variant="ghost" size="icon" className="text-gray-400 hover:text-indigo-600">
-            <RefreshCw className="w-4 h-4" />
+          <Button onClick={loadReservations} variant="outline" size="sm" className="h-9 gap-1.5">
+            <RefreshCw className="w-3.5 h-3.5" /> Refresh
           </Button>
 
           <div className="ml-auto">
@@ -333,7 +317,6 @@ export default function ReservationsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setNewDialog(false)}>Cancel</Button>
             <Button
-              className="bg-indigo-600 hover:bg-indigo-700 text-white"
               onClick={createReservation}
               disabled={saving || !form.customer_name || !form.reservation_date || !form.reservation_time}
             >
@@ -356,9 +339,15 @@ export default function ReservationsPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Status</span>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${STATUS_BADGE[detailRes.status]}`}>
-                  {detailRes.status.replace("_", " ")}
-                </span>
+              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${STATUS_BADGE[detailRes.status]}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  detailRes.status === "pending" ? "bg-amber-500" :
+                  detailRes.status === "confirmed" ? "bg-blue-500" :
+                  detailRes.status === "seated" ? "bg-emerald-500" :
+                  detailRes.status === "completed" ? "bg-gray-400" : "bg-red-500"
+                }`} />
+                {detailRes.status.replace("_", " ")}
+              </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Customer</span>

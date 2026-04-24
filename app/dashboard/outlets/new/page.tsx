@@ -56,7 +56,7 @@ export default function NewOutletPage() {
   return (
     <div>
       <Header title="Add Outlet" subtitle="Add a new branch to your business" />
-      <div className="p-6 max-w-xl">
+      <div className="p-6 max-w-xl mx-auto">
         <Link href="/dashboard/outlets" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-6">
           <ArrowLeft className="w-4 h-4" /> Back to Outlets
         </Link>

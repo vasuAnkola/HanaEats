@@ -86,7 +86,7 @@ export default function NewItemPage({ params }: Props) {
   return (
     <div>
       <Header />
-      <div className="p-6 max-w-2xl">
+      <div className="p-6 max-w-2xl mx-auto">
         <div className="mb-4">
           <Link href={`/dashboard/menu/${outletId}`} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800">
             <ArrowLeft className="w-4 h-4" /> Back to Menu

@@ -39,13 +39,13 @@ interface AddOnGroup {
 interface ItemDetail { id: number; name: string; price: number; variants: VariantGroup[]; addons: AddOnGroup[]; }
 
 const STATUS_COLOR: Record<string, string> = {
-  draft:     "bg-gray-100 text-gray-600",
-  pending:   "bg-amber-100 text-amber-700",
-  preparing: "bg-blue-100 text-blue-700",
-  ready:     "bg-[#5C432B]/10 text-[#5C432B]",
-  served:    "bg-purple-100 text-purple-700",
-  closed:    "bg-emerald-100 text-emerald-700",
-  cancelled: "bg-red-100 text-red-600",
+  draft:     "bg-gray-100 text-gray-500 ring-1 ring-gray-200",
+  pending:   "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
+  preparing: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
+  ready:     "bg-violet-50 text-violet-700 ring-1 ring-violet-200",
+  served:    "bg-purple-50 text-purple-700 ring-1 ring-purple-200",
+  closed:    "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
+  cancelled: "bg-red-50 text-red-600 ring-1 ring-red-200",
 };
 
 const TYPE_LABEL: Record<string, string> = {
@@ -299,7 +299,15 @@ export default function OrdersPage() {
     {
       key: "status", label: "Status", sortable: true,
       render: o => (
-        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize ${STATUS_COLOR[o.status] ?? "bg-gray-100 text-gray-600"}`}>
+        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full capitalize ${STATUS_COLOR[o.status] ?? "bg-gray-100 text-gray-600"}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${
+            o.status === "pending" ? "bg-amber-500" :
+            o.status === "preparing" ? "bg-blue-500" :
+            o.status === "ready" ? "bg-violet-500" :
+            o.status === "served" ? "bg-purple-500" :
+            o.status === "closed" ? "bg-emerald-500" :
+            o.status === "cancelled" ? "bg-red-500" : "bg-gray-400"
+          }`} />
           {o.status}
         </span>
       ),
@@ -310,7 +318,7 @@ export default function OrdersPage() {
     },
     {
       key: "total", label: "Total",
-      render: o => <span className="text-sm font-semibold text-gray-900">{parseFloat(String(o.total)).toFixed(2)}</span>,
+      render: o => <span className="text-sm font-bold text-blue-700">{parseFloat(String(o.total)).toFixed(2)}</span>,
     },
     {
       key: "created_at", label: "Time", sortable: true,
@@ -325,12 +333,12 @@ export default function OrdersPage() {
       render: o => (
         <div className="flex items-center gap-1 justify-end">
           {STATUS_FLOW[o.status] && (
-            <Button size="sm" className="h-7 text-xs px-2" onClick={() => updateStatus(o.id, STATUS_FLOW[o.status])} disabled={updating === o.id}>
+            <Button size="sm" className="h-7 text-xs px-2.5 gap-1" onClick={() => updateStatus(o.id, STATUS_FLOW[o.status])} disabled={updating === o.id}>
               {updating === o.id ? <Loader2 className="w-3 h-3 animate-spin" /> : `→ ${STATUS_FLOW[o.status]}`}
             </Button>
           )}
           {EDITABLE_STATUSES.includes(o.status) && (
-            <Button size="sm" variant="outline" className="h-7 text-xs px-2 gap-1 border-[#5C432B]/20 text-[#5C432B] hover:bg-[#5C432B]/10" onClick={() => openEdit(o)}>
+            <Button size="sm" variant="outline" className="h-7 text-xs px-2 gap-1" onClick={() => openEdit(o)}>
               <Pencil className="w-3 h-3" /> Edit
             </Button>
           )}
@@ -339,7 +347,7 @@ export default function OrdersPage() {
               <CreditCard className="w-3 h-3" /> Pay
             </Button>
           )}
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-[#5C432B]" onClick={() => viewDetail(o.id)}>
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50" onClick={() => viewDetail(o.id)}>
             <Eye className="w-3.5 h-3.5" />
           </Button>
         </div>
@@ -350,31 +358,41 @@ export default function OrdersPage() {
   return (
     <div>
       <Header title="Orders" subtitle="All orders across the outlet" />
-      <div className="p-6">
-        <div className="flex items-center gap-3 mb-5 flex-wrap">
-          <Select value={outletId} onValueChange={(v) => v && setOutletId(v)}>
-            <SelectTrigger className="w-44 h-9"><SelectValue placeholder="Select outlet" /></SelectTrigger>
-            <SelectContent>{outlets.map(o => <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>)}</SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={(v) => v && setStatusFilter(v)}>
-            <SelectTrigger className="w-36 h-9"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              {["pending","preparing","ready","served","closed","cancelled"].map(s => (
-                <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+      <div className="p-6 space-y-5">
+        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3 flex-wrap">
+            <Select value={outletId} onValueChange={(v) => v && setOutletId(v)}>
+              <SelectTrigger className="w-44 h-9"><SelectValue placeholder="Select outlet" /></SelectTrigger>
+              <SelectContent>{outlets.map(o => <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={(v) => v && setStatusFilter(v)}>
+              <SelectTrigger className="w-36 h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                {["pending","preparing","ready","served","closed","cancelled"].map(s => (
+                  <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={load}>
+              <RefreshCw className="w-3.5 h-3.5" /> Refresh
+            </Button>
+            <div className="ml-auto flex items-center gap-2">
+              {["pending","preparing","ready","served","closed"].map(s => (
+                <span key={s} className={`hidden lg:inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_COLOR[s]}`}>
+                  {orders.filter(o => o.status === s).length} {s}
+                </span>
               ))}
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={load}>
-            <RefreshCw className="w-3.5 h-3.5" /> Refresh
-          </Button>
+            </div>
+          </div>
+          <div className="p-4">
+            {loading ? (
+              <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-blue-300" /></div>
+            ) : (
+              <DataTable data={orders} columns={columns} searchKeys={["order_number","customer_name","status"]} searchPlaceholder="Search orders..." pageSize={20} emptyMessage="No orders found." />
+            )}
+          </div>
         </div>
-
-        {loading ? (
-          <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-gray-300" /></div>
-        ) : (
-          <DataTable data={orders} columns={columns} searchKeys={["order_number","customer_name","status"]} searchPlaceholder="Search orders..." pageSize={20} emptyMessage="No orders found." />
-        )}
       </div>
 
       {/* ── Order Detail Dialog ── */}
@@ -384,7 +402,17 @@ export default function OrdersPage() {
           {detail && (
             <div className="space-y-4">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className={`text-xs font-semibold px-2 py-1 rounded-full capitalize ${STATUS_COLOR[detail.status]}`}>{detail.status}</span>
+              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize inline-flex items-center gap-1 ${STATUS_COLOR[detail.status]}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  detail.status === "pending" ? "bg-amber-500" :
+                  detail.status === "preparing" ? "bg-blue-500" :
+                  detail.status === "ready" ? "bg-violet-500" :
+                  detail.status === "served" ? "bg-purple-500" :
+                  detail.status === "closed" ? "bg-emerald-500" :
+                  detail.status === "cancelled" ? "bg-red-500" : "bg-gray-400"
+                }`} />
+                {detail.status}
+              </span>
                 <span className="text-xs text-gray-500">{TYPE_LABEL[detail.order_type]}</span>
                 {detail.table_number && <span className="text-xs text-gray-500">Table {detail.table_number}</span>}
                 {detail.customer_name && <span className="text-xs text-gray-500">{detail.customer_name}</span>}
@@ -405,10 +433,10 @@ export default function OrdersPage() {
               <div className="border-t border-gray-100 pt-3 space-y-1">
                 <div className="flex justify-between text-xs text-gray-500"><span>Subtotal</span><span>{parseFloat(String(detail.subtotal)).toFixed(2)}</span></div>
                 {detail.tax_amount > 0 && <div className="flex justify-between text-xs text-gray-500"><span>Tax</span><span>{parseFloat(String(detail.tax_amount)).toFixed(2)}</span></div>}
-                <div className="flex justify-between font-semibold text-gray-900"><span>Total</span><span>{parseFloat(String(detail.total)).toFixed(2)}</span></div>
+                <div className="flex justify-between font-bold text-gray-900"><span>Total</span><span className="text-blue-700">{parseFloat(String(detail.total)).toFixed(2)}</span></div>
               </div>
               {EDITABLE_STATUSES.includes(detail.status) && (
-                <Button variant="outline" className="w-full gap-2 border-[#5C432B]/20 text-[#5C432B] hover:bg-[#5C432B]/10" onClick={() => { setDetailOpen(false); openEdit(detail); }}>
+                <Button variant="outline" className="w-full gap-2" onClick={() => { setDetailOpen(false); openEdit(detail); }}>
                   <Pencil className="w-4 h-4" /> Edit Order
                 </Button>
               )}
@@ -439,7 +467,7 @@ export default function OrdersPage() {
             {/* Left: menu picker */}
             <div className="flex-1 flex flex-col border-r border-gray-200 min-w-0">
               <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-                <UtensilsCrossed className="w-4 h-4 text-[#5C432B]" />
+                <UtensilsCrossed className="w-4 h-4 text-blue-500" />
                 <p className="font-semibold text-sm text-gray-800">Add Items</p>
                 {editSaving && <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400 ml-auto" />}
               </div>
@@ -476,11 +504,11 @@ export default function OrdersPage() {
                       variant="outline"
                       className="h-auto flex flex-col items-start justify-start p-3 rounded-xl"
                     >
-                      <div className="w-full h-14 bg-[#5C432B]/10 rounded-lg flex items-center justify-center mb-2">
-                        <UtensilsCrossed className="w-6 h-6 text-[#5C432B]/40" />
+                      <div className="w-full h-14 bg-blue-400 rounded-lg flex items-center justify-center mb-2">
+                        <UtensilsCrossed className="w-6 h-6 text-white opacity-90" />
                       </div>
                       <p className="font-medium text-gray-900 text-xs leading-tight text-left">{item.name}</p>
-                      <p className="text-[#5C432B] font-semibold text-xs mt-0.5">{parseFloat(String(item.price)).toFixed(2)}</p>
+                      <p className="text-blue-700 font-bold text-xs mt-0.5">{parseFloat(String(item.price)).toFixed(2)}</p>
                     </Button>
                   ))}
                 </div>
@@ -549,7 +577,7 @@ export default function OrdersPage() {
                 {parseFloat(String(editOrder?.tax_amount ?? 0)) > 0 && (
                   <div className="flex justify-between text-xs text-gray-500"><span>Tax</span><span>{parseFloat(String(editOrder?.tax_amount ?? 0)).toFixed(2)}</span></div>
                 )}
-                <div className="flex justify-between font-semibold text-gray-900 text-sm"><span>Total</span><span className="text-[#5C432B]">{parseFloat(String(editOrder?.total ?? 0)).toFixed(2)}</span></div>
+                <div className="flex justify-between font-bold text-gray-900 text-sm"><span>Total</span><span className="text-blue-700">{parseFloat(String(editOrder?.total ?? 0)).toFixed(2)}</span></div>
                 <Button className="w-full mt-2 h-9" onClick={() => setEditOpen(false)}>
                   Done
                 </Button>
@@ -664,9 +692,9 @@ export default function OrdersPage() {
           ) : (
             <div className="space-y-4 py-2">
               {payError && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{payError}</p>}
-              <div className="bg-[#5C432B]/10 rounded-xl px-4 py-3 flex items-center justify-between">
-                <span className="text-sm text-[#5C432B] font-medium">Order Total</span>
-                <span className="text-lg font-bold text-[#5C432B]">{parseFloat(String(payOrder?.total ?? 0)).toFixed(2)}</span>
+                <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center justify-between">
+                <span className="text-sm text-blue-700 font-semibold">Order Total</span>
+                <span className="text-lg font-bold text-blue-700">{parseFloat(String(payOrder?.total ?? 0)).toFixed(2)}</span>
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-600 block mb-2">Payment Method</label>

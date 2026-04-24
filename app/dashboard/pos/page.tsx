@@ -156,6 +156,14 @@ export default function POSPage() {
   }
 
   function addToCart(item: MenuItem, qty: number, variants: CartItem["variants"], addons: CartItem["addons"]) {
+    // If no variants/addons, increment existing cart item instead of adding duplicate
+    if (variants.length === 0 && addons.length === 0) {
+      const existing = cart.find(c => c.item_id === item.id && c.variants.length === 0 && c.addons.length === 0);
+      if (existing) {
+        setCart(c => c.map(i => i.key === existing.key ? { ...i, quantity: i.quantity + qty } : i));
+        return;
+      }
+    }
     const key = `${item.id}-${Date.now()}`;
     setCart(c => [...c, { key, item_id: item.id, item_name: item.name, quantity: qty, unit_price: parseFloat(String(item.price)) || 0, note: "", variants, addons }]);
   }
@@ -356,11 +364,11 @@ export default function POSPage() {
         {/* Left — Menu */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
-          <Button onClick={doneEditing} variant="ghost" className="flex items-center gap-1.5 text-sm text-[#5C432B] hover:text-[#5C432B]/80 font-medium">
+          <Button onClick={doneEditing} variant="ghost" className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-semibold">
             <ArrowLeft className="w-4 h-4" /> Back
           </Button>
-            <span className="text-gray-300">|</span>
-            <p className="text-sm font-semibold text-gray-800">Editing <span className="font-mono text-[#5C432B]">{orderNum}</span></p>
+            <span className="text-gray-200">|</span>
+            <p className="text-sm font-semibold text-gray-800">Editing <span className="font-mono text-blue-600">{orderNum}</span></p>
             {editSaving && <Loader2 className="w-4 h-4 animate-spin text-gray-400 ml-auto" />}
           </div>
           <div className="bg-white border-b border-gray-200 px-4 overflow-x-auto">
@@ -396,11 +404,11 @@ export default function POSPage() {
                     variant="outline"
                     className="h-auto flex flex-col items-start justify-start p-3 rounded-xl"
                   >
-                    <div className="w-full h-16 bg-[#5C432B]/10 rounded-lg flex items-center justify-center mb-2">
-                      <UtensilsCrossed className="w-7 h-7 text-[#5C432B]/40" />
+                    <div className="w-full h-16 bg-blue-600 rounded-lg flex items-center justify-center mb-2">
+                      <UtensilsCrossed className="w-7 h-7 text-white opacity-80" />
                     </div>
                     <p className="font-medium text-gray-900 text-xs leading-tight text-left">{item.name}</p>
-                    <p className="text-[#5C432B] font-semibold text-xs mt-0.5">{parseFloat(String(item.price)).toFixed(2)}</p>
+                    <p className="text-blue-700 font-bold text-xs mt-0.5">{parseFloat(String(item.price)).toFixed(2)}</p>
                   </Button>
                 ))}
               </div>
@@ -468,8 +476,8 @@ export default function POSPage() {
             <div className="flex justify-between text-xs text-gray-500">
               <span>Subtotal</span><span>{editOrderSubtotal.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between font-semibold text-gray-900">
-              <span>Total</span><span className="text-[#5C432B]">{editOrderTotal.toFixed(2)}</span>
+            <div className="flex justify-between font-bold text-gray-900 text-base">
+              <span>Total</span><span className="text-blue-700">{editOrderTotal.toFixed(2)}</span>
             </div>
             <Button className="w-full h-10 font-semibold" onClick={doneEditing}>
               Done Editing
@@ -573,12 +581,12 @@ export default function POSPage() {
           <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-1">Order Placed!</h2>
           <p className="text-gray-500 mb-1">Order <span className="font-mono font-semibold">{orderNum}</span> sent to kitchen</p>
-          <p className="text-lg font-bold text-[#5C432B] mt-2">Total: {orderTotal.toFixed(2)}</p>
+          <p className="text-lg font-bold text-blue-700 mt-2">Total: {orderTotal.toFixed(2)}</p>
           <div className="flex flex-col gap-2 mt-6">
             <Button className="gap-2" onClick={() => { setPayDialog(true); setAmountPaid(orderTotal.toFixed(2)); setPayRef(""); setPayError(""); setPaySuccess(null); }}>
               <CreditCard className="w-4 h-4" /> Collect Payment
             </Button>
-            <Button variant="outline" className="gap-2 border-[#5C432B]/20 text-[#5C432B] hover:bg-[#5C432B]/10" onClick={enterEditMode}>
+            <Button variant="outline" className="gap-2 border-blue-200 text-blue-600 hover:bg-blue-50" onClick={enterEditMode}>
               <Pencil className="w-4 h-4" /> Edit Order
             </Button>
             <Button variant="outline" onClick={() => { setSuccess(false); setOrderId(null); }}>New Order</Button>
@@ -605,11 +613,11 @@ export default function POSPage() {
           </div>
         </div>
 
-        <div className="bg-white border-b border-gray-200 px-4 overflow-x-auto">
+        <div className="bg-white border-b border-gray-100 px-4 overflow-x-auto">
           <div className="flex gap-1 py-2">
             {categories.map(c => (
               <button key={c.id} onClick={() => setSelectedCat(c.id)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${selectedCat === c.id ? "bg-[#5C432B] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${selectedCat === c.id ? "bg-blue-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600"}`}>
                 {c.name}
               </button>
             ))}
@@ -623,13 +631,13 @@ export default function POSPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {filteredItems.map(item => (
                 <button key={item.id} onClick={() => openCustom(item)}
-                  className="bg-white border border-gray-200 rounded-xl p-3 text-left hover:border-[#5C432B]/30 hover:shadow-sm transition-all active:scale-95">
-                  <div className="w-full h-20 bg-[#5C432B]/10 rounded-lg flex items-center justify-center mb-2">
-                    <UtensilsCrossed className="w-8 h-8 text-[#5C432B]/40" />
+                  className="bg-white border border-gray-100 rounded-xl p-3 text-left hover:border-blue-300 hover:shadow-md transition-all active:scale-95">
+                  <div className="w-full h-20 bg-blue-400 rounded-lg flex items-center justify-center mb-2.5">
+                    <UtensilsCrossed className="w-8 h-8 text-white opacity-90" />
                   </div>
-                  <p className="font-medium text-gray-900 text-sm leading-tight">{item.name}</p>
-                  <p className="text-[#5C432B] font-semibold text-sm mt-1">{parseFloat(String(item.price)).toFixed(2)}</p>
-                  {item.is_halal && <span className="text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded-full">Halal</span>}
+                  <p className="font-semibold text-gray-900 text-sm leading-tight">{item.name}</p>
+                  <p className="text-blue-700 font-bold text-sm mt-1">{parseFloat(String(item.price)).toFixed(2)}</p>
+                  {item.is_halal && <span className="inline-block text-[10px] font-semibold px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-full mt-1 ring-1 ring-emerald-200">Halal</span>}
                 </button>
               ))}
             </div>
@@ -641,9 +649,9 @@ export default function POSPage() {
       <div className="w-80 flex-shrink-0 bg-white border-l border-gray-200 flex flex-col">
         <div className="px-4 py-3 border-b border-gray-100">
           <div className="flex items-center gap-2 mb-3">
-            <ShoppingCart className="w-4 h-4 text-[#5C432B]" />
-            <p className="font-semibold text-gray-900 text-sm">Order</p>
-            <span className="ml-auto text-xs text-gray-400">{cart.length} item{cart.length !== 1 ? "s" : ""}</span>
+            <ShoppingCart className="w-4 h-4 text-blue-600" />
+            <p className="font-bold text-gray-900 text-sm">Current Order</p>
+            <span className="ml-auto text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{cart.length} item{cart.length !== 1 ? "s" : ""}</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <Select value={orderType} onValueChange={(v) => v && setOrderType(v)}>
@@ -667,8 +675,11 @@ export default function POSPage() {
         <div className="flex-1 overflow-y-auto px-4 py-2 space-y-2">
           {cart.length === 0 ? (
             <div className="text-center py-12 text-gray-400">
-              <ShoppingCart className="w-8 h-8 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">Cart is empty</p>
+              <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-3">
+                <ShoppingCart className="w-6 h-6 text-blue-200" />
+              </div>
+              <p className="text-sm font-medium">Cart is empty</p>
+              <p className="text-xs mt-1">Select items to start an order</p>
             </div>
           ) : cart.map(item => {
             const _base = parseFloat(String(item.unit_price)) || 0;
@@ -697,11 +708,11 @@ export default function POSPage() {
                 ))}
                 <div className="flex items-center justify-between mt-2">
                   <div className="flex items-center gap-1">
-                    <button onClick={() => updateQty(item.key, -1)} className="w-5 h-5 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:border-[#5C432B]/30">
+                    <button onClick={() => updateQty(item.key, -1)} className="w-5 h-5 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:border-blue-300 hover:bg-blue-50">
                       <Minus className="w-2.5 h-2.5" />
                     </button>
                     <span className="w-6 text-center text-xs font-medium">{item.quantity}</span>
-                    <button onClick={() => updateQty(item.key, 1)} className="w-5 h-5 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:border-[#5C432B]/30">
+                    <button onClick={() => updateQty(item.key, 1)} className="w-5 h-5 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:border-blue-300 hover:bg-blue-50">
                       <Plus className="w-2.5 h-2.5" />
                     </button>
                   </div>
@@ -721,12 +732,12 @@ export default function POSPage() {
               <span>Tax ({taxRate}%)</span><span>{taxAmt.toFixed(2)}</span>
             </div>
           )}
-          <div className="flex justify-between font-semibold text-gray-900">
-            <span>Total</span><span className="text-[#5C432B]">{total.toFixed(2)}</span>
+          <div className="flex justify-between font-bold text-gray-900 text-base">
+            <span>Total</span><span className="text-blue-700">{total.toFixed(2)}</span>
           </div>
           <Input placeholder="Order note..." value={note} onChange={e => setNote(e.target.value)} className="h-8 text-xs mt-1" />
-          <Button className="w-full h-10 font-semibold" disabled={cart.length === 0 || placing} onClick={placeOrder}>
-            {placing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+          <Button className="w-full h-11 font-bold text-base shadow-sm" disabled={cart.length === 0 || placing} onClick={placeOrder}>
+            {placing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShoppingCart className="w-4 h-4 mr-2" />}
             Place Order · {total.toFixed(2)}
           </Button>
         </div>
@@ -746,7 +757,7 @@ export default function POSPage() {
                       const sel = selectedVariants[group.id]?.option_name === opt.name;
                       return (
                         <button key={opt.id} onClick={() => setSelectedVariants(s => ({ ...s, [group.id]: { option_name: opt.name, price_modifier: parseFloat(String(opt.price_modifier)) || 0 } }))}
-                          className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${sel ? "bg-[#5C432B] text-white border-[#5C432B]" : "bg-white text-gray-600 border-gray-200 hover:border-[#5C432B]/30"}`}>
+                          className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${sel ? "bg-blue-600 text-white border-blue-600 shadow-sm" : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"}`}>
                           {opt.name}{parseFloat(String(opt.price_modifier)) !== 0 ? ` +${parseFloat(String(opt.price_modifier)).toFixed(2)}` : ""}
                         </button>
                       );
@@ -770,7 +781,7 @@ export default function POSPage() {
                             return { ...s, [group.id]: [...cur, { name: addon.name, price: parseFloat(String(addon.price)) || 0 }] };
                           });
                         }}
-                          className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${sel ? "bg-[#5C432B] text-white border-[#5C432B]" : "bg-white text-gray-600 border-gray-200 hover:border-[#5C432B]/30"}`}>
+                          className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${sel ? "bg-blue-600 text-white border-blue-600 shadow-sm" : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"}`}>
                           {addon.name}{parseFloat(String(addon.price)) > 0 ? ` +${parseFloat(String(addon.price)).toFixed(2)}` : ""}
                         </button>
                       );
@@ -781,9 +792,9 @@ export default function POSPage() {
               <div className="flex items-center gap-3 pt-2">
                 <p className="text-xs font-medium text-gray-600">Quantity</p>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => setCustomQty(q => Math.max(1, q - 1))} className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center hover:border-[#5C432B]/30"><Minus className="w-3 h-3" /></button>
+                  <button onClick={() => setCustomQty(q => Math.max(1, q - 1))} className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center hover:border-blue-300 hover:bg-blue-50"><Minus className="w-3 h-3" /></button>
                   <span className="w-8 text-center text-sm font-semibold">{customQty}</span>
-                  <button onClick={() => setCustomQty(q => q + 1)} className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center hover:border-[#5C432B]/30"><Plus className="w-3 h-3" /></button>
+                  <button onClick={() => setCustomQty(q => q + 1)} className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center hover:border-blue-300 hover:bg-blue-50"><Plus className="w-3 h-3" /></button>
                 </div>
               </div>
             </div>
@@ -819,16 +830,16 @@ export default function POSPage() {
             <>
               <div className="space-y-4 py-2">
                 {payError && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{payError}</p>}
-                <div className="bg-[#5C432B]/10 rounded-xl px-4 py-3 flex items-center justify-between">
-                  <span className="text-sm text-[#5C432B] font-medium">Order Total</span>
-                  <span className="text-lg font-bold text-[#5C432B]">{orderTotal.toFixed(2)}</span>
+                <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center justify-between">
+                  <span className="text-sm text-blue-700 font-semibold">Order Total</span>
+                  <span className="text-xl font-bold text-blue-700">{orderTotal.toFixed(2)}</span>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-gray-600 block mb-1">Payment Method</label>
                   <div className="grid grid-cols-3 gap-2">
                     {PAYMENT_METHODS.map(m => (
                       <button key={m.value} onClick={() => setPayMethod(m.value)}
-                        className={`py-2 px-1 rounded-lg text-xs font-medium border transition-colors ${payMethod === m.value ? "bg-[#5C432B] text-white border-[#5C432B]" : "bg-white text-gray-600 border-gray-200 hover:border-[#5C432B]/30"}`}>
+                        className={`py-2.5 px-2 rounded-lg text-xs font-semibold border transition-all ${payMethod === m.value ? "bg-blue-600 text-white border-blue-600 shadow-sm" : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"}`}>
                         {m.label}
                       </button>
                     ))}
