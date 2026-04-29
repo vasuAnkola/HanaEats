@@ -120,6 +120,12 @@ export function getNavGroups(role: UserRole): NavGroup[] {
           { label: "Reports", href: "/dashboard/reports", icon: BarChart3 },
         ],
       },
+      {
+        title: "System",
+        items: [
+          { label: "Settings", href: "/dashboard/settings", icon: Settings },
+        ],
+      },
     ];
   }
 

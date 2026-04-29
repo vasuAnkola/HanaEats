@@ -50,7 +50,7 @@ export default function LoginPage() {
             The all-in-one POS & restaurant management platform built for Southeast Asia.
           </p>
 
-          <div className="mt-12 grid grid-cols-2 gap-4 w-full max-w-xs">
+          {/* <div className="mt-12 grid grid-cols-2 gap-4 w-full max-w-xs">
             {[
               { label: "Outlets", value: "Multi-branch" },
               { label: "Languages", value: "5 SE Asian" },
@@ -62,7 +62,7 @@ export default function LoginPage() {
                 <p className="text-blue-200 text-xs mt-0.5">{item.label}</p>
               </div>
             ))}
-          </div>
+          </div> */}
         </div>
       </div>
 
