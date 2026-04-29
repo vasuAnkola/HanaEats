@@ -80,7 +80,7 @@ export default function NewTenantPage() {
   return (
     <div>
       <Header title="Add Tenant" subtitle="Register a new business on the platform" />
-      <div className="p-6 max-w-2xl">
+      <div className="p-6 max-w-2xl mx-auto">
         <Link href="/dashboard/tenants" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-6">
           <ArrowLeft className="w-4 h-4" /> Back to Tenants
         </Link>
