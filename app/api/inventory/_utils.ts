@@ -3,7 +3,21 @@ import { NextResponse } from "next/server";
 interface TenantSession {
   user: {
     tenantId?: string | null;
+    role?: string;
   };
+}
+
+const INVENTORY_MANAGERS = ["super_admin", "admin", "manager"];
+
+/** Ingredients, vendors, purchase orders and recipes are a management surface —
+ * cashier/waiter/kitchen can't reach it from the sidebar and shouldn't be able
+ * to write to it via the API either. */
+export function canManageInventory(session: TenantSession) {
+  return !!session.user.role && INVENTORY_MANAGERS.includes(session.user.role);
+}
+
+export function inventoryForbidden() {
+  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 }
 
 export function getTenantId(

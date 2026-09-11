@@ -26,9 +26,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (!keys.length) return NextResponse.json({ error: "No fields" }, { status: 400 });
   const setClauses = keys.map((k, i) => `${k} = $${i + 1}`).join(", ");
   const row = await queryOne(
-    `UPDATE menu_variants SET ${setClauses} WHERE id = $${keys.length + 1} RETURNING *`,
-    [...keys.map((k) => fields[k]), id]
+    `UPDATE menu_variants mv SET ${setClauses}
+     FROM menu_items mi WHERE mv.item_id = mi.id
+       AND mv.id = $${keys.length + 1} AND mi.tenant_id = $${keys.length + 2}
+     RETURNING mv.*`,
+    [...keys.map((k) => fields[k]), id, session.user.tenantId]
   );
+  if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(row);
 }
 
@@ -38,6 +42,10 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const { id } = await params;
-  await queryOne("DELETE FROM menu_variants WHERE id = $1", [id]);
+  await queryOne(
+    `DELETE FROM menu_variants mv USING menu_items mi
+     WHERE mv.item_id = mi.id AND mv.id = $1 AND mi.tenant_id = $2`,
+    [id, session.user.tenantId]
+  );
   return NextResponse.json({ success: true });
 }

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { query, queryOne } from "@/lib/db";
 import pool from "@/lib/db";
-import { apiError, getTenantId, tenantRequired } from "../../_utils";
+import { apiError, getTenantId, tenantRequired, canManageInventory, inventoryForbidden } from "../../_utils";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -40,6 +40,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!canManageInventory(session)) return inventoryForbidden();
     const { id } = await params;
     const body = await req.json();
     const tenantId = getTenantId(session, body);
@@ -52,14 +53,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         const items = await query(
           `SELECT poi.*, i.name AS ingredient_name FROM purchase_order_items poi
            JOIN ingredients i ON i.id = poi.ingredient_id
-           WHERE poi.purchase_order_id = $1`,
-          [id]
+           JOIN purchase_orders po ON po.id = poi.purchase_order_id
+           WHERE poi.purchase_order_id = $1 AND po.tenant_id = $2`,
+          [id, tenantId]
         );
 
         for (const item of items) {
           const receivedQty = parseFloat(String(item.quantity));
           await client.query(
-            `UPDATE ingredients SET stock_quantity = stock_quantity + $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3`,
+            `UPDATE ingredients SET current_stock = current_stock + $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3`,
             [receivedQty, item.ingredient_id, tenantId]
           );
           await client.query(
@@ -79,7 +81,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           [id, tenantId]
         );
         await client.query("COMMIT");
-        const updated = await queryOne(`SELECT * FROM purchase_orders WHERE id=$1`, [id]);
+        const updated = await queryOne(`SELECT * FROM purchase_orders WHERE id=$1 AND tenant_id=$2`, [id, tenantId]);
         return NextResponse.json(updated);
       } catch (e) {
         await client.query("ROLLBACK");
@@ -108,6 +110,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   try {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!canManageInventory(session)) return inventoryForbidden();
     const tenantId = getTenantId(session);
     if (!tenantId) return tenantRequired();
     const { id } = await params;

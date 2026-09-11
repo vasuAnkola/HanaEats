@@ -37,8 +37,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
      FROM menu_items mi
      LEFT JOIN menu_item_dietary d ON d.item_id = mi.id
      LEFT JOIN menu_categories mc ON mc.id = mi.category_id
-     WHERE mi.id = $1`,
-    [id]
+     WHERE mi.id = $1 AND mi.tenant_id = $2`,
+    [id, session.user.tenantId]
   );
   if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -74,6 +74,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (!parsed.success) {
     return NextResponse.json({ error: Object.values(parsed.error.flatten().fieldErrors).flat()[0] ?? "Invalid input" }, { status: 400 });
   }
+
+  const owned = await queryOne(`SELECT id FROM menu_items WHERE id = $1 AND tenant_id = $2`, [id, session.user.tenantId]);
+  if (!owned) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const { dietary, ...rest } = parsed.data;
   const keys = Object.keys(rest) as (keyof typeof rest)[];
@@ -111,6 +114,6 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const { id } = await params;
-  await queryOne("DELETE FROM menu_items WHERE id = $1", [id]);
+  await queryOne("DELETE FROM menu_items WHERE id = $1 AND tenant_id = $2", [id, session.user.tenantId]);
   return NextResponse.json({ success: true });
 }

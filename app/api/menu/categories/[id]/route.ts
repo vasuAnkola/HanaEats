@@ -31,8 +31,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const setClauses = keys.map((k, i) => `${k} = $${i + 1}`).join(", ");
   const values = keys.map((k) => fields[k]);
   const row = await queryOne(
-    `UPDATE menu_categories SET ${setClauses}, updated_at = NOW() WHERE id = $${keys.length + 1} RETURNING *`,
-    [...values, id]
+    `UPDATE menu_categories SET ${setClauses}, updated_at = NOW() WHERE id = $${keys.length + 1} AND tenant_id = $${keys.length + 2} RETURNING *`,
+    [...values, id, session.user.tenantId]
   );
   if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(row);
@@ -44,6 +44,6 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const { id } = await params;
-  await queryOne("DELETE FROM menu_categories WHERE id = $1", [id]);
+  await queryOne("DELETE FROM menu_categories WHERE id = $1 AND tenant_id = $2", [id, session.user.tenantId]);
   return NextResponse.json({ success: true });
 }

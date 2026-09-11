@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
 import { query, queryOne } from "@/lib/db";
-import { apiError, getTenantId, tenantRequired } from "../_utils";
+import { apiError, getTenantId, tenantRequired, canManageInventory, inventoryForbidden } from "../_utils";
 
 export async function GET(req: NextRequest) {
   try {
@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!canManageInventory(session)) return inventoryForbidden();
     const body = await req.json();
     const tenantId = getTenantId(session, body);
     if (!tenantId) return tenantRequired();

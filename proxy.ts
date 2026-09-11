@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/api/auth"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/api/auth",
+  "/qr", // customer-facing QR self-ordering — no login
+  "/api/qr", // menu / order / order-status for the QR flow above
+  "/api/delivery/webhook", // inbound calls from GrabFood/Foodpanda/GoFood, not a browser session
+];
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;

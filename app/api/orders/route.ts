@@ -131,6 +131,33 @@ export async function POST(req: NextRequest) {
           [orderItemId, a.addon_name, a.price]
         );
       }
+
+      // Auto-deduct recipe ingredients from stock, if this menu item has a recipe linked.
+      if (item.item_id) {
+        const recipe = await client.query(
+          `SELECT id, yield_qty FROM recipes WHERE menu_item_id = $1 AND tenant_id = $2 AND is_active = true LIMIT 1`,
+          [item.item_id, tenantId]
+        );
+        if (recipe.rows[0]) {
+          const yieldQty = parseFloat(recipe.rows[0].yield_qty) || 1;
+          const recipeIngredients = await client.query(
+            `SELECT ingredient_id, quantity FROM recipe_ingredients WHERE recipe_id = $1`,
+            [recipe.rows[0].id]
+          );
+          for (const ri of recipeIngredients.rows) {
+            const deduction = (parseFloat(ri.quantity) / yieldQty) * item.quantity;
+            await client.query(
+              `UPDATE ingredients SET current_stock = current_stock - $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3`,
+              [deduction, ri.ingredient_id, tenantId]
+            );
+            await client.query(
+              `INSERT INTO stock_movements (tenant_id, ingredient_id, outlet_id, movement_type, quantity, reference_id, notes, created_by)
+               VALUES ($1,$2,$3,'sale_deduction',$4,$5,$6,$7)`,
+              [tenantId, ri.ingredient_id, outlet_id, -deduction, order.id, `Order ${orderNum}`, session.user.id]
+            );
+          }
+        }
+      }
     }
 
     // Mark table occupied if dine-in

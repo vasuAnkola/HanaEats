@@ -17,7 +17,7 @@ export async function GET(
   }
 
   const categories = await query<{ id: number; name: string }>(
-    "SELECT id, name FROM menu_categories WHERE tenant_id = $1 ORDER BY sort_order, name",
+    "SELECT id, name FROM menu_categories WHERE tenant_id = $1 ORDER BY display_order, name",
     [qrSession.tenant_id]
   );
 
@@ -32,7 +32,7 @@ export async function GET(
     `SELECT id, category_id, name, description, price, image_url
      FROM menu_items
      WHERE tenant_id = $1 AND is_available = true
-     ORDER BY category_id, sort_order, name`,
+     ORDER BY category_id, display_order, name`,
     [qrSession.tenant_id]
   );
 

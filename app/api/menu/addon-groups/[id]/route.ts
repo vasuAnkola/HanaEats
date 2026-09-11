@@ -27,9 +27,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (!keys.length) return NextResponse.json({ error: "No fields" }, { status: 400 });
   const setClauses = keys.map((k, i) => `${k} = $${i + 1}`).join(", ");
   const row = await queryOne(
-    `UPDATE menu_add_on_groups SET ${setClauses} WHERE id = $${keys.length + 1} RETURNING *`,
-    [...keys.map((k) => fields[k]), id]
+    `UPDATE menu_add_on_groups mag SET ${setClauses}
+     FROM menu_items mi WHERE mag.item_id = mi.id
+       AND mag.id = $${keys.length + 1} AND mi.tenant_id = $${keys.length + 2}
+     RETURNING mag.*`,
+    [...keys.map((k) => fields[k]), id, session.user.tenantId]
   );
+  if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(row);
 }
 
@@ -39,6 +43,10 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const { id } = await params;
-  await queryOne("DELETE FROM menu_add_on_groups WHERE id = $1", [id]);
+  await queryOne(
+    `DELETE FROM menu_add_on_groups mag USING menu_items mi
+     WHERE mag.item_id = mi.id AND mag.id = $1 AND mi.tenant_id = $2`,
+    [id, session.user.tenantId]
+  );
   return NextResponse.json({ success: true });
 }

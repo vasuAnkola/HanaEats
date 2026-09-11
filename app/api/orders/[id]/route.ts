@@ -15,8 +15,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
      FROM orders o
      LEFT JOIN outlet_tables t ON t.id = o.table_id
      LEFT JOIN users u ON u.id = o.served_by
-     WHERE o.id = $1`,
-    [id]
+     WHERE o.id = $1 AND o.tenant_id = $2`,
+    [id, session.user.tenantId]
   );
   if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -50,7 +50,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     await client.query("BEGIN");
 
     const orderRes = await client.query(
-      `SELECT * FROM orders WHERE id=$1`, [id]
+      `SELECT * FROM orders WHERE id=$1 AND tenant_id=$2`, [id, session.user.tenantId]
     );
     const order = orderRes.rows[0];
     if (!order) throw new Error("Order not found");
@@ -121,8 +121,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const total = parseFloat((subtotal + taxAmount).toFixed(2));
 
     const updated = await client.query(
-      `UPDATE orders SET subtotal=$1, tax_amount=$2, total=$3, updated_at=NOW() WHERE id=$4 RETURNING *`,
-      [subtotal.toFixed(2), taxAmount.toFixed(2), total.toFixed(2), id]
+      `UPDATE orders SET subtotal=$1, tax_amount=$2, total=$3, updated_at=NOW() WHERE id=$4 AND tenant_id=$5 RETURNING *`,
+      [subtotal.toFixed(2), taxAmount.toFixed(2), total.toFixed(2), id, session.user.tenantId]
     );
 
     await client.query("COMMIT");

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { queryOne } from "@/lib/db";
 import pool from "@/lib/db";
-import { apiError, getTenantId, tenantRequired } from "../../_utils";
+import { apiError, getTenantId, tenantRequired, canManageInventory, inventoryForbidden } from "../../_utils";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -34,6 +34,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!canManageInventory(session)) return inventoryForbidden();
     const { id } = await params;
     const body = await req.json();
     const tenantId = getTenantId(session, body);
@@ -58,8 +59,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         );
         await client.query("COMMIT");
         const updated = await queryOne(
-          `SELECT id, name, unit, cost_per_unit, current_stock AS stock_quantity, reorder_level AS low_stock_threshold FROM ingredients WHERE id = $1`,
-          [id]
+          `SELECT id, name, unit, cost_per_unit, current_stock AS stock_quantity, reorder_level AS low_stock_threshold FROM ingredients WHERE id = $1 AND tenant_id = $2`,
+          [id, tenantId]
         );
         return NextResponse.json(updated);
       } catch (e) {
@@ -103,6 +104,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   try {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!canManageInventory(session)) return inventoryForbidden();
     const tenantId = getTenantId(session);
     if (!tenantId) return tenantRequired();
     const { id } = await params;

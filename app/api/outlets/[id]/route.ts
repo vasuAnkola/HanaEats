@@ -57,6 +57,12 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const setClauses = keys.map((k, i) => `${k} = $${i + 1}`).join(", ");
   const values = keys.map((k) => fields[k]);
 
+  const existing = await queryOne<{ tenant_id: string }>("SELECT tenant_id FROM outlets WHERE id = $1", [id]);
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (session.user.role !== "super_admin" && String(existing.tenant_id) !== session.user.tenantId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const outlet = await queryOne(
     `UPDATE outlets SET ${setClauses}, updated_at = NOW() WHERE id = $${keys.length + 1} RETURNING *`,
     [...values, id]

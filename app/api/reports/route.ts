@@ -97,10 +97,10 @@ export async function GET(req: NextRequest) {
 
   if (type === "inventory") {
     const rows = await query(`
-      SELECT i.name, i.unit, i.stock_quantity, i.low_stock_threshold,
+      SELECT i.name, i.unit, i.current_stock AS stock_quantity, i.reorder_level AS low_stock_threshold,
              i.cost_per_unit,
-             (i.stock_quantity * i.cost_per_unit)::numeric AS stock_value,
-             CASE WHEN i.low_stock_threshold > 0 AND i.stock_quantity <= i.low_stock_threshold
+             (i.current_stock * i.cost_per_unit)::numeric AS stock_value,
+             CASE WHEN i.reorder_level > 0 AND i.current_stock <= i.reorder_level
                   THEN true ELSE false END AS is_low
       FROM ingredients i
       WHERE i.tenant_id = $1 AND i.is_active = true

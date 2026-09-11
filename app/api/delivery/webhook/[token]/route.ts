@@ -41,6 +41,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   }
   const { external_order_id, customer_name, customer_phone, delivery_address, items } = parsed.data;
 
+  // Platforms retry webhooks on timeout — if we've already recorded this exact
+  // platform order, hand back the order we already created instead of duplicating it.
+  const existing = await queryOne<{ order_id: number }>(
+    `SELECT do_.order_id FROM delivery_orders do_ WHERE do_.platform_id = $1 AND do_.external_order_id = $2`,
+    [platform.id, external_order_id]
+  );
+  if (existing) {
+    const order = await queryOne(`SELECT id, order_number FROM orders WHERE id = $1`, [existing.order_id]);
+    return NextResponse.json({ order_id: existing.order_id, order_number: (order as { order_number: string } | null)?.order_number, duplicate: true }, { status: 200 });
+  }
+
   const subtotal = items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
   const total = parseFloat(subtotal.toFixed(2));
 

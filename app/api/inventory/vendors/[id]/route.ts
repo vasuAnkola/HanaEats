@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
 import { queryOne } from "@/lib/db";
-import { apiError, getTenantId, tenantRequired } from "../../_utils";
+import { apiError, getTenantId, tenantRequired, canManageInventory, inventoryForbidden } from "../../_utils";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!canManageInventory(session)) return inventoryForbidden();
     const { id } = await params;
     const body = await req.json();
     const tenantId = getTenantId(session, body);
@@ -38,6 +39,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   try {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!canManageInventory(session)) return inventoryForbidden();
     const tenantId = getTenantId(session);
     if (!tenantId) return tenantRequired();
     const { id } = await params;

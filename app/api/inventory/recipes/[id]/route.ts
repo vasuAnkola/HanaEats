@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
 import { query, queryOne } from "@/lib/db";
-import { apiError, getTenantId, tenantRequired } from "../../_utils";
+import { apiError, getTenantId, tenantRequired, canManageInventory, inventoryForbidden } from "../../_utils";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -21,7 +21,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
     const ingredients = await query(
       `SELECT ri.*, i.name AS ingredient_name, i.unit AS ingredient_unit,
-              i.cost_per_unit, i.stock_quantity
+              i.cost_per_unit, i.current_stock AS stock_quantity
        FROM recipe_ingredients ri
        JOIN ingredients i ON i.id = ri.ingredient_id
        WHERE ri.recipe_id = $1`,
@@ -41,6 +41,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!canManageInventory(session)) return inventoryForbidden();
     const { id } = await params;
     const body = await req.json();
     const tenantId = getTenantId(session, body);
@@ -62,6 +63,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
        is_active != null ? is_active : null,
        id, tenantId]
     );
+    if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     if (ingredients) {
       await queryOne(`DELETE FROM recipe_ingredients WHERE recipe_id = $1`, [id]);
@@ -83,6 +85,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   try {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!canManageInventory(session)) return inventoryForbidden();
     const tenantId = getTenantId(session);
     if (!tenantId) return tenantRequired();
     const { id } = await params;
