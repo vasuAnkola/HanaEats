@@ -17,7 +17,7 @@
 #      this script does NOT create one for you; see the ENV NOTE below.
 set -euo pipefail
 
-REPO="git@github-vasu:vasuAnkola/app.git"
+REPO="git@github-vasu:vasuAnkola/HanaEats.git"
 APP_ROOT="/var/www/hanaeats"
 APP_DIR="$APP_ROOT/app"
 BRANCH="master"
