@@ -10,6 +10,9 @@ import { DataTable, type Column } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { Pencil, Trash2, UserPlus, Loader2, Eye, EyeOff } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useTourUser, usePageTour } from "@/lib/tour";
+import { SpotlightTour } from "@/components/onboarding/spotlight-tour";
+import { USERS_STEPS } from "@/lib/page-tour-steps";
 
 interface User {
   id: number; name: string; email: string; role: string;
@@ -37,6 +40,8 @@ const ROLES = ["admin","manager","cashier","waiter","kitchen"];
 const emptyForm = { name: "", email: "", role: "cashier", outlet_id: "", is_active: true, password: "" };
 
 export default function UsersPage() {
+  const { userId } = useTourUser();
+  const pageTour = usePageTour("users", userId);
   const [users, setUsers] = useState<User[] | null>(null);
   const [outlets, setOutlets] = useState<Outlet[]>([]);
   const [canManage, setCanManage] = useState(false);
@@ -173,6 +178,7 @@ export default function UsersPage() {
         onConfirm={confirmDel}
         onCancel={() => setConfirmUser(null)}
       />
+      <SpotlightTour steps={USERS_STEPS} run={pageTour.run} onFinish={pageTour.finish} />
       <Header title="Team" subtitle="Manage staff accounts and roles" />
       <div className="p-6 space-y-6">
 
@@ -184,12 +190,12 @@ export default function UsersPage() {
               <p className="text-xs text-gray-400 mt-0.5">{(users ?? []).length} staff member{(users ?? []).length !== 1 ? "s" : ""}</p>
             </div>
             {canManage && (
-              <Button className="gap-2 h-9" onClick={openAdd}>
+              <Button data-tour="users-add" className="gap-2 h-9" onClick={openAdd}>
                 <UserPlus className="w-4 h-4" /> Add User
               </Button>
             )}
           </div>
-          <div className="p-4">
+          <div className="p-4" data-tour="users-table">
             {users === null ? <TableSkeleton rows={6} cols={5} /> : (
               <DataTable
                 data={users}

@@ -58,6 +58,12 @@ export function getNavGroups(role: UserRole): NavGroup[] {
           { label: "Countries", href: "/dashboard/countries", icon: Globe },
         ],
       },
+      {
+        title: "System",
+        items: [
+          { label: "Settings", href: "/dashboard/settings", icon: Settings },
+        ],
+      },
     ];
   }
 
@@ -126,6 +132,12 @@ export function getNavGroups(role: UserRole): NavGroup[] {
           { label: "Insights", href: "/dashboard/insights", icon: Sparkles },
         ],
       },
+      {
+        title: "System",
+        items: [
+          { label: "Settings", href: "/dashboard/settings", icon: Settings },
+        ],
+      },
     ];
   }
 
@@ -141,6 +153,12 @@ export function getNavGroups(role: UserRole): NavGroup[] {
           { label: "Shifts", href: "/dashboard/shifts", icon: Clock },
         ],
       },
+      {
+        title: "System",
+        items: [
+          { label: "Settings", href: "/dashboard/settings", icon: Settings },
+        ],
+      },
     ];
   }
 
@@ -154,6 +172,12 @@ export function getNavGroups(role: UserRole): NavGroup[] {
           { label: "Tables", href: "/dashboard/tables", icon: Armchair },
         ],
       },
+      {
+        title: "System",
+        items: [
+          { label: "Settings", href: "/dashboard/settings", icon: Settings },
+        ],
+      },
     ];
   }
 
@@ -163,6 +187,12 @@ export function getNavGroups(role: UserRole): NavGroup[] {
         title: "Kitchen",
         items: [
           { label: "KDS", href: "/dashboard/kds", icon: ChefHat },
+        ],
+      },
+      {
+        title: "System",
+        items: [
+          { label: "Settings", href: "/dashboard/settings", icon: Settings },
         ],
       },
     ];

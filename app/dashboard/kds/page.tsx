@@ -5,6 +5,9 @@ import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, RefreshCw, Clock, CheckCircle, ChefHat } from "lucide-react";
+import { useTourUser, usePageTour } from "@/lib/tour";
+import { SpotlightTour } from "@/components/onboarding/spotlight-tour";
+import { KDS_STEPS } from "@/lib/page-tour-steps";
 
 interface Outlet { id: number; name: string; }
 interface OrderItem { id: number; item_name: string; quantity: number; note: string | null; variants: { variant_name: string; option_name: string }[] | null; }
@@ -32,6 +35,8 @@ function elapsed(created: string) {
 }
 
 export default function KDSPage() {
+  const { userId } = useTourUser();
+  const pageTour = usePageTour("kds", userId);
   const [outlets, setOutlets] = useState<Outlet[]>([]);
   const [outletId, setOutletId] = useState("");
   const [orders, setOrders] = useState<KDSOrder[]>([]);
@@ -104,8 +109,8 @@ export default function KDSPage() {
   const preparing = orders.filter(o => o.status === "preparing");
   const ready     = orders.filter(o => o.status === "ready");
 
-  const col = (title: string, color: string, badge: string, list: KDSOrder[], nextStatus?: string, btnLabel?: string) => (
-    <div className="flex-1 min-w-0">
+  const col = (title: string, color: string, badge: string, list: KDSOrder[], nextStatus?: string, btnLabel?: string, tourId?: string) => (
+    <div className="flex-1 min-w-0" data-tour={tourId}>
       <div className={`flex items-center gap-2 mb-3 px-1`}>
         <span className={`w-2 h-2 rounded-full ${color}`} />
         <p className="font-semibold text-gray-800 text-sm">{title}</p>
@@ -158,6 +163,7 @@ export default function KDSPage() {
 
   return (
     <div className="flex flex-col h-screen">
+      <SpotlightTour steps={KDS_STEPS} run={pageTour.run} onFinish={pageTour.finish} />
       <Header title="Kitchen Display" subtitle="Live order queue" />
       <div className="px-6 py-3 border-b border-gray-200 flex items-center gap-3 bg-white">
         <ChefHat className="w-4 h-4 text-[#5C432B]" />
@@ -175,9 +181,9 @@ export default function KDSPage() {
           <div className="flex justify-center items-center h-full"><Loader2 className="w-8 h-8 animate-spin text-gray-300" /></div>
         ) : (
           <div className="flex gap-4 h-full">
-            {col("Pending", "bg-amber-400", "bg-amber-100 text-amber-800", pending, "preparing", "→ Start Preparing")}
-            {col("Preparing", "bg-blue-400", "bg-blue-100 text-blue-800", preparing, "ready", "→ Mark Ready")}
-            {col("Ready", "bg-emerald-400", "bg-emerald-100 text-emerald-800", ready, undefined)}
+            {col("Pending", "bg-amber-400", "bg-amber-100 text-amber-800", pending, "preparing", "→ Start Preparing", "kds-pending")}
+            {col("Preparing", "bg-blue-400", "bg-blue-100 text-blue-800", preparing, "ready", "→ Mark Ready", "kds-preparing")}
+            {col("Ready", "bg-emerald-400", "bg-emerald-100 text-emerald-800", ready, undefined, undefined, "kds-ready")}
           </div>
         )}
       </div>

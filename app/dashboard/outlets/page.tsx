@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import Link from "next/link";
 import { Plus, Store, Loader2, MapPin, Phone, Pencil, CheckCircle, XCircle } from "lucide-react";
+import { useTourUser, usePageTour } from "@/lib/tour";
+import { SpotlightTour } from "@/components/onboarding/spotlight-tour";
+import { OUTLETS_STEPS } from "@/lib/page-tour-steps";
 
 interface Outlet {
   id: number;
@@ -39,6 +42,8 @@ const TYPE_COLOR: Record<string, string> = {
 };
 
 export default function OutletsPage() {
+  const { userId } = useTourUser();
+  const pageTour = usePageTour("outlets", userId);
   const [outlets, setOutlets] = useState<Outlet[]>([]);
   const [loading, setLoading] = useState(true);
   const [canCreate, setCanCreate] = useState(false);
@@ -157,6 +162,7 @@ export default function OutletsPage() {
 
   return (
     <div>
+      <SpotlightTour steps={OUTLETS_STEPS} run={pageTour.run} onFinish={pageTour.finish} />
       <Header title="Outlets" subtitle="Manage your branches and locations" />
       <div className="p-6 space-y-6">
 
@@ -200,13 +206,13 @@ export default function OutletsPage() {
             </div>
             {canCreate && (
               <Link href="/dashboard/outlets/new">
-                <Button className="gap-2 h-9">
+                <Button data-tour="outlets-add" className="gap-2 h-9">
                   <Plus className="w-4 h-4" /> Add Outlet
                 </Button>
               </Link>
             )}
           </div>
-          <div className="p-4">
+          <div className="p-4" data-tour="outlets-table">
             {loading ? (
               <div className="flex items-center justify-center py-20">
                 <Loader2 className="w-6 h-6 animate-spin text-blue-300" />

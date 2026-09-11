@@ -8,6 +8,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Plus, Minus, Trash2, ShoppingCart, Loader2, UtensilsCrossed, CheckCircle, CreditCard, Pencil, ArrowLeft, WifiOff, CloudUpload } from "lucide-react";
 import { queueOrder, syncQueuedOrders, getQueuedOrders, newClientOrderId } from "@/lib/offline-queue";
+import { useTourUser, usePageTour } from "@/lib/tour";
+import { SpotlightTour } from "@/components/onboarding/spotlight-tour";
+import { POS_STEPS } from "@/lib/page-tour-steps";
 
 interface Outlet { id: number; name: string; }
 interface Category { id: number; name: string; }
@@ -62,6 +65,8 @@ const PAYMENT_METHODS = [
 
 export default function POSPage() {
   const router = useRouter();
+  const { userId } = useTourUser();
+  const pageTour = usePageTour("pos", userId);
   const [outlets, setOutlets] = useState<Outlet[]>([]);
   const [outletId, setOutletId] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
@@ -671,6 +676,7 @@ export default function POSPage() {
   // ── Main POS screen ──────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col md:flex-row h-screen overflow-hidden bg-gray-50">
+      <SpotlightTour steps={POS_STEPS} run={pageTour.run} onFinish={pageTour.finish} />
       {/* Left — Menu */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {(!isOnline || pendingSync > 0 || queuedOffline) && (
@@ -684,17 +690,19 @@ export default function POSPage() {
           </div>
         )}
         <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 flex-wrap">
-          <Select value={outletId} onValueChange={(v) => v && setOutletId(v)}>
-            <SelectTrigger className="w-40 h-8 text-sm"><SelectValue placeholder="Outlet" /></SelectTrigger>
-            <SelectContent>{outlets.map(o => <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>)}</SelectContent>
-          </Select>
+          <div data-tour="pos-outlet" className="contents">
+            <Select value={outletId} onValueChange={(v) => v && setOutletId(v)}>
+              <SelectTrigger className="w-40 h-8 text-sm"><SelectValue placeholder="Outlet" /></SelectTrigger>
+              <SelectContent>{outlets.map(o => <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             <Input placeholder="Search items..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-sm" />
           </div>
         </div>
 
-        <div className="bg-white border-b border-gray-100 px-4 overflow-x-auto">
+        <div data-tour="pos-categories" className="bg-white border-b border-gray-100 px-4 overflow-x-auto">
           <div className="flex gap-1 py-2">
             {categories.map(c => (
               <button key={c.id} onClick={() => setSelectedCat(c.id)}
@@ -709,7 +717,7 @@ export default function POSPage() {
           {filteredItems.length === 0 ? (
             <div className="text-center py-16 text-gray-400 text-sm">No items found</div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div data-tour="pos-menu-grid" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {filteredItems.map(item => (
                 <button key={item.id} onClick={() => openCustom(item)}
                   className="relative bg-white border border-gray-100 rounded-xl p-3 text-left hover:border-blue-300 hover:shadow-md transition-all active:scale-95">
@@ -730,7 +738,7 @@ export default function POSPage() {
       </div>
 
       {/* Right — Cart */}
-      <div className="w-full md:w-80 flex-shrink-0 bg-white border-t md:border-t-0 md:border-l border-gray-200 flex flex-col min-h-[45vh] md:min-h-0">
+      <div data-tour="pos-cart" className="w-full md:w-80 flex-shrink-0 bg-white border-t md:border-t-0 md:border-l border-gray-200 flex flex-col min-h-[45vh] md:min-h-0">
         <div className="px-4 py-3 border-b border-gray-100">
           <div className="flex items-center gap-2 mb-3">
             <ShoppingCart className="w-4 h-4 text-blue-600" />
@@ -738,10 +746,12 @@ export default function POSPage() {
             <span className="ml-auto text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{cart.length} item{cart.length !== 1 ? "s" : ""}</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <Select value={orderType} onValueChange={(v) => v && setOrderType(v)}>
-              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>{ORDER_TYPES.map(t => <SelectItem key={t.value} value={t.value} className="text-xs">{t.label}</SelectItem>)}</SelectContent>
-            </Select>
+            <div data-tour="pos-order-type" className="contents">
+              <Select value={orderType} onValueChange={(v) => v && setOrderType(v)}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>{ORDER_TYPES.map(t => <SelectItem key={t.value} value={t.value} className="text-xs">{t.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
             {orderType === "dine_in" && (
               <Select value={tableId} onValueChange={(v) => v && setTableId(v)}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Table" /></SelectTrigger>
@@ -835,7 +845,7 @@ export default function POSPage() {
             <span>Total</span><span className="text-blue-700">{total.toFixed(2)}</span>
           </div>
           <Input placeholder="Order note..." value={note} onChange={e => setNote(e.target.value)} className="h-8 text-xs mt-1" />
-          <Button className="w-full h-11 font-bold text-base shadow-sm" disabled={cart.length === 0 || placing} onClick={placeOrder}>
+          <Button data-tour="pos-place-order" className="w-full h-11 font-bold text-base shadow-sm" disabled={cart.length === 0 || placing} onClick={placeOrder}>
             {placing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShoppingCart className="w-4 h-4 mr-2" />}
             Place Order · {total.toFixed(2)}
           </Button>

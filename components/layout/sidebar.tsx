@@ -119,7 +119,7 @@ export function AppSidebar({ userName, userEmail, userRole }: AppSidebarProps) {
 
                     return (
                       <Collapsible key={item.href} defaultOpen={isOpen} className="group/collapsible">
-                        <SidebarMenuItem>
+                        <SidebarMenuItem data-tour={`nav-${item.href.replace(/\//g, "-").replace(/^-/, "")}`}>
                           <CollapsibleTrigger
                             render={
                               <SidebarMenuButton
@@ -162,7 +162,7 @@ export function AppSidebar({ userName, userEmail, userRole }: AppSidebarProps) {
                   }
 
                   return (
-                    <SidebarMenuItem key={item.href}>
+                    <SidebarMenuItem key={item.href} data-tour={`nav-${item.href.replace(/\//g, "-").replace(/^-/, "")}`}>
                       <SidebarMenuButton
                         render={<Link href={item.href} />}
                         isActive={active}
