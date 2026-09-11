@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { query, queryOne } from "@/lib/db";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
+import { logAudit, getClientIp } from "@/lib/audit";
 
 const CreateUserSchema = z.object({
   name: z.string().min(2).max(150),
@@ -58,12 +59,18 @@ export async function POST(req: NextRequest) {
   const tenantId = body.tenant_id ?? session.user.tenantId;
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
 
-  const user = await queryOne(
+  const user = await queryOne<{ id: number }>(
     `INSERT INTO users (tenant_id, outlet_id, name, email, password_hash, role)
      VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING id, name, email, role, is_active, created_at`,
     [tenantId, parsed.data.outlet_id ?? null, parsed.data.name, parsed.data.email, passwordHash, parsed.data.role]
   );
+
+  logAudit({
+    userId: session.user.id, tenantId, action: "user.create", entity: "user", entityId: user?.id,
+    details: { name: parsed.data.name, email: parsed.data.email, role: parsed.data.role },
+    ip: getClientIp(req),
+  });
 
   return NextResponse.json(user, { status: 201 });
 }

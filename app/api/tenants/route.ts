@@ -4,6 +4,7 @@ import { query, queryOne } from "@/lib/db";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import pool from "@/lib/db";
+import { logAudit, getClientIp } from "@/lib/audit";
 
 const CreateTenantSchema = z.object({
   name: z.string().min(2).max(150),
@@ -81,6 +82,12 @@ export async function POST(req: NextRequest) {
     );
 
     await client.query("COMMIT");
+
+    logAudit({
+      userId: session.user.id, tenantId: tenant.id, action: "tenant.create", entity: "tenant", entityId: tenant.id,
+      details: { name, slug, plan, admin_email }, ip: getClientIp(req),
+    });
+
     return NextResponse.json(tenant, { status: 201 });
   } catch (err) {
     await client.query("ROLLBACK");

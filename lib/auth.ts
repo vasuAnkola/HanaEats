@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { queryOne } from "@/lib/db";
+import { logAudit, getClientIp } from "@/lib/audit";
 
 export type UserRole = "super_admin" | "admin" | "manager" | "cashier" | "waiter" | "kitchen";
 
@@ -27,8 +28,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         if (!credentials?.email || !credentials?.password) return null;
+        const ip = getClientIp(request);
 
         let user: DbUser | null;
         try {
@@ -41,18 +43,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        if (!user) return null;
+        if (!user) {
+          logAudit({ userId: null, tenantId: null, action: "auth.login_failed", details: { email: credentials.email }, ip });
+          return null;
+        }
 
         const passwordMatch = await bcrypt.compare(
           credentials.password as string,
           user.password_hash
         );
-        if (!passwordMatch) return null;
+        if (!passwordMatch) {
+          logAudit({ userId: user.id, tenantId: user.tenant_id, action: "auth.login_failed", details: { email: credentials.email }, ip });
+          return null;
+        }
 
         queryOne(
           "UPDATE users SET last_login_at = NOW() WHERE id = $1",
           [user.id]
         ).catch(() => {});
+        logAudit({ userId: user.id, tenantId: user.tenant_id, action: "auth.login", ip });
 
         return {
           id: String(user.id),

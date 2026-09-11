@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { queryOne } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { logAudit, getClientIp } from "@/lib/audit";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -47,6 +48,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (orderRow?.table_id) {
     await queryOne(`UPDATE outlet_tables SET status='occupied' WHERE id=$1`, [orderRow.table_id]);
   }
+
+  logAudit({
+    userId: session.user.id, tenantId: session.user.tenantId, action: "payment.void", entity: "payment", entityId: id,
+    details: { void_reason: void_reason || null }, ip: getClientIp(req),
+  });
 
   return NextResponse.json(row);
 }

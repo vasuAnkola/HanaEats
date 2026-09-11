@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { queryOne } from "@/lib/db";
 import bcrypt from "bcryptjs";
+import { logAudit, getClientIp } from "@/lib/audit";
 
 const SUPPORTED_LANGUAGES = ["en", "th", "ms", "id", "vi", "tl"];
 
@@ -58,5 +59,13 @@ export async function PATCH(req: NextRequest) {
      RETURNING id, name, email, role, language`,
     [language ?? null, name?.trim() ?? null, newPasswordHash, session.user.id]
   );
+
+  if (newPasswordHash) {
+    logAudit({
+      userId: session.user.id, tenantId: session.user.tenantId, action: "account.change_password",
+      entity: "user", entityId: session.user.id, ip: getClientIp(req),
+    });
+  }
+
   return NextResponse.json(user);
 }

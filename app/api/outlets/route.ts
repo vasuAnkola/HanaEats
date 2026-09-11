@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { query, queryOne } from "@/lib/db";
 import { z } from "zod";
+import { logAudit, getClientIp } from "@/lib/audit";
 
 const CreateOutletSchema = z.object({
   name: z.string().min(2).max(150),
@@ -49,12 +50,17 @@ export async function POST(req: NextRequest) {
 
   const { name, address, phone, email, outlet_type } = parsed.data;
 
-  const outlet = await queryOne(
+  const outlet = await queryOne<{ id: number }>(
     `INSERT INTO outlets (tenant_id, name, address, phone, email, outlet_type)
      VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING *`,
     [tenantId, name, address ?? null, phone ?? null, email ?? null, outlet_type]
   );
+
+  logAudit({
+    userId: session.user.id, tenantId, action: "outlet.create", entity: "outlet", entityId: outlet?.id,
+    details: { name, outlet_type }, ip: getClientIp(req),
+  });
 
   return NextResponse.json(outlet, { status: 201 });
 }

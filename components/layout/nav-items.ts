@@ -25,6 +25,7 @@ import {
   Users2,
   Bike,
   Sparkles,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -56,6 +57,7 @@ export function getNavGroups(role: UserRole): NavGroup[] {
           { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
           { label: "Tenants", href: "/dashboard/tenants", icon: Building2 },
           { label: "Countries", href: "/dashboard/countries", icon: Globe },
+          { label: "Activity Log", href: "/dashboard/audit-log", icon: ShieldCheck },
         ],
       },
       {
@@ -101,6 +103,7 @@ export function getNavGroups(role: UserRole): NavGroup[] {
       {
         title: "System",
         items: [
+          { label: "Activity Log", href: "/dashboard/audit-log", icon: ShieldCheck },
           { label: "Settings", href: "/dashboard/settings", icon: Settings },
         ],
       },
@@ -135,6 +138,7 @@ export function getNavGroups(role: UserRole): NavGroup[] {
       {
         title: "System",
         items: [
+          { label: "Activity Log", href: "/dashboard/audit-log", icon: ShieldCheck },
           { label: "Settings", href: "/dashboard/settings", icon: Settings },
         ],
       },

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { queryOne } from "@/lib/db";
 import bcrypt from "bcryptjs";
+import { logAudit, getClientIp } from "@/lib/audit";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -41,10 +42,18 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       ? [name || null, email || null, role || null, is_active ?? null, outlet_id ?? null, id, passwordHash, session.user.tenantId]
       : [name || null, email || null, role || null, is_active ?? null, outlet_id ?? null, id, session.user.tenantId]
   );
+
+  logAudit({
+    userId: session.user.id, tenantId: session.user.tenantId, action: passwordHash ? "user.reset_password" : "user.update",
+    entity: "user", entityId: id,
+    details: { fields: Object.keys(body).filter(k => body[k] !== undefined && k !== "password") },
+    ip: getClientIp(req),
+  });
+
   return NextResponse.json(user);
 }
 
-export async function DELETE(_req: NextRequest, { params }: Params) {
+export async function DELETE(req: NextRequest, { params }: Params) {
   const session = await auth();
   if (!session || !["super_admin", "admin"].includes(session.user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -52,5 +61,11 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   const { id } = await params;
   if (id === session.user.id) return NextResponse.json({ error: "Cannot delete your own account" }, { status: 400 });
   await queryOne("DELETE FROM users WHERE id = $1 AND tenant_id = $2", [id, session.user.tenantId]);
+
+  logAudit({
+    userId: session.user.id, tenantId: session.user.tenantId, action: "user.delete", entity: "user", entityId: id,
+    ip: getClientIp(req),
+  });
+
   return NextResponse.json({ ok: true });
 }
