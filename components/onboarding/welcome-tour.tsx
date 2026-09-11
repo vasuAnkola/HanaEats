@@ -48,7 +48,7 @@ export function WelcomeTour({ userId, role }: WelcomeTourProps) {
           <X className="w-4 h-4" />
         </button>
 
-        <div className="bg-gradient-to-br from-[#1E3A5F] to-[#2563EB] px-6 pt-9 pb-7 text-center">
+        <div className="bg-gradient-to-br from-[#5C432B] to-[#D98C3B] px-6 pt-9 pb-7 text-center">
           <div className="text-4xl mb-3">{slide.emoji}</div>
           <h2 className="text-white font-bold text-lg leading-snug">{slide.title}</h2>
         </div>
@@ -60,7 +60,7 @@ export function WelcomeTour({ userId, role }: WelcomeTourProps) {
             {slides.map((_, i) => (
               <span
                 key={i}
-                className={`h-1.5 rounded-full transition-all ${i === step ? "w-5 bg-blue-600" : "w-1.5 bg-gray-200"}`}
+                className={`h-1.5 rounded-full transition-all ${i === step ? "w-5 bg-brand-primary" : "w-1.5 bg-gray-200"}`}
               />
             ))}
           </div>

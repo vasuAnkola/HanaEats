@@ -20,7 +20,7 @@ interface OrderItem {
   id: number; item_name: string; quantity: number; unit_price: number;
   total_price: number; note: string | null;
   variants: { variant_name: string; option_name: string; price_modifier: number }[] | null;
-  addons: { addon_name: string; price: number }[] | null;
+  addons: { addon_name: string; price: number; quantity: number }[] | null;
 }
 interface OrderDetail extends Order { items: OrderItem[]; }
 interface MenuItem {
@@ -41,7 +41,7 @@ interface ItemDetail { id: number; name: string; price: number; variants: Varian
 const STATUS_COLOR: Record<string, string> = {
   draft:     "bg-gray-100 text-gray-500 ring-1 ring-gray-200",
   pending:   "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
-  preparing: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
+  preparing: "bg-brand-section text-brand-primary ring-1 ring-brand-gold",
   ready:     "bg-violet-50 text-violet-700 ring-1 ring-violet-200",
   served:    "bg-purple-50 text-purple-700 ring-1 ring-purple-200",
   closed:    "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
@@ -89,7 +89,7 @@ export default function OrdersPage() {
   const [customItem, setCustomItem] = useState<ItemDetail | null>(null);
   const [customDialog, setCustomDialog] = useState(false);
   const [selVariants, setSelVariants] = useState<Record<number, { option_name: string; price_modifier: number }>>({});
-  const [selAddons, setSelAddons] = useState<Record<number, { name: string; price: number }[]>>({});
+  const [selAddons, setSelAddons] = useState<Record<number, { name: string; price: number; quantity: number }[]>>({});
   const [customQty, setCustomQty] = useState(1);
 
   // Payment
@@ -181,13 +181,28 @@ export default function OrdersPage() {
     setCustomDialog(true);
   }
 
+  function adjustAddonQty(group: AddOnGroup, addon: { id: number; name: string; price: number }, delta: number) {
+    setSelAddons(s => {
+      const cur = s[group.id] ?? [];
+      const existing = cur.find(a => a.name === addon.name);
+      const currentQty = existing?.quantity ?? 0;
+      const newQty = currentQty + delta;
+      if (newQty < 0) return s;
+      const groupTotal = cur.reduce((sum, a) => sum + a.quantity, 0);
+      if (delta > 0 && group.max_select && groupTotal >= group.max_select) return s;
+      if (newQty === 0) return { ...s, [group.id]: cur.filter(a => a.name !== addon.name) };
+      if (existing) return { ...s, [group.id]: cur.map(a => a.name === addon.name ? { ...a, quantity: newQty } : a) };
+      return { ...s, [group.id]: [...cur, { name: addon.name, price: parseFloat(String(addon.price)) || 0, quantity: newQty }] };
+    });
+  }
+
   async function confirmCustomForEdit() {
     if (!customItem) return;
     const variants = Object.entries(selVariants).map(([gid, opt]) => {
       const g = customItem.variants.find(v => v.id === parseInt(gid));
       return { variant_name: g?.name ?? "", option_name: opt.option_name, price_modifier: parseFloat(String(opt.price_modifier)) || 0 };
     });
-    const addons = Object.values(selAddons).flat().map(a => ({ addon_name: a.name, price: parseFloat(String(a.price)) || 0 }));
+    const addons = Object.values(selAddons).flat().map(a => ({ addon_name: a.name, price: parseFloat(String(a.price)) || 0, quantity: a.quantity }));
     const fakeItem = { ...customItem, is_available: true, is_halal: false, variant_count: 0, addon_group_count: 0 };
     setCustomDialog(false);
     await addItemToOrder(fakeItem, customQty, variants, addons);
@@ -197,7 +212,7 @@ export default function OrdersPage() {
     item: { id: number; name: string; price: number },
     qty: number,
     variants: { variant_name: string; option_name: string; price_modifier: number }[],
-    addons: { addon_name: string; price: number }[]
+    addons: { addon_name: string; price: number; quantity: number }[]
   ) {
     if (!editOrder) return;
     setEditSaving(true);
@@ -302,7 +317,7 @@ export default function OrdersPage() {
         <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full capitalize ${STATUS_COLOR[o.status] ?? "bg-gray-100 text-gray-600"}`}>
           <span className={`w-1.5 h-1.5 rounded-full ${
             o.status === "pending" ? "bg-amber-500" :
-            o.status === "preparing" ? "bg-blue-500" :
+            o.status === "preparing" ? "bg-brand-orange" :
             o.status === "ready" ? "bg-violet-500" :
             o.status === "served" ? "bg-purple-500" :
             o.status === "closed" ? "bg-emerald-500" :
@@ -318,7 +333,7 @@ export default function OrdersPage() {
     },
     {
       key: "total", label: "Total",
-      render: o => <span className="text-sm font-bold text-blue-700">{parseFloat(String(o.total)).toFixed(2)}</span>,
+      render: o => <span className="text-sm font-bold text-brand-primary">{parseFloat(String(o.total)).toFixed(2)}</span>,
     },
     {
       key: "created_at", label: "Time", sortable: true,
@@ -347,7 +362,7 @@ export default function OrdersPage() {
               <CreditCard className="w-3 h-3" /> Pay
             </Button>
           )}
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50" onClick={() => viewDetail(o.id)}>
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-brand-primary hover:bg-brand-section" onClick={() => viewDetail(o.id)}>
             <Eye className="w-3.5 h-3.5" />
           </Button>
         </div>
@@ -387,7 +402,7 @@ export default function OrdersPage() {
           </div>
           <div className="p-4">
             {loading ? (
-              <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-blue-300" /></div>
+              <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-brand-gold" /></div>
             ) : (
               <DataTable data={orders} columns={columns} searchKeys={["order_number","customer_name","status"]} searchPlaceholder="Search orders..." pageSize={20} emptyMessage="No orders found." />
             )}
@@ -405,7 +420,7 @@ export default function OrdersPage() {
               <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize inline-flex items-center gap-1 ${STATUS_COLOR[detail.status]}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${
                   detail.status === "pending" ? "bg-amber-500" :
-                  detail.status === "preparing" ? "bg-blue-500" :
+                  detail.status === "preparing" ? "bg-brand-orange" :
                   detail.status === "ready" ? "bg-violet-500" :
                   detail.status === "served" ? "bg-purple-500" :
                   detail.status === "closed" ? "bg-emerald-500" :
@@ -425,7 +440,7 @@ export default function OrdersPage() {
                       <p className="text-sm font-semibold">{parseFloat(String(item.total_price)).toFixed(2)}</p>
                     </div>
                     {item.variants?.map((v, i) => <p key={i} className="text-xs text-gray-400">{v.variant_name}: {v.option_name}</p>)}
-                    {item.addons?.map((a, i) => <p key={i} className="text-xs text-gray-400">+ {a.addon_name}</p>)}
+                    {item.addons?.map((a, i) => <p key={i} className="text-xs text-gray-400">+ {a.quantity > 1 ? `${a.quantity}× ` : ""}{a.addon_name}</p>)}
                     {item.note && <p className="text-xs text-amber-600 italic">Note: {item.note}</p>}
                   </div>
                 ))}
@@ -433,7 +448,7 @@ export default function OrdersPage() {
               <div className="border-t border-gray-100 pt-3 space-y-1">
                 <div className="flex justify-between text-xs text-gray-500"><span>Subtotal</span><span>{parseFloat(String(detail.subtotal)).toFixed(2)}</span></div>
                 {detail.tax_amount > 0 && <div className="flex justify-between text-xs text-gray-500"><span>Tax</span><span>{parseFloat(String(detail.tax_amount)).toFixed(2)}</span></div>}
-                <div className="flex justify-between font-bold text-gray-900"><span>Total</span><span className="text-blue-700">{parseFloat(String(detail.total)).toFixed(2)}</span></div>
+                <div className="flex justify-between font-bold text-gray-900"><span>Total</span><span className="text-brand-primary">{parseFloat(String(detail.total)).toFixed(2)}</span></div>
               </div>
               {EDITABLE_STATUSES.includes(detail.status) && (
                 <Button variant="outline" className="w-full gap-2" onClick={() => { setDetailOpen(false); openEdit(detail); }}>
@@ -467,7 +482,7 @@ export default function OrdersPage() {
             {/* Left: menu picker */}
             <div className="flex-1 flex flex-col border-r border-gray-200 min-w-0">
               <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-                <UtensilsCrossed className="w-4 h-4 text-blue-500" />
+                <UtensilsCrossed className="w-4 h-4 text-brand-orange" />
                 <p className="font-semibold text-sm text-gray-800">Add Items</p>
                 {editSaving && <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400 ml-auto" />}
               </div>
@@ -504,11 +519,11 @@ export default function OrdersPage() {
                       variant="outline"
                       className="h-auto flex flex-col items-start justify-start p-3 rounded-xl"
                     >
-                      <div className="w-full h-14 bg-blue-400 rounded-lg flex items-center justify-center mb-2">
+                      <div className="w-full h-14 bg-brand-light rounded-lg flex items-center justify-center mb-2">
                         <UtensilsCrossed className="w-6 h-6 text-white opacity-90" />
                       </div>
                       <p className="font-medium text-gray-900 text-xs leading-tight text-left">{item.name}</p>
-                      <p className="text-blue-700 font-bold text-xs mt-0.5">{parseFloat(String(item.price)).toFixed(2)}</p>
+                      <p className="text-brand-primary font-bold text-xs mt-0.5">{parseFloat(String(item.price)).toFixed(2)}</p>
                     </Button>
                   ))}
                 </div>
@@ -542,7 +557,7 @@ export default function OrdersPage() {
                       <p key={i} className="text-[10px] text-gray-400">{v.variant_name}: {v.option_name}</p>
                     ))}
                     {item.addons?.map((a, i) => (
-                      <p key={i} className="text-[10px] text-gray-400">+ {a.addon_name}</p>
+                      <p key={i} className="text-[10px] text-gray-400">+ {a.quantity > 1 ? `${a.quantity}× ` : ""}{a.addon_name}</p>
                     ))}
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-1">
@@ -577,7 +592,7 @@ export default function OrdersPage() {
                 {parseFloat(String(editOrder?.tax_amount ?? 0)) > 0 && (
                   <div className="flex justify-between text-xs text-gray-500"><span>Tax</span><span>{parseFloat(String(editOrder?.tax_amount ?? 0)).toFixed(2)}</span></div>
                 )}
-                <div className="flex justify-between font-bold text-gray-900 text-sm"><span>Total</span><span className="text-blue-700">{parseFloat(String(editOrder?.total ?? 0)).toFixed(2)}</span></div>
+                <div className="flex justify-between font-bold text-gray-900 text-sm"><span>Total</span><span className="text-brand-primary">{parseFloat(String(editOrder?.total ?? 0)).toFixed(2)}</span></div>
                 <Button className="w-full mt-2 h-9" onClick={() => setEditOpen(false)}>
                   Done
                 </Button>
@@ -619,23 +634,27 @@ export default function OrdersPage() {
                   <div className="flex flex-wrap gap-2">
                     {group.add_ons?.map(addon => {
                       const cur = selAddons[group.id] ?? [];
-                      const sel = cur.some(a => a.name === addon.name);
+                      const qty = cur.find(a => a.name === addon.name)?.quantity ?? 0;
+                      if (qty === 0) {
+                        return (
+                          <Button key={addon.id} type="button" onClick={() => adjustAddonQty(group, addon, 1)} variant="outline" className="rounded-full text-xs">
+                            {addon.name}{parseFloat(String(addon.price)) > 0 ? ` +${parseFloat(String(addon.price)).toFixed(2)}` : ""}
+                          </Button>
+                        );
+                      }
                       return (
-                        <Button
-                          key={addon.id}
-                          onClick={() => {
-                            setSelAddons(s => {
-                              const c = s[group.id] ?? [];
-                              if (sel) return { ...s, [group.id]: c.filter(a => a.name !== addon.name) };
-                              if (group.max_select && c.length >= group.max_select) return s;
-                              return { ...s, [group.id]: [...c, { name: addon.name, price: parseFloat(String(addon.price)) || 0 }] };
-                            });
-                          }}
-                          variant={sel ? "default" : "outline"}
-                          className="rounded-full text-xs"
-                        >
-                          {addon.name}{parseFloat(String(addon.price)) > 0 ? ` +${parseFloat(String(addon.price)).toFixed(2)}` : ""}
-                        </Button>
+                        <div key={addon.id} className="flex items-center gap-2 rounded-full border border-brand-primary bg-brand-primary text-white pl-3 pr-1.5 py-1">
+                          <span className="text-xs font-semibold whitespace-nowrap">{addon.name}</span>
+                          <div className="flex items-center gap-1">
+                            <button type="button" onClick={() => adjustAddonQty(group, addon, -1)} className="w-5 h-5 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center">
+                              <Minus className="w-2.5 h-2.5" />
+                            </button>
+                            <span className="w-4 text-center text-xs font-bold tabular-nums">{qty}</span>
+                            <button type="button" onClick={() => adjustAddonQty(group, addon, 1)} className="w-5 h-5 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center">
+                              <Plus className="w-2.5 h-2.5" />
+                            </button>
+                          </div>
+                        </div>
                       );
                     })}
                   </div>
@@ -692,9 +711,9 @@ export default function OrdersPage() {
           ) : (
             <div className="space-y-4 py-2">
               {payError && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{payError}</p>}
-                <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center justify-between">
-                <span className="text-sm text-blue-700 font-semibold">Order Total</span>
-                <span className="text-lg font-bold text-blue-700">{parseFloat(String(payOrder?.total ?? 0)).toFixed(2)}</span>
+                <div className="bg-brand-section border border-brand-section rounded-xl px-4 py-3 flex items-center justify-between">
+                <span className="text-sm text-brand-primary font-semibold">Order Total</span>
+                <span className="text-lg font-bold text-brand-primary">{parseFloat(String(payOrder?.total ?? 0)).toFixed(2)}</span>
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-600 block mb-2">Payment Method</label>

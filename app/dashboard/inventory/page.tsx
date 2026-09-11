@@ -25,7 +25,7 @@ export default function InventoryPage() {
   ).length ?? 0;
 
   const cards = [
-    { href: "/dashboard/inventory/ingredients", icon: FlaskConical, label: "Ingredients", desc: "Stock levels, cost per unit, adjustments", color: "text-indigo-600 bg-indigo-50 border-indigo-100", ring: "hover:border-indigo-300" },
+    { href: "/dashboard/inventory/ingredients", icon: FlaskConical, label: "Ingredients", desc: "Stock levels, cost per unit, adjustments", color: "text-brand-primary bg-brand-section border-brand-section", ring: "hover:border-brand-gold" },
     { href: "/dashboard/inventory/purchase-orders", icon: ShoppingCart, label: "Purchase Orders", desc: "Create POs, track delivery, receive stock", color: "text-amber-600 bg-amber-50 border-amber-100", ring: "hover:border-amber-300" },
     { href: "/dashboard/inventory/vendors", icon: Truck, label: "Vendors", desc: "Supplier contacts and details", color: "text-emerald-600 bg-emerald-50 border-emerald-100", ring: "hover:border-emerald-300" },
     { href: "/dashboard/inventory/recipes", icon: ChefHat, label: "Recipes", desc: "Ingredient usage per menu item, cost per dish", color: "text-rose-600 bg-rose-50 border-rose-100", ring: "hover:border-rose-300" },
@@ -54,7 +54,7 @@ export default function InventoryPage() {
               <div className={"w-11 h-11 rounded-xl flex items-center justify-center mb-4 border " + c.color}>
                 <c.icon className="w-5 h-5" />
               </div>
-              <p className="font-semibold text-gray-900 group-hover:text-indigo-700 transition-colors">{c.label}</p>
+              <p className="font-semibold text-gray-900 group-hover:text-brand-primary transition-colors">{c.label}</p>
               <p className="text-xs text-gray-500 mt-1 leading-relaxed">{c.desc}</p>
             </Link>
           ))}

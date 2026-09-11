@@ -11,6 +11,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const outlet_id = searchParams.get("outlet_id");
   const status = searchParams.get("status");
+  const mine = searchParams.get("mine") === "true";
 
   if (!outlet_id) return NextResponse.json({ error: "outlet_id required" }, { status: 400 });
 
@@ -25,6 +26,10 @@ export async function GET(req: NextRequest) {
   if (status) {
     params.push(status);
     sql += ` AND ss.status = $${params.length}`;
+  }
+  if (mine) {
+    params.push(session.user.id);
+    sql += ` AND ss.cashier_id = $${params.length}`;
   }
 
   sql += ` ORDER BY ss.opening_at DESC LIMIT 50`;

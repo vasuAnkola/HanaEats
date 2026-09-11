@@ -37,12 +37,12 @@ export default function MenuHubPage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-24">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-300" />
+            <Loader2 className="w-6 h-6 animate-spin text-brand-gold" />
           </div>
         ) : outlets.length === 0 ? (
           <div className="bg-white border border-gray-100 rounded-2xl shadow-sm flex flex-col items-center justify-center py-20 text-center px-6">
-            <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
-              <UtensilsCrossed className="w-8 h-8 text-blue-300" />
+            <div className="w-16 h-16 rounded-2xl bg-brand-section flex items-center justify-center mb-4">
+              <UtensilsCrossed className="w-8 h-8 text-brand-gold" />
             </div>
             <p className="text-gray-700 font-semibold text-base">No outlets yet</p>
             <p className="text-sm text-gray-400 mt-1 mb-5">Create an outlet first before managing menus.</p>
@@ -54,9 +54,9 @@ export default function MenuHubPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {outlets.map((o) => (
               <Link key={o.id} href={`/dashboard/menu/${o.id}`}>
-                <div className="bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-pointer group p-5">
+                <div className="bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-brand-gold transition-all cursor-pointer group p-5">
                   <div className="flex items-start justify-between mb-5">
-                    <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-sm">
+                    <div className="w-12 h-12 bg-brand-primary rounded-xl flex items-center justify-center shadow-sm">
                       <Store className="w-6 h-6 text-white" />
                     </div>
                     <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full ring-1 ${
@@ -71,11 +71,11 @@ export default function MenuHubPage() {
                   <p className="font-bold text-gray-900 text-base">{o.name}</p>
                   <p className="text-xs text-gray-400 mt-0.5">{TYPE_LABEL[o.outlet_type] ?? o.outlet_type}</p>
                   <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 group-hover:gap-2.5 transition-all">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-brand-primary group-hover:gap-2.5 transition-all">
                       <ChefHat className="w-3.5 h-3.5" /> Manage Menu
                     </div>
-                    <div className="w-7 h-7 rounded-full bg-blue-50 group-hover:bg-blue-600 flex items-center justify-center transition-colors">
-                      <ArrowRight className="w-3.5 h-3.5 text-blue-400 group-hover:text-white transition-colors" />
+                    <div className="w-7 h-7 rounded-full bg-brand-section group-hover:bg-brand-primary flex items-center justify-center transition-colors">
+                      <ArrowRight className="w-3.5 h-3.5 text-brand-light group-hover:text-white transition-colors" />
                     </div>
                   </div>
                 </div>

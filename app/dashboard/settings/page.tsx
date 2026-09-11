@@ -97,7 +97,7 @@ export default function SettingsPage() {
               <p className="text-sm"><span className="text-gray-400">Email:</span> <span className="text-gray-800 font-medium">{account.email}</span></p>
               <p className="text-sm"><span className="text-gray-400">Role:</span> <span className="text-gray-800 font-medium capitalize">{account.role.replace("_", " ")}</span></p>
               {canManageTeam && (
-                <p className="text-xs text-gray-400">Need to reset someone else's password? Do it from <a href="/dashboard/users" className="text-blue-600 hover:underline">Team</a> — open their profile and set a new one.</p>
+                <p className="text-xs text-gray-400">Need to reset someone else's password? Do it from <a href="/dashboard/users" className="text-brand-primary hover:underline">Team</a> — open their profile and set a new one.</p>
               )}
             </div>
           ) : (

@@ -6,6 +6,9 @@ const PUBLIC_PATHS = [
   "/qr", // customer-facing QR self-ordering — no login
   "/api/qr", // menu / order / order-status for the QR flow above
   "/api/delivery/webhook", // inbound calls from GrabFood/Foodpanda/GoFood, not a browser session
+  "/book", // public table-booking page — no login
+  "/api/public", // outlet lookup / reservation creation for the booking page above
+  "/offline", // service worker's offline fallback page
 ];
 
 export function proxy(req: NextRequest) {
@@ -31,5 +34,5 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.png$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest\\.json|sw\\.js|.*\\.png$).*)"],
 };

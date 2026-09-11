@@ -14,7 +14,7 @@ interface OrderItem {
   quantity: number;
   unit_price: number;
   variants?: { variant_name: string; option_name: string; price_modifier: number }[];
-  addons?: { addon_name: string; price: number }[];
+  addons?: { addon_name: string; price: number; quantity?: number }[];
 }
 
 export async function POST(
@@ -46,7 +46,7 @@ export async function POST(
     const subtotal = items.reduce((sum, item) => {
       const itemTotal = parseFloat(String(item.unit_price)) * item.quantity;
       const variantsTotal = (item.variants ?? []).reduce((s, v) => s + parseFloat(String(v.price_modifier)), 0) * item.quantity;
-      const addonsTotal = (item.addons ?? []).reduce((s, a) => s + parseFloat(String(a.price)), 0) * item.quantity;
+      const addonsTotal = (item.addons ?? []).reduce((s, a) => s + parseFloat(String(a.price)) * (a.quantity ?? 1), 0) * item.quantity;
       return sum + itemTotal + variantsTotal + addonsTotal;
     }, 0);
 
@@ -63,7 +63,7 @@ export async function POST(
     for (const item of items) {
       const unitPrice = parseFloat(String(item.unit_price));
       const variantsTotal = (item.variants ?? []).reduce((s, v) => s + parseFloat(String(v.price_modifier)), 0);
-      const addonsTotal = (item.addons ?? []).reduce((s, a) => s + parseFloat(String(a.price)), 0);
+      const addonsTotal = (item.addons ?? []).reduce((s, a) => s + parseFloat(String(a.price)) * (a.quantity ?? 1), 0);
       const lineTotal = (unitPrice + variantsTotal + addonsTotal) * item.quantity;
 
       const itemRow = await client.query(
@@ -82,8 +82,8 @@ export async function POST(
 
       for (const a of item.addons ?? []) {
         await client.query(
-          "INSERT INTO order_item_addons (order_item_id, addon_name, price) VALUES ($1,$2,$3)",
-          [orderItemId, a.addon_name, parseFloat(String(a.price)).toFixed(2)]
+          "INSERT INTO order_item_addons (order_item_id, addon_name, price, quantity) VALUES ($1,$2,$3,$4)",
+          [orderItemId, a.addon_name, parseFloat(String(a.price)).toFixed(2), a.quantity ?? 1]
         );
       }
     }

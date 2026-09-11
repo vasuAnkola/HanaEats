@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { businessDateStr } from "@/lib/date";
+import { getTenantTimezone } from "@/lib/tenant";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -14,7 +16,7 @@ export async function POST(req: NextRequest) {
   );
   if (!rows[0]) return NextResponse.json({ valid: false, reason: "Invalid or inactive voucher code" });
   const v = rows[0];
-  const today = new Date().toISOString().split("T")[0];
+  const today = businessDateStr(await getTenantTimezone(session.user.tenantId));
   if (v.valid_from && today < v.valid_from) return NextResponse.json({ valid: false, reason: "Voucher not yet valid" });
   if (v.valid_until && today > v.valid_until) return NextResponse.json({ valid: false, reason: "Voucher has expired" });
   if (v.max_uses != null && parseInt(String(v.used_count)) >= parseInt(String(v.max_uses))) return NextResponse.json({ valid: false, reason: "Usage limit reached" });

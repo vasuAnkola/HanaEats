@@ -48,7 +48,7 @@ const ORDER_STATUS_LABEL: Record<string, string> = {
 
 const ORDER_STATUS_COLOR: Record<string, string> = {
   pending:   "text-amber-600",
-  preparing: "text-blue-600",
+  preparing: "text-brand-primary",
   ready:     "text-emerald-600",
   served:    "text-purple-600",
   closed:    "text-gray-500",
@@ -154,7 +154,7 @@ export default function QrMenuPage({ params }: { params: Promise<{ token: string
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-brand-orange" />
       </div>
     );
   }
@@ -178,10 +178,10 @@ export default function QrMenuPage({ params }: { params: Promise<{ token: string
   return (
     <div className="max-w-md mx-auto min-h-screen flex flex-col bg-white">
       {/* Header */}
-      <div className="bg-indigo-600 text-white px-4 pt-8 pb-6">
-        <p className="text-indigo-200 text-sm">{sessionInfo.outlet_name}</p>
+      <div className="bg-brand-primary text-white px-4 pt-8 pb-6">
+        <p className="text-brand-gold text-sm">{sessionInfo.outlet_name}</p>
         <h1 className="text-2xl font-bold mt-1">Table {sessionInfo.table_number}</h1>
-        <p className="text-indigo-200 text-sm mt-1">Scan & Order</p>
+        <p className="text-brand-gold text-sm mt-1">Scan & Order</p>
       </div>
 
       {/* Order result banner */}
@@ -241,7 +241,7 @@ export default function QrMenuPage({ params }: { params: Promise<{ token: string
                   <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{item.description}</p>
                 )}
                 <div className="flex items-center justify-between mt-2">
-                  <span className="font-bold text-indigo-600 text-sm">
+                  <span className="font-bold text-brand-primary text-sm">
                     {item.price.toFixed(2)}
                   </span>
                   {cartItem ? (
@@ -340,7 +340,7 @@ export default function QrMenuPage({ params }: { params: Promise<{ token: string
             <div className="border-t border-gray-100 px-4 py-4">
               <div className="flex justify-between text-base font-bold mb-4">
                 <span>Total</span>
-                <span className="text-indigo-600">{cartTotal.toFixed(2)}</span>
+                <span className="text-brand-primary">{cartTotal.toFixed(2)}</span>
               </div>
               <Button
                 onClick={() => setNameDialog(true)}
@@ -365,7 +365,7 @@ export default function QrMenuPage({ params }: { params: Promise<{ token: string
               placeholder="Enter your name"
               value={customerName}
               onChange={e => setCustomerName(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange mb-4"
               autoFocus
             />
             <div className="flex gap-3">

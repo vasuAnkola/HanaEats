@@ -9,12 +9,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { apiErrorMessage, readJson } from "@/lib/api-client";
-import { AlertTriangle, History, Pencil, Plus } from "lucide-react";
+import { AlertTriangle, History, Pencil, Plus, ScanLine } from "lucide-react";
 import { Loader2 } from "lucide-react";
+import { BarcodeScanner } from "@/components/barcode-scanner";
+import { toast } from "sonner";
 
 interface Ingredient {
   id: number; name: string; unit: string; category_name: string | null;
-  cost_per_unit: number; stock_quantity: number; low_stock_threshold: number;
+  cost_per_unit: number; calories_per_unit: number | null; barcode: string | null;
+  stock_quantity: number; low_stock_threshold: number;
 }
 interface Movement {
   id: number; movement_type: string; quantity: number; unit: string;
@@ -31,8 +34,9 @@ export default function IngredientsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [movements, setMovements] = useState<Movement[]>([]);
-  const [form, setForm] = useState({ name: "", unit: "kg", cost_per_unit: "0", stock_quantity: "0", low_stock_threshold: "0" });
+  const [form, setForm] = useState({ name: "", unit: "kg", cost_per_unit: "0", calories_per_unit: "", barcode: "", stock_quantity: "0", low_stock_threshold: "0" });
   const [adjForm, setAdjForm] = useState({ quantity: "0", movement_type: "adjustment", notes: "" });
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/inventory/ingredients");
@@ -46,18 +50,30 @@ export default function IngredientsPage() {
       .then((data) => setIngredients(Array.isArray(data) ? data : []));
   }, []);
 
-  function openAdd() {
-    setForm({ name: "", unit: "kg", cost_per_unit: "0", stock_quantity: "0", low_stock_threshold: "0" });
+  function openAdd(prefillBarcode?: string) {
+    setForm({ name: "", unit: "kg", cost_per_unit: "0", calories_per_unit: "", barcode: prefillBarcode ?? "", stock_quantity: "0", low_stock_threshold: "0" });
     setError(""); setDialog("add");
   }
   function openEdit(i: Ingredient) {
     setSelected(i);
-    setForm({ name: i.name, unit: i.unit, cost_per_unit: String(i.cost_per_unit), stock_quantity: String(i.stock_quantity), low_stock_threshold: String(i.low_stock_threshold) });
+    setForm({ name: i.name, unit: i.unit, cost_per_unit: String(i.cost_per_unit), calories_per_unit: i.calories_per_unit != null ? String(i.calories_per_unit) : "", barcode: i.barcode ?? "", stock_quantity: String(i.stock_quantity), low_stock_threshold: String(i.low_stock_threshold) });
     setError(""); setDialog("edit");
   }
   function openAdjust(i: Ingredient) {
     setSelected(i); setAdjForm({ quantity: "0", movement_type: "adjustment", notes: "" });
     setError(""); setDialog("adjust");
+  }
+
+  function handleScan(code: string) {
+    setScannerOpen(false);
+    const match = (ingredients ?? []).find(i => i.barcode === code);
+    if (match) {
+      toast.success(`Found "${match.name}" — receiving stock`);
+      openAdjust(match);
+    } else {
+      toast.info("No ingredient matches that barcode yet — add one");
+      openAdd(code);
+    }
   }
   async function openHistory(i: Ingredient) {
     setSelected(i);
@@ -73,7 +89,12 @@ export default function IngredientsPage() {
     const res = await fetch(url, {
       method: dialog === "edit" ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: form.name, unit: form.unit, cost_per_unit: parseFloat(form.cost_per_unit) || 0, stock_quantity: parseFloat(form.stock_quantity) || 0, low_stock_threshold: parseFloat(form.low_stock_threshold) || 0 }),
+      body: JSON.stringify({
+        name: form.name, unit: form.unit, cost_per_unit: parseFloat(form.cost_per_unit) || 0,
+        calories_per_unit: form.calories_per_unit ? parseFloat(form.calories_per_unit) : null,
+        barcode: form.barcode || null,
+        stock_quantity: parseFloat(form.stock_quantity) || 0, low_stock_threshold: parseFloat(form.low_stock_threshold) || 0,
+      }),
     });
     const data = await readJson(res);
     if (!res.ok) { setError(apiErrorMessage(data)); setSaving(false); return; }
@@ -131,10 +152,10 @@ export default function IngredientsPage() {
       render: i => (
         <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={() => openAdjust(i)}>Adjust</Button>
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-indigo-600" onClick={() => openHistory(i)}>
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-brand-primary" onClick={() => openHistory(i)}>
             <History className="w-3.5 h-3.5" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-indigo-600" onClick={() => openEdit(i)}>
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-brand-primary" onClick={() => openEdit(i)}>
             <Pencil className="w-3.5 h-3.5" />
           </Button>
         </div>
@@ -144,6 +165,7 @@ export default function IngredientsPage() {
 
   return (
     <div>
+      <BarcodeScanner open={scannerOpen} onClose={() => setScannerOpen(false)} onScan={handleScan} />
       <Header title="Ingredients" subtitle="Track stock levels and ingredient costs" />
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
@@ -155,9 +177,14 @@ export default function IngredientsPage() {
               </div>
             )}
           </div>
-          <Button className="gap-2" onClick={openAdd}>
-            <Plus className="w-4 h-4" /> Add Ingredient
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => setScannerOpen(true)}>
+              <ScanLine className="w-4 h-4" /> Scan Barcode
+            </Button>
+            <Button className="gap-2" onClick={() => openAdd()}>
+              <Plus className="w-4 h-4" /> Add Ingredient
+            </Button>
+          </div>
         </div>
 
         {ingredients === null ? (
@@ -177,6 +204,10 @@ export default function IngredientsPage() {
               <label className="text-xs font-medium text-gray-600">Name</label>
               <Input placeholder="Enter ingredient name" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
             </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-600">Barcode <span className="text-gray-400 font-normal">(optional)</span></label>
+              <Input placeholder="Scan or type a barcode" value={form.barcode} onChange={e => setForm(f => ({ ...f, barcode: e.target.value }))} />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-gray-600">Unit</label>
@@ -188,6 +219,12 @@ export default function IngredientsPage() {
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-gray-600">Cost / Unit</label>
                 <Input type="number" min="0" step="0.0001" value={form.cost_per_unit} onChange={e => setForm(f => ({ ...f, cost_per_unit: e.target.value }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-gray-600">Calories / Unit <span className="text-gray-400 font-normal">(optional)</span></label>
+                <Input type="number" min="0" step="1" placeholder="kcal" value={form.calories_per_unit} onChange={e => setForm(f => ({ ...f, calories_per_unit: e.target.value }))} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">

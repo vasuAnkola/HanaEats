@@ -111,7 +111,7 @@ export default function PaymentsPage() {
         return (
           <div className="flex flex-wrap gap-1">
             {splits.map((sp, i) => (
-              <span key={i} className="text-[10px] bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded font-medium">
+              <span key={i} className="text-[10px] bg-brand-section text-brand-primary px-1.5 py-0.5 rounded font-medium">
                 {METHOD_LABEL[sp.method] ?? sp.method}
               </span>
             ))}
@@ -134,7 +134,7 @@ export default function PaymentsPage() {
     {
       key: "actions", label: "",
       render: p => (
-        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-indigo-600" onClick={() => viewDetail(p.id)}>
+        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-brand-primary" onClick={() => viewDetail(p.id)}>
           <Eye className="w-3.5 h-3.5" />
         </Button>
       ),

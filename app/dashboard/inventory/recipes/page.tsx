@@ -10,7 +10,8 @@ import { DataTable, type Column } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { apiErrorMessage, readJson } from "@/lib/api-client";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Loader2, Plus, Eye, Pencil, Trash2, X, ChefHat } from "lucide-react";
+import { Loader2, Plus, Eye, Pencil, Trash2, X, ChefHat, Flame } from "lucide-react";
+import { toast } from "sonner";
 
 interface MenuItem { id: number; name: string; }
 interface Ingredient { id: number; name: string; unit: string; cost_per_unit: number; }
@@ -19,8 +20,8 @@ interface Recipe {
   yield_qty: number; yield_unit: string; is_active: boolean;
 }
 interface RecipeDetail extends Recipe {
-  instructions: string | null; cost_per_serving: string;
-  ingredients: { id: number; ingredient_id?: number; ingredient_name: string; ingredient_unit: string; quantity: number; unit: string; cost_per_unit: number }[];
+  instructions: string | null; cost_per_serving: string; calories_per_serving: number | null;
+  ingredients: { id: number; ingredient_id?: number; ingredient_name: string; ingredient_unit: string; quantity: number; unit: string; cost_per_unit: number; calories_per_unit: number | null }[];
 }
 interface IngLine { ingredient_id: string; quantity: string; unit: string; }
 
@@ -31,6 +32,8 @@ export default function RecipesPage() {
   const [dialog, setDialog] = useState<"add" | "edit" | "detail" | null>(null);
   const [selected, setSelected] = useState<Recipe | null>(null);
   const [detail, setDetail] = useState<RecipeDetail | null>(null);
+  const [scaleServings, setScaleServings] = useState("1");
+  const [syncingCalories, setSyncingCalories] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [confirmId, setConfirmId] = useState<number | null>(null);
@@ -80,11 +83,24 @@ export default function RecipesPage() {
     setError(""); setDialog("edit");
   }
 
+  async function syncCalories() {
+    if (!detail?.menu_item_id || detail.calories_per_serving == null) return;
+    setSyncingCalories(true);
+    const res = await fetch(`/api/menu/items/${detail.menu_item_id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ calories: detail.calories_per_serving }),
+    });
+    setSyncingCalories(false);
+    if (!res.ok) { toast.error("Couldn't sync calories to the menu item"); return; }
+    toast.success(`Menu item calories updated to ${detail.calories_per_serving} kcal`);
+  }
+
   async function viewDetail(r: Recipe) {
     const res = await fetch("/api/inventory/recipes/" + r.id);
     const data = await readJson<RecipeDetail>(res);
     if (res.ok && data) {
       setDetail(data);
+      setScaleServings(String(data.yield_qty));
       setDialog("detail");
     }
   }
@@ -145,10 +161,10 @@ export default function RecipesPage() {
       key: "actions", label: "",
       render: r => (
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-indigo-600" onClick={() => viewDetail(r)}>
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-brand-primary" onClick={() => viewDetail(r)}>
             <Eye className="w-3.5 h-3.5" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-indigo-600" onClick={() => openEdit(r)}>
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-brand-primary" onClick={() => openEdit(r)}>
             <Pencil className="w-3.5 h-3.5" />
           </Button>
           <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-red-500" onClick={() => del(r.id)}>
@@ -255,16 +271,25 @@ export default function RecipesPage() {
               <ChefHat className="w-4 h-4 text-rose-500" /> {detail?.name}
             </DialogTitle>
           </DialogHeader>
-          {detail && (
+          {detail && (() => {
+            const baseYield = parseFloat(String(detail.yield_qty)) || 1;
+            const target = parseFloat(scaleServings) || baseYield;
+            const scale = target / baseYield;
+            const isScaled = Math.abs(scale - 1) > 0.001;
+            return (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 text-center">
                   <p className="text-xl font-bold text-gray-900">{parseFloat(String(detail.yield_qty))}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{detail.yield_unit}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{detail.yield_unit} (base)</p>
                 </div>
-                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-center">
-                  <p className="text-xl font-bold text-indigo-700">{parseFloat(String(detail.cost_per_serving)).toFixed(3)}</p>
-                  <p className="text-xs text-indigo-400 mt-0.5">Cost / serving</p>
+                <div className="bg-brand-section border border-brand-section rounded-xl p-3 text-center">
+                  <p className="text-xl font-bold text-brand-primary">{parseFloat(String(detail.cost_per_serving)).toFixed(3)}</p>
+                  <p className="text-xs text-brand-light mt-0.5">Cost / serving</p>
+                </div>
+                <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-center">
+                  <p className="text-xl font-bold text-emerald-700">{(parseFloat(String(detail.cost_per_serving)) * target).toFixed(2)}</p>
+                  <p className="text-xs text-emerald-500 mt-0.5">Total at {target} {detail.yield_unit}</p>
                 </div>
               </div>
 
@@ -274,20 +299,45 @@ export default function RecipesPage() {
                 </p>
               )}
 
+              {detail.calories_per_serving != null ? (
+                <div className="flex items-center justify-between bg-orange-50 border border-orange-100 rounded-xl px-3 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <Flame className="w-4 h-4 text-orange-500" />
+                    <span className="text-sm text-orange-800"><strong>{detail.calories_per_serving} kcal</strong> / {detail.yield_unit}, calculated from ingredients</span>
+                  </div>
+                  {detail.menu_item_id && (
+                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={syncCalories} disabled={syncingCalories}>
+                      {syncingCalories ? <Loader2 className="w-3 h-3 animate-spin" /> : "Sync to menu item"}
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <p className="text-[11px] text-gray-400 px-1">Add calories/unit to every ingredient here to calculate this recipe's calories automatically.</p>
+              )}
+
+              <div className="flex items-center gap-2 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5">
+                <span className="text-xs font-medium text-amber-800 whitespace-nowrap">Scale to</span>
+                <Input type="number" min="0.1" step="0.1" value={scaleServings} onChange={e => setScaleServings(e.target.value)} className="h-8 text-sm w-24" />
+                <span className="text-xs text-amber-700">{detail.yield_unit}{isScaled ? ` (×${scale.toFixed(2)})` : ""}</span>
+              </div>
+
               <div className="border border-gray-100 rounded-xl divide-y divide-gray-100 overflow-hidden">
                 <div className="grid grid-cols-[1fr_70px_70px] gap-2 px-4 py-2 bg-gray-50 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
-                  <span>Ingredient</span><span className="text-right">Qty</span><span className="text-right">Cost</span>
+                  <span>Ingredient</span><span className="text-right">Qty{isScaled ? " (scaled)" : ""}</span><span className="text-right">Cost</span>
                 </div>
-                {detail.ingredients.map((ing, i) => (
-                  <div key={i} className="grid grid-cols-[1fr_70px_70px] gap-2 px-4 py-2.5 items-center">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{ing.ingredient_name}</p>
-                      <p className="text-[11px] text-gray-400">{ing.unit}</p>
+                {detail.ingredients.map((ing, i) => {
+                  const scaledQty = parseFloat(String(ing.quantity)) * scale;
+                  return (
+                    <div key={i} className="grid grid-cols-[1fr_70px_70px] gap-2 px-4 py-2.5 items-center">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{ing.ingredient_name}</p>
+                        <p className="text-[11px] text-gray-400">{ing.unit}</p>
+                      </div>
+                      <span className="text-sm text-gray-600 text-right tabular-nums">{scaledQty.toFixed(3)}</span>
+                      <span className="text-sm text-gray-700 font-medium text-right tabular-nums">{(scaledQty * parseFloat(String(ing.cost_per_unit))).toFixed(4)}</span>
                     </div>
-                    <span className="text-sm text-gray-600 text-right tabular-nums">{parseFloat(String(ing.quantity)).toFixed(3)}</span>
-                    <span className="text-sm text-gray-700 font-medium text-right tabular-nums">{(parseFloat(String(ing.quantity)) * parseFloat(String(ing.cost_per_unit))).toFixed(4)}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {detail.instructions && (
@@ -297,7 +347,8 @@ export default function RecipesPage() {
                 </div>
               )}
             </div>
-          )}
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>

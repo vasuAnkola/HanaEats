@@ -20,6 +20,7 @@ const ItemSchema = z.object({
   addons: z.array(z.object({
     addon_name: z.string(),
     price: numStr.default(0),
+    quantity: z.union([z.number(), z.string()]).transform(v => parseInt(String(v))).default(1),
   })).optional(),
 });
 
@@ -28,6 +29,7 @@ const Schema = z.object({
   table_id: z.union([z.number(), z.string()]).transform(v => parseInt(String(v))).nullable().optional(),
   order_type: z.enum(["dine_in", "takeaway", "delivery", "drive_thru"]).default("dine_in"),
   customer_name: z.string().optional(),
+  customer_id: z.union([z.number(), z.string()]).transform(v => parseInt(String(v))).nullable().optional(),
   customer_note: z.string().optional(),
   tax_rate: numStr.default(0),
   items: z.array(ItemSchema).min(1),
@@ -73,7 +75,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: Object.values(parsed.error.flatten().fieldErrors).flat()[0] ?? "Invalid input" }, { status: 400 });
   }
 
-  const { outlet_id, table_id, order_type, customer_name, customer_note, tax_rate, items, client_order_id } = parsed.data;
+  const { outlet_id, table_id, order_type, customer_name, customer_id, customer_note, tax_rate, items, client_order_id } = parsed.data;
   const tenantId = session.user.tenantId ?? body.tenant_id;
 
   if (client_order_id) {
@@ -88,7 +90,7 @@ export async function POST(req: NextRequest) {
   let subtotal = 0;
   for (const item of items) {
     const variantTotal = (item.variants ?? []).reduce((s, v) => s + v.price_modifier, 0);
-    const addonTotal = (item.addons ?? []).reduce((s, a) => s + a.price, 0);
+    const addonTotal = (item.addons ?? []).reduce((s, a) => s + a.price * a.quantity, 0);
     subtotal += (item.unit_price + variantTotal + addonTotal) * item.quantity;
   }
   const taxAmount = parseFloat(((subtotal * tax_rate) / 100).toFixed(2));
@@ -101,15 +103,15 @@ export async function POST(req: NextRequest) {
 
     const orderNum = `ORD-${Date.now().toString().slice(-6)}`;
     const orderRes = await client.query(
-      `INSERT INTO orders (outlet_id, tenant_id, table_id, order_type, status, order_number, customer_name, customer_note, subtotal, tax_amount, total, served_by, client_order_id)
-       VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
-      [outlet_id, tenantId, table_id ?? null, order_type, orderNum, customer_name ?? null, customer_note ?? null, subtotal, taxAmount, total, session.user.id, client_order_id ?? null]
+      `INSERT INTO orders (outlet_id, tenant_id, table_id, order_type, status, order_number, customer_name, customer_id, customer_note, subtotal, tax_amount, total, served_by, client_order_id)
+       VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
+      [outlet_id, tenantId, table_id ?? null, order_type, orderNum, customer_name ?? null, customer_id ?? null, customer_note ?? null, subtotal, taxAmount, total, session.user.id, client_order_id ?? null]
     );
     const order = orderRes.rows[0];
 
     for (const item of items) {
       const variantTotal = (item.variants ?? []).reduce((s, v) => s + v.price_modifier, 0);
-      const addonTotal = (item.addons ?? []).reduce((s, a) => s + a.price, 0);
+      const addonTotal = (item.addons ?? []).reduce((s, a) => s + a.price * a.quantity, 0);
       const lineTotal = parseFloat(((item.unit_price + variantTotal + addonTotal) * item.quantity).toFixed(2));
 
       const itemRes = await client.query(
@@ -127,8 +129,8 @@ export async function POST(req: NextRequest) {
       }
       for (const a of (item.addons ?? [])) {
         await client.query(
-          `INSERT INTO order_item_addons (order_item_id, addon_name, price) VALUES ($1,$2,$3)`,
-          [orderItemId, a.addon_name, a.price]
+          `INSERT INTO order_item_addons (order_item_id, addon_name, price, quantity) VALUES ($1,$2,$3,$4)`,
+          [orderItemId, a.addon_name, a.price, a.quantity]
         );
       }
 

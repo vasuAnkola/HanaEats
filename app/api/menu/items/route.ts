@@ -15,6 +15,7 @@ const Schema = z.object({
   prep_time: z.number().int().min(0).optional(),
   calories: z.number().int().min(0).optional(),
   display_order: z.number().int().default(0),
+  weather_tag: z.enum(["hot", "cold", "rainy"]).nullable().optional(),
   dietary: z.object({
     is_vegan: z.boolean().default(false),
     is_vegetarian: z.boolean().default(false),
@@ -78,13 +79,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: Object.values(parsed.error.flatten().fieldErrors).flat()[0] ?? "Invalid input" }, { status: 400 });
   }
 
-  const { category_id, outlet_id, name, description, sku, price, cost, image_url, prep_time, calories, display_order, dietary } = parsed.data;
+  const { category_id, outlet_id, name, description, sku, price, cost, image_url, prep_time, calories, display_order, weather_tag, dietary } = parsed.data;
   const tenantId = session.user.tenantId ?? body.tenant_id;
 
   const item = await queryOne(
-    `INSERT INTO menu_items (category_id, outlet_id, tenant_id, name, description, sku, price, cost, image_url, prep_time, calories, display_order)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
-    [category_id, outlet_id, tenantId, name, description ?? null, sku ?? null, price, cost, image_url ?? null, prep_time ?? null, calories ?? null, display_order]
+    `INSERT INTO menu_items (category_id, outlet_id, tenant_id, name, description, sku, price, cost, image_url, prep_time, calories, display_order, weather_tag)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
+    [category_id, outlet_id, tenantId, name, description ?? null, sku ?? null, price, cost, image_url ?? null, prep_time ?? null, calories ?? null, display_order, weather_tag ?? null]
   );
 
   if (dietary && item) {

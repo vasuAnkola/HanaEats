@@ -23,13 +23,13 @@ interface LogRow {
 const ACTION_META: Record<string, { label: string; icon: typeof ShieldCheck; color: string }> = {
   "auth.login": { label: "Signed in", icon: LogIn, color: "text-emerald-600 bg-emerald-50" },
   "auth.login_failed": { label: "Failed sign-in", icon: LogOut, color: "text-red-600 bg-red-50" },
-  "user.create": { label: "Invited user", icon: UserPlus, color: "text-blue-600 bg-blue-50" },
-  "user.update": { label: "Updated user", icon: UserCog, color: "text-blue-600 bg-blue-50" },
+  "user.create": { label: "Invited user", icon: UserPlus, color: "text-brand-primary bg-brand-section" },
+  "user.update": { label: "Updated user", icon: UserCog, color: "text-brand-primary bg-brand-section" },
   "user.reset_password": { label: "Reset password", icon: KeyRound, color: "text-amber-600 bg-amber-50" },
   "user.delete": { label: "Removed user", icon: Trash2, color: "text-red-600 bg-red-50" },
   "account.change_password": { label: "Changed own password", icon: KeyRound, color: "text-amber-600 bg-amber-50" },
-  "tenant.create": { label: "Onboarded tenant", icon: Building2, color: "text-indigo-600 bg-indigo-50" },
-  "outlet.create": { label: "Added outlet", icon: Store, color: "text-indigo-600 bg-indigo-50" },
+  "tenant.create": { label: "Onboarded tenant", icon: Building2, color: "text-brand-primary bg-brand-section" },
+  "outlet.create": { label: "Added outlet", icon: Store, color: "text-brand-primary bg-brand-section" },
   "payment.void": { label: "Voided payment", icon: Ban, color: "text-red-600 bg-red-50" },
 };
 

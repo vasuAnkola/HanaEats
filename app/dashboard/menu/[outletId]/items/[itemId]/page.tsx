@@ -31,6 +31,7 @@ interface ItemDetail {
   category_id: number; category_name: string; is_available: boolean;
   is_halal: boolean; is_vegan: boolean; is_vegetarian: boolean;
   is_gluten_free: boolean; contains_nuts: boolean;
+  weather_tag: "hot" | "cold" | "rainy" | null;
   variants: Variant[]; addons: AddOnGroup[];
 }
 
@@ -54,6 +55,7 @@ export default function ItemDetailPage({ params }: Props) {
   const [error, setError] = useState("");
   const [form, setForm] = useState({ name: "", description: "", sku: "", price: "", cost: "", prep_time: "", calories: "", category_id: "" });
   const [dietary, setDietary] = useState({ is_halal: false, is_vegan: false, is_vegetarian: false, is_gluten_free: false, contains_nuts: false });
+  const [weatherTag, setWeatherTag] = useState<"none" | "hot" | "cold" | "rainy">("none");
 
   // Variant dialog
   const [variantDialog, setVariantDialog] = useState(false);
@@ -92,6 +94,7 @@ export default function ItemDetailPage({ params }: Props) {
       is_gluten_free: !!itemData.is_gluten_free,
       contains_nuts: !!itemData.contains_nuts,
     });
+    setWeatherTag(itemData.weather_tag ?? "none");
     setLoading(false);
   }, [itemId, outletId]);
 
@@ -115,6 +118,7 @@ export default function ItemDetailPage({ params }: Props) {
         cost: parseFloat(form.cost) || 0,
         prep_time: form.prep_time ? parseInt(form.prep_time) : null,
         calories: form.calories ? parseInt(form.calories) : null,
+        weather_tag: weatherTag === "none" ? null : weatherTag,
         dietary,
       }),
     });
@@ -277,6 +281,28 @@ export default function ItemDetailPage({ params }: Props) {
             </CardContent>
           </Card>
 
+          <Card className="border-gray-200 shadow-none">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold text-gray-700">Weather Suggestion</CardTitle>
+              <p className="text-xs text-gray-400 -mt-1">Surface this item to staff when the weather matches — hot/humid, cool, or rainy.</p>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {([
+                  { key: "none", label: "No suggestion" },
+                  { key: "hot", label: "☀️ Hot weather" },
+                  { key: "cold", label: "❄️ Cool weather" },
+                  { key: "rainy", label: "🌧️ Rainy day" },
+                ] as const).map(({ key, label }) => (
+                  <button key={key} type="button" onClick={() => setWeatherTag(key)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${weatherTag === key ? "bg-[#5C432B] text-white border-[#5C432B]" : "bg-white text-gray-600 border-gray-200 hover:border-[#5C432B]/30"}`}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="flex gap-3">
             <Button type="submit" className="gap-2" disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -352,7 +378,7 @@ export default function ItemDetailPage({ params }: Props) {
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-sm text-gray-900">{g.name}</p>
                         {g.is_required && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-red-100 text-red-600">Required</span>}
-                        {g.max_select && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600">Max {g.max_select}</span>}
+                        {g.max_select && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-brand-section text-brand-primary">Max {g.max_select}</span>}
                       </div>
                       <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-400 hover:text-red-600 hover:bg-red-50" onClick={() => deleteAddonGroup(g.id)}>
                         <Trash2 className="w-3.5 h-3.5" />

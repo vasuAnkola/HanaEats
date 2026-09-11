@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     const categoryId = searchParams.get("category_id");
 
     const rows = await query(
-      `SELECT i.id, i.name, i.unit, i.cost_per_unit,
+      `SELECT i.id, i.name, i.unit, i.cost_per_unit, i.calories_per_unit, i.barcode,
               i.current_stock AS stock_quantity,
               i.reorder_level AS low_stock_threshold,
               i.is_active, i.outlet_id, i.category_id,
@@ -39,8 +39,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const tenantId = getTenantId(session, body);
     if (!tenantId) return tenantRequired();
-    const { name, unit, cost_per_unit, stock_quantity, low_stock_threshold, category_id, outlet_id } = body;
+    const { name, unit, cost_per_unit, calories_per_unit, barcode, stock_quantity, low_stock_threshold, category_id, outlet_id } = body;
     if (!name || !unit) return NextResponse.json({ error: "name and unit are required" }, { status: 400 });
+
+    if (barcode) {
+      const existing = await queryOne(`SELECT id FROM ingredients WHERE tenant_id = $1 AND barcode = $2`, [tenantId, barcode]);
+      if (existing) return NextResponse.json({ error: "An ingredient with this barcode already exists" }, { status: 409 });
+    }
 
     // outlet_id: use provided, or fall back to user's outlet, or first outlet for tenant
     let resolvedOutletId = outlet_id || session.user.outletId || null;
@@ -53,16 +58,18 @@ export async function POST(req: NextRequest) {
     if (!resolvedOutletId) return NextResponse.json({ error: "No outlet found for this tenant" }, { status: 400 });
 
     const row = await queryOne(
-      `INSERT INTO ingredients (tenant_id, outlet_id, category_id, name, unit, cost_per_unit, current_stock, reorder_level)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING
-         id, name, unit, cost_per_unit,
+      `INSERT INTO ingredients (tenant_id, outlet_id, category_id, name, unit, cost_per_unit, current_stock, reorder_level, calories_per_unit, barcode)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING
+         id, name, unit, cost_per_unit, calories_per_unit, barcode,
          current_stock AS stock_quantity,
          reorder_level AS low_stock_threshold,
          outlet_id, category_id, is_active`,
       [tenantId, resolvedOutletId, category_id || null, name, unit,
        parseFloat(String(cost_per_unit || 0)),
        parseFloat(String(stock_quantity || 0)),
-       parseFloat(String(low_stock_threshold || 0))]
+       parseFloat(String(low_stock_threshold || 0)),
+       calories_per_unit != null && calories_per_unit !== "" ? parseFloat(String(calories_per_unit)) : null,
+       barcode || null]
     );
     return NextResponse.json(row, { status: 201 });
   } catch (error) {

@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Eye, Loader2, RefreshCw } from "lucide-react";
+import { Plus, Eye, Loader2, RefreshCw, Link2, Check } from "lucide-react";
 
 interface Outlet { id: number; name: string; }
 interface TableRow { id: number; table_number: string; capacity: number; status: string; }
@@ -32,7 +32,7 @@ interface Reservation {
 
 const STATUS_BADGE: Record<string, string> = {
   pending:   "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
-  confirmed: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
+  confirmed: "bg-brand-section text-brand-primary ring-1 ring-brand-gold",
   seated:    "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
   completed: "bg-gray-100 text-gray-600 ring-1 ring-gray-200",
   cancelled: "bg-red-50 text-red-600 ring-1 ring-red-200",
@@ -48,6 +48,8 @@ const EMPTY_FORM = {
 };
 
 export default function ReservationsPage() {
+  const [bookingSlug, setBookingSlug] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [outlets, setOutlets] = useState<Outlet[]>([]);
   const [outletId, setOutletId] = useState("");
   const [tables, setTables] = useState<TableRow[]>([]);
@@ -68,7 +70,16 @@ export default function ReservationsPage() {
       setOutlets(list);
       if (list.length > 0) setOutletId(String(list[0].id));
     });
+    fetch("/api/tenants/me").then(r => r.ok ? r.json() : null).then(d => setBookingSlug(d?.slug ?? null)).catch(() => {});
   }, []);
+
+  function copyBookingLink() {
+    if (!bookingSlug || typeof window === "undefined") return;
+    navigator.clipboard.writeText(`${window.location.origin}/book/${bookingSlug}`).then(() => {
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 1500);
+    });
+  }
 
   useEffect(() => {
     if (!outletId) return;
@@ -172,7 +183,7 @@ export default function ReservationsPage() {
         <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${STATUS_BADGE[r.status] ?? "bg-gray-100 text-gray-600"}`}>
           <span className={`w-1.5 h-1.5 rounded-full ${
             r.status === "pending" ? "bg-amber-500" :
-            r.status === "confirmed" ? "bg-blue-500" :
+            r.status === "confirmed" ? "bg-brand-orange" :
             r.status === "seated" ? "bg-emerald-500" :
             r.status === "completed" ? "bg-gray-400" :
             "bg-red-500"
@@ -187,7 +198,7 @@ export default function ReservationsPage() {
       render: (r) => (
         <div className="flex items-center gap-1">
           {r.status === "pending" && (
-            <Button size="sm" variant="outline" className="h-7 text-xs px-2.5 border-blue-200 text-blue-600 hover:bg-blue-50" onClick={() => quickAction(r.id, "confirmed")} disabled={updating === r.id}>
+            <Button size="sm" variant="outline" className="h-7 text-xs px-2.5 border-brand-gold text-brand-primary hover:bg-brand-section" onClick={() => quickAction(r.id, "confirmed")} disabled={updating === r.id}>
               Confirm
             </Button>
           )}
@@ -211,10 +222,10 @@ export default function ReservationsPage() {
               Cancel
             </Button>
           )}
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50" onClick={() => { setDetailRes(r); setDetailOpen(true); }}>
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-brand-primary hover:bg-brand-section" onClick={() => { setDetailRes(r); setDetailOpen(true); }}>
             <Eye className="w-3.5 h-3.5" />
           </Button>
-          {updating === r.id && <Loader2 className="w-3 h-3 animate-spin text-blue-400" />}
+          {updating === r.id && <Loader2 className="w-3 h-3 animate-spin text-brand-light" />}
         </div>
       ),
     },
@@ -224,6 +235,17 @@ export default function ReservationsPage() {
     <div>
       <Header title="Reservations" subtitle="Table booking management" />
       <div className="p-6">
+        {bookingSlug && (
+          <div className="flex items-center gap-3 bg-brand-section border border-brand-section rounded-xl px-4 py-2.5 mb-5">
+            <Link2 className="w-4 h-4 text-brand-orange shrink-0" />
+            <p className="text-xs text-brand-primary flex-1 min-w-0">
+              Customers can book a table themselves at <span className="font-mono">/book/{bookingSlug}</span> — no login needed. Share this link on your website or socials.
+            </p>
+            <Button variant="outline" size="sm" className="h-7 text-xs shrink-0" onClick={copyBookingLink}>
+              {linkCopied ? <Check className="w-3 h-3 mr-1 text-emerald-600" /> : null} {linkCopied ? "Copied" : "Copy link"}
+            </Button>
+          </div>
+        )}
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3 mb-5">
           <Select value={outletId} onValueChange={(v) => v && setOutletId(v)}>
@@ -342,7 +364,7 @@ export default function ReservationsPage() {
               <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${STATUS_BADGE[detailRes.status]}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${
                   detailRes.status === "pending" ? "bg-amber-500" :
-                  detailRes.status === "confirmed" ? "bg-blue-500" :
+                  detailRes.status === "confirmed" ? "bg-brand-orange" :
                   detailRes.status === "seated" ? "bg-emerald-500" :
                   detailRes.status === "completed" ? "bg-gray-400" : "bg-red-500"
                 }`} />

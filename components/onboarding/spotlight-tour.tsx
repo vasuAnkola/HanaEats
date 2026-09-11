@@ -29,7 +29,7 @@ export function SpotlightTour({ steps, run, onFinish }: SpotlightTourProps) {
       onEvent={handleEvent}
       locale={{ back: "Back", close: "Close", last: "Done", next: "Next", skip: "Skip tour", open: "Open" }}
       options={{
-        primaryColor: "#2563EB",
+        primaryColor: "#D98C3B",
         textColor: "#111827",
         backgroundColor: "#ffffff",
         overlayColor: "rgba(17, 24, 39, 0.55)",

@@ -25,7 +25,7 @@ interface LineItem { ingredient_id: string; quantity: string; unit_cost: string;
 
 const STATUS_COLOR: Record<string, string> = {
   draft: "bg-gray-100 text-gray-600",
-  sent: "bg-blue-100 text-blue-700",
+  sent: "bg-brand-section text-brand-primary",
   received: "bg-emerald-100 text-emerald-700",
   cancelled: "bg-red-100 text-red-600",
 };
@@ -138,7 +138,7 @@ export default function PurchaseOrdersPage() {
     {
       key: "actions", label: "",
       render: p => (
-        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-indigo-600" onClick={() => viewDetail(p.id)}>
+        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-brand-primary" onClick={() => viewDetail(p.id)}>
           <Eye className="w-3.5 h-3.5" />
         </Button>
       ),
@@ -191,7 +191,7 @@ export default function PurchaseOrdersPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-medium text-gray-600">Line Items</label>
-                <Button type="button" variant="ghost" size="sm" className="h-7 text-xs text-indigo-600 hover:text-indigo-700" onClick={addLine}>+ Add Row</Button>
+                <Button type="button" variant="ghost" size="sm" className="h-7 text-xs text-brand-primary hover:text-brand-primary" onClick={addLine}>+ Add Row</Button>
               </div>
               <div className="space-y-2">
                 {lines.map((line, i) => (

@@ -67,8 +67,8 @@ export default function VouchersPage() {
   const columns: Column<Voucher>[] = [
     { key:"code", label:"Voucher", sortable:true, render: v => (
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
-          <Tag className="w-4 h-4 text-blue-500" />
+        <div className="w-9 h-9 rounded-lg bg-brand-section border border-brand-section flex items-center justify-center flex-shrink-0">
+          <Tag className="w-4 h-4 text-brand-orange" />
         </div>
         <div>
           <p className="font-mono font-bold text-gray-900 text-sm tracking-widest">{v.code}</p>
@@ -77,9 +77,9 @@ export default function VouchersPage() {
       </div>
     )},
     { key:"discount_type", label:"Discount", render: v => (
-      <div className="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1">
-        <Percent className="w-3 h-3 text-blue-500" />
-        <span className="text-sm font-bold text-blue-700">
+      <div className="inline-flex items-center gap-1.5 bg-brand-section border border-brand-section rounded-lg px-2.5 py-1">
+        <Percent className="w-3 h-3 text-brand-orange" />
+        <span className="text-sm font-bold text-brand-primary">
           {v.discount_type==="percentage" ? parseFloat(String(v.discount_value)).toFixed(0)+"%" : parseFloat(String(v.discount_value)).toFixed(2)+" off"}
         </span>
       </div>
@@ -92,7 +92,7 @@ export default function VouchersPage() {
         <p className="text-sm font-semibold text-gray-800">{v.used_count}<span className="text-gray-400 font-normal"> / {v.max_uses ?? "∞"}</span></p>
         {v.max_uses && (
           <div className="w-20 h-1 bg-gray-100 rounded-full mt-1">
-            <div className="h-1 bg-blue-400 rounded-full" style={{ width: `${Math.min(100, (v.used_count / v.max_uses) * 100)}%` }} />
+            <div className="h-1 bg-brand-light rounded-full" style={{ width: `${Math.min(100, (v.used_count / v.max_uses) * 100)}%` }} />
           </div>
         )}
       </div>
@@ -141,8 +141,8 @@ export default function VouchersPage() {
 
         {/* Stat cards */}
         <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white border border-blue-100 rounded-xl p-4 flex items-center gap-4 shadow-sm">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
+          <div className="bg-white border border-brand-section rounded-xl p-4 flex items-center gap-4 shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-brand-primary flex items-center justify-center flex-shrink-0">
               <Tag className="w-5 h-5 text-white" />
             </div>
             <div>

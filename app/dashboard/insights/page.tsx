@@ -7,7 +7,7 @@ import { DataTable, type Column } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { readJson } from "@/lib/api-client";
-import { TrendingUp, Flame, AlertTriangle, Sparkles } from "lucide-react";
+import { TrendingUp, Flame, AlertTriangle, Sparkles, CloudRain, Sun, Snowflake } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
@@ -22,6 +22,14 @@ interface MarginData { items: MarginItem[]; threshold_pct: number; }
 
 interface PopularItem { id: number; name: string; order_count: number; }
 
+interface WeatherData {
+  available: boolean;
+  condition?: "hot" | "cold" | "rainy" | "mild";
+  temperature_c?: number;
+  country?: string;
+  items?: { id: number; name: string; price: number }[];
+}
+
 const fmt = (n: number | string) => "RM " + parseFloat(String(n || 0)).toFixed(2);
 const DOW_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -31,6 +39,7 @@ export default function InsightsPage() {
   const [forecast, setForecast] = useState<ForecastData | null>(null);
   const [margins, setMargins] = useState<MarginData | null>(null);
   const [popular, setPopular] = useState<PopularItem[] | null>(null);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
 
   useEffect(() => {
     fetch("/api/outlets").then(readJson).then(d => {
@@ -42,15 +51,17 @@ export default function InsightsPage() {
 
   const load = useCallback(async () => {
     if (!outletId) return;
-    setForecast(null); setMargins(null); setPopular(null);
-    const [f, m, p] = await Promise.all([
+    setForecast(null); setMargins(null); setPopular(null); setWeather(null);
+    const [f, m, p, w] = await Promise.all([
       fetch(`/api/insights/forecast?outlet_id=${outletId}`).then(readJson) as Promise<Partial<ForecastData>>,
       fetch(`/api/insights/margins?outlet_id=${outletId}`).then(readJson) as Promise<Partial<MarginData>>,
       fetch(`/api/insights/popular?outlet_id=${outletId}`).then(readJson),
+      fetch(`/api/insights/weather?outlet_id=${outletId}`).then(readJson) as Promise<WeatherData>,
     ]);
     setForecast(f?.days ? (f as ForecastData) : { days: [], has_data: false });
     setMargins(m?.items ? (m as MarginData) : { items: [], threshold_pct: 30 });
     setPopular(Array.isArray(p) ? p : []);
+    setWeather(w?.available !== undefined ? w : { available: false });
   }, [outletId]);
 
   useEffect(() => { load(); }, [load]);
@@ -94,7 +105,7 @@ export default function InsightsPage() {
           <TabsContent value="forecast" className="space-y-4">
             <div className="bg-white border border-gray-200 rounded-xl p-5">
               <div className="flex items-center gap-2 mb-4">
-                <TrendingUp className="w-4 h-4 text-indigo-500" />
+                <TrendingUp className="w-4 h-4 text-brand-orange" />
                 <h3 className="text-sm font-semibold text-gray-700">Predicted Orders — Next 7 Days</h3>
               </div>
               {forecast === null ? (
@@ -162,6 +173,38 @@ export default function InsightsPage() {
                 </div>
               )}
               <p className="text-[11px] text-gray-400 mt-3 flex items-center gap-1"><Sparkles className="w-3 h-3" /> These also show as suggestions inside POS while taking an order.</p>
+            </div>
+
+            <div className="bg-white border border-gray-200 rounded-xl p-5 mt-4">
+              <div className="flex items-center gap-2 mb-4">
+                {weather?.condition === "hot" ? <Sun className="w-4 h-4 text-amber-500" /> : weather?.condition === "cold" ? <Snowflake className="w-4 h-4 text-brand-light" /> : weather?.condition === "rainy" ? <CloudRain className="w-4 h-4 text-slate-500" /> : <CloudRain className="w-4 h-4 text-gray-300" />}
+                <h3 className="text-sm font-semibold text-gray-700">Weather Right Now</h3>
+              </div>
+              {weather === null ? (
+                <div className="h-20 flex items-center justify-center text-sm text-gray-400">Loading...</div>
+              ) : !weather.available ? (
+                <div className="h-20 flex items-center justify-center text-sm text-gray-400 text-center px-6">No location set for this outlet — add coordinates to enable weather-based suggestions.</div>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-600 mb-3">
+                    <span className="font-semibold text-gray-900">{weather.temperature_c}°C</span> and {weather.condition === "hot" ? "hot" : weather.condition === "cold" ? "cool" : weather.condition === "rainy" ? "rainy" : "mild"} near {weather.country}.
+                  </p>
+                  {weather.condition === "mild" ? (
+                    <p className="text-xs text-gray-400">No specific suggestion for mild weather.</p>
+                  ) : weather.items && weather.items.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {weather.items.map(it => (
+                        <div key={it.id} className="border border-gray-100 rounded-lg px-3 py-2 text-sm">
+                          <p className="font-medium text-gray-800 truncate">{it.name}</p>
+                          <p className="text-[11px] text-gray-400">{fmt(it.price)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-400">No items tagged for this weather yet — tag a menu item under Menu → item → Weather Suggestion.</p>
+                  )}
+                </>
+              )}
             </div>
           </TabsContent>
 

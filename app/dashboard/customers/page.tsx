@@ -23,7 +23,7 @@ const LANG_LABEL: Record<string,string> = { en:"English", th:"Thai", ms:"Bahasa 
 const TX_COLOR: Record<string,string> = {
   earn: "bg-emerald-100 text-emerald-700",
   redeem: "bg-amber-100 text-amber-700",
-  manual_add: "bg-blue-100 text-blue-700",
+  manual_add: "bg-brand-section text-brand-primary",
   manual_deduct: "bg-red-100 text-red-600",
   expire: "bg-gray-100 text-gray-500",
 };
@@ -81,8 +81,8 @@ export default function CustomersPage() {
   const columns: Column<Customer>[] = [
     { key:"name", label:"Customer", sortable:true, render: c => (
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-          <span className="text-xs font-bold text-blue-600">{c.name.charAt(0).toUpperCase()}</span>
+        <div className="w-8 h-8 rounded-full bg-brand-section flex items-center justify-center flex-shrink-0">
+          <span className="text-xs font-bold text-brand-primary">{c.name.charAt(0).toUpperCase()}</span>
         </div>
         <div>
           <p className="font-medium text-gray-900 text-sm">{c.name}</p>
@@ -100,18 +100,18 @@ export default function CustomersPage() {
       </div>
     )},
     { key:"total_spent", label:"Total Spent", sortable:true, render: c => (
-      <span className="text-sm font-semibold text-blue-700">{parseFloat(String(c.total_spent)).toFixed(2)}</span>
+      <span className="text-sm font-semibold text-brand-primary">{parseFloat(String(c.total_spent)).toFixed(2)}</span>
     )},
     { key:"visit_count", label:"Visits", render: c => (
-      <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-600 text-xs font-bold">{c.visit_count}</span>
+      <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-brand-section text-brand-primary text-xs font-bold">{c.visit_count}</span>
     )},
     { key:"actions", label:"", render: c => (
       <div className="flex items-center gap-1">
         <Button variant="outline" size="sm" className="h-7 px-2 text-xs gap-1 border-amber-200 text-amber-600 hover:bg-amber-50" onClick={() => openPoints(c)}>
           <Star className="w-3 h-3" /> Points
         </Button>
-        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50" onClick={() => openDetail(c)}><Eye className="w-3.5 h-3.5" /></Button>
-        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50" onClick={() => openEdit(c)}><Pencil className="w-3.5 h-3.5" /></Button>
+        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-brand-primary hover:bg-brand-section" onClick={() => openDetail(c)}><Eye className="w-3.5 h-3.5" /></Button>
+        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-brand-primary hover:bg-brand-section" onClick={() => openEdit(c)}><Pencil className="w-3.5 h-3.5" /></Button>
       </div>
     )},
   ];
@@ -123,8 +123,8 @@ export default function CustomersPage() {
 
         {/* Stat cards */}
         <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white border border-blue-100 rounded-xl p-4 flex items-center gap-4 shadow-sm">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
+          <div className="bg-white border border-brand-section rounded-xl p-4 flex items-center gap-4 shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-brand-primary flex items-center justify-center flex-shrink-0">
               <Users className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -237,7 +237,7 @@ export default function CustomersPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center">
                 <span className="text-sm font-bold text-white">{detail?.name.charAt(0).toUpperCase()}</span>
               </div>
               <DialogTitle>{detail?.name}</DialogTitle>
@@ -250,9 +250,9 @@ export default function CustomersPage() {
                   <p className="text-xl font-bold text-amber-700">{detail.loyalty_points}</p>
                   <p className="text-[10px] text-amber-500 mt-0.5 font-medium">Points</p>
                 </div>
-                <div className="bg-gradient-to-b from-blue-50 to-blue-100/50 border border-blue-200 rounded-xl p-3 text-center">
-                  <p className="text-xl font-bold text-blue-700">{parseFloat(String(detail.total_spent)).toFixed(0)}</p>
-                  <p className="text-[10px] text-blue-500 mt-0.5 font-medium">Spent</p>
+                <div className="bg-gradient-to-b from-brand-section to-brand-section/50 border border-brand-gold rounded-xl p-3 text-center">
+                  <p className="text-xl font-bold text-brand-primary">{parseFloat(String(detail.total_spent)).toFixed(0)}</p>
+                  <p className="text-[10px] text-brand-orange mt-0.5 font-medium">Spent</p>
                 </div>
                 <div className="bg-gradient-to-b from-emerald-50 to-emerald-100/50 border border-emerald-200 rounded-xl p-3 text-center">
                   <p className="text-xl font-bold text-emerald-700">{detail.visit_count}</p>

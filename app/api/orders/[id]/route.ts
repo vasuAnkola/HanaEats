@@ -60,13 +60,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       const { items } = body as {
         items: { item_id: number | null; item_name: string; quantity: number; unit_price: number; note?: string;
           variants: { variant_name: string; option_name: string; price_modifier: number }[];
-          addons: { addon_name: string; price: number }[] }[]
+          addons: { addon_name: string; price: number; quantity?: number }[] }[]
       };
 
       for (const item of items) {
         const unitPrice = parseFloat(String(item.unit_price)) || 0;
         const variantTotal = (item.variants ?? []).reduce((s, v) => s + (parseFloat(String(v.price_modifier)) || 0), 0);
-        const addonTotal = (item.addons ?? []).reduce((s, a) => s + (parseFloat(String(a.price)) || 0), 0);
+        const addonTotal = (item.addons ?? []).reduce((s, a) => s + (parseFloat(String(a.price)) || 0) * (parseInt(String(a.quantity)) || 1), 0);
         const qty = parseInt(String(item.quantity)) || 1;
         const lineTotal = parseFloat(((unitPrice + variantTotal + addonTotal) * qty).toFixed(2));
 
@@ -85,8 +85,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         }
         for (const a of (item.addons ?? [])) {
           await client.query(
-            `INSERT INTO order_item_addons (order_item_id, addon_name, price) VALUES ($1,$2,$3)`,
-            [orderItemId, a.addon_name, parseFloat(String(a.price)) || 0]
+            `INSERT INTO order_item_addons (order_item_id, addon_name, price, quantity) VALUES ($1,$2,$3,$4)`,
+            [orderItemId, a.addon_name, parseFloat(String(a.price)) || 0, parseInt(String(a.quantity)) || 1]
           );
         }
       }
@@ -101,7 +101,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       if (oi.rows[0]) {
         const row = oi.rows[0];
         const varRes = await client.query(`SELECT SUM(price_modifier) as vt FROM order_item_variants WHERE order_item_id=$1`, [order_item_id]);
-        const addonRes = await client.query(`SELECT SUM(price) as at FROM order_item_addons WHERE order_item_id=$1`, [order_item_id]);
+        const addonRes = await client.query(`SELECT SUM(price * quantity) as at FROM order_item_addons WHERE order_item_id=$1`, [order_item_id]);
         const vt = parseFloat(varRes.rows[0]?.vt ?? "0") || 0;
         const at = parseFloat(addonRes.rows[0]?.at ?? "0") || 0;
         const lineTotal = parseFloat(((parseFloat(row.unit_price) + vt + at) * qty).toFixed(2));

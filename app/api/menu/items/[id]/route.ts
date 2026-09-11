@@ -15,6 +15,7 @@ const Schema = z.object({
   calories: z.number().int().min(0).nullable().optional(),
   display_order: z.number().int().optional(),
   is_available: z.boolean().optional(),
+  weather_tag: z.enum(["hot", "cold", "rainy"]).nullable().optional(),
   dietary: z.object({
     is_vegan: z.boolean(),
     is_vegetarian: z.boolean(),

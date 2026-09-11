@@ -16,7 +16,7 @@ interface Tenant {
 
 const PLAN_BADGE: Record<string, string> = {
   starter: "bg-gray-100 text-gray-600",
-  pro: "bg-blue-100 text-blue-700",
+  pro: "bg-brand-section text-brand-primary",
   enterprise: "bg-purple-100 text-purple-700",
 };
 
@@ -57,7 +57,7 @@ export default function TenantsPage() {
       render: (t) => (
         <div className="flex items-center gap-3">
           <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${t.is_active ? "bg-[#5C432B]/10" : "bg-gray-100"}`}>
-            <Building2 className={`w-4 h-4 ${t.is_active ? "text-indigo-600" : "text-gray-400"}`} />
+            <Building2 className={`w-4 h-4 ${t.is_active ? "text-brand-primary" : "text-gray-400"}`} />
           </div>
           <div>
             <p className="font-medium text-gray-900">{t.name}</p>
@@ -75,7 +75,7 @@ export default function TenantsPage() {
       key: "actions", label: "", className: "w-36",
       render: (t) => (
         <div className="flex items-center gap-1 justify-end">
-          <Link href={`/dashboard/tenants/${t.id}`}><Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50"><Eye className="w-4 h-4" /></Button></Link>
+          <Link href={`/dashboard/tenants/${t.id}`}><Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-brand-primary hover:bg-brand-section"><Eye className="w-4 h-4" /></Button></Link>
           <Link href={`/dashboard/tenants/${t.id}/edit`}><Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-[#5C432B] hover:bg-[#5C432B]/10"><Pencil className="w-4 h-4" /></Button></Link>
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-green-600 hover:bg-green-50" onClick={() => toggleActive(t)} disabled={actionId === t.id}>
             {actionId === t.id ? <Loader2 className="w-4 h-4 animate-spin" /> : t.is_active ? <ToggleRight className="w-4 h-4 text-green-500" /> : <ToggleLeft className="w-4 h-4" />}

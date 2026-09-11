@@ -46,7 +46,7 @@ interface User {
 }
 
 const ROLE_COLOR: Record<string, string> = {
-  admin: "bg-blue-100 text-blue-700",
+  admin: "bg-brand-section text-brand-primary",
   manager: "bg-green-100 text-green-700",
   cashier: "bg-[#5C432B]/10 text-[#5C432B]",
   waiter: "bg-yellow-100 text-yellow-700",
@@ -55,7 +55,7 @@ const ROLE_COLOR: Record<string, string> = {
 
 const PLAN_COLOR: Record<string, string> = {
   starter: "bg-gray-100 text-gray-600",
-  pro: "bg-blue-100 text-blue-700",
+  pro: "bg-brand-section text-brand-primary",
   enterprise: "bg-purple-100 text-purple-700",
 };
 
@@ -106,7 +106,7 @@ export default async function TenantDetailPage({ params }: Props) {
         <Card className="border-gray-200 shadow-none">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-indigo-600" /> Business Info
+              <Building2 className="w-4 h-4 text-brand-primary" /> Business Info
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -133,7 +133,7 @@ export default async function TenantDetailPage({ params }: Props) {
         <Card className="border-gray-200 shadow-none">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <Store className="w-4 h-4 text-indigo-600" /> Outlets ({outlets.length})
+              <Store className="w-4 h-4 text-brand-primary" /> Outlets ({outlets.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -161,7 +161,7 @@ export default async function TenantDetailPage({ params }: Props) {
         <Card className="border-gray-200 shadow-none">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <Users className="w-4 h-4 text-indigo-600" /> Team ({users.length})
+              <Users className="w-4 h-4 text-brand-primary" /> Team ({users.length})
             </CardTitle>
           </CardHeader>
           <CardContent>

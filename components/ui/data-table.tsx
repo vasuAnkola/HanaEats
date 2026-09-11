@@ -109,7 +109,7 @@ export function DataTable<T extends object>({
                   <span className="flex items-center gap-1">
                     {col.label}
                     {col.sortable && sortKey === col.key && (
-                      <span className="text-indigo-500">{sortDir === "asc" ? "↑" : "↓"}</span>
+                      <span className="text-brand-orange">{sortDir === "asc" ? "↑" : "↓"}</span>
                     )}
                   </span>
                 </TableHead>

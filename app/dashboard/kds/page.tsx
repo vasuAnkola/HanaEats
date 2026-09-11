@@ -19,7 +19,7 @@ interface KDSOrder {
 
 const STATUS_COLOR: Record<string, string> = {
   pending:   "border-amber-400 bg-amber-50",
-  preparing: "border-blue-400 bg-blue-50",
+  preparing: "border-brand-light bg-brand-section",
   ready:     "border-emerald-400 bg-emerald-50",
 };
 
@@ -182,7 +182,7 @@ export default function KDSPage() {
         ) : (
           <div className="flex gap-4 h-full">
             {col("Pending", "bg-amber-400", "bg-amber-100 text-amber-800", pending, "preparing", "→ Start Preparing", "kds-pending")}
-            {col("Preparing", "bg-blue-400", "bg-blue-100 text-blue-800", preparing, "ready", "→ Mark Ready", "kds-preparing")}
+            {col("Preparing", "bg-brand-light", "bg-brand-section text-brand-dark", preparing, "ready", "→ Mark Ready", "kds-preparing")}
             {col("Ready", "bg-emerald-400", "bg-emerald-100 text-emerald-800", ready, undefined, undefined, "kds-ready")}
           </div>
         )}

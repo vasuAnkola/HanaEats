@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   const countries = await query(
     all
       ? "SELECT * FROM countries ORDER BY name"
-      : "SELECT id, name, code, currency_code, currency_symbol, tax_name, tax_rate FROM countries WHERE is_active = true ORDER BY name"
+      : "SELECT id, name, code, currency_code, currency_symbol, tax_name, tax_rate, timezone FROM countries WHERE is_active = true ORDER BY name"
   );
   return NextResponse.json(countries);
 }

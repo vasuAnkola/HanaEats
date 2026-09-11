@@ -34,19 +34,19 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left panel — branding */}
-      <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-[#1E3A5F] to-[#2563EB] flex-col items-center justify-center p-12 relative overflow-hidden">
+      <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-[#5C432B] to-[#D98C3B] flex-col items-center justify-center p-12 relative overflow-hidden">
         {/* dot grid */}
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
         {/* glow blobs */}
-        <div className="absolute top-0 right-0 w-72 h-72 bg-blue-400/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 bg-[#1E3A5F]/40 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-0 w-72 h-72 bg-brand-light/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-[#5C432B]/40 rounded-full blur-3xl" />
 
         <div className="relative z-10 flex flex-col items-center text-center">
           <div className="mb-8">
             <Image src="/mainlogo2.png" alt="HANAEats" width={200} height={60} className="object-contain brightness-0 invert" priority />
           </div>
           <h1 className="text-3xl font-bold text-white mb-3">Welcome to HANAEats</h1>
-          <p className="text-blue-200 text-base max-w-xs leading-relaxed">
+          <p className="text-brand-gold text-base max-w-xs leading-relaxed">
             The all-in-one POS & restaurant management platform built for Southeast Asia.
           </p>
 
@@ -59,7 +59,7 @@ export default function LoginPage() {
             ].map(item => (
               <div key={item.label} className="bg-white/10 rounded-xl px-4 py-3 text-left backdrop-blur-sm">
                 <p className="text-white font-bold text-sm">{item.value}</p>
-                <p className="text-blue-200 text-xs mt-0.5">{item.label}</p>
+                <p className="text-brand-gold text-xs mt-0.5">{item.label}</p>
               </div>
             ))}
           </div>
@@ -76,7 +76,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-[#1E3A5F]">Sign in</h2>
+            <h2 className="text-2xl font-bold text-[#5C432B]">Sign in</h2>
             <p className="text-sm text-gray-500 mt-1">Enter your credentials to access the dashboard</p>
           </div>
 
@@ -91,7 +91,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="h-11 rounded-xl border-gray-200 focus:border-[#2563EB] focus:ring-[#2563EB]/20"
+                className="h-11 rounded-xl border-gray-200 focus:border-[#D98C3B] focus:ring-[#D98C3B]/20"
               />
             </div>
 
@@ -106,7 +106,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="h-11 rounded-xl border-gray-200 focus:border-[#2563EB] focus:ring-[#2563EB]/20 pr-10"
+                  className="h-11 rounded-xl border-gray-200 focus:border-[#D98C3B] focus:ring-[#D98C3B]/20 pr-10"
                 />
                 <button
                   type="button"
@@ -127,7 +127,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full h-11 rounded-xl font-semibold text-base shadow-md shadow-blue-500/20"
+              className="w-full h-11 rounded-xl font-semibold text-base shadow-md shadow-brand-orange/20"
               disabled={loading}
             >
               {loading ? (
@@ -139,16 +139,16 @@ export default function LoginPage() {
           </form>
 
           {/* Demo credentials */}
-          {/* <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
-            <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2.5">Demo credentials</p>
+          {/* <div className="mt-6 p-4 bg-brand-section rounded-xl border border-brand-section">
+            <p className="text-[10px] font-bold text-brand-light uppercase tracking-widest mb-2.5">Demo credentials</p>
             <div className="text-xs space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="text-gray-500">Email</span>
-                <span className="text-[#1E3A5F] font-semibold">superadmin@hanaeats.com</span>
+                <span className="text-[#5C432B] font-semibold">superadmin@hanaeats.com</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-500">Password</span>
-                <span className="text-[#1E3A5F] font-semibold">admin123456</span>
+                <span className="text-[#5C432B] font-semibold">admin123456</span>
               </div>
             </div>
           </div> */}

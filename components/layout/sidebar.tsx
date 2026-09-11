@@ -196,7 +196,7 @@ export function AppSidebar({ userName, userEmail, userRole }: AppSidebarProps) {
             }
           >
             <Avatar className="w-7 h-7 flex-shrink-0">
-              <AvatarFallback className={`text-white text-[10px] font-bold bg-gradient-to-br from-[#1E3A5F] to-[#2563EB]`}>
+              <AvatarFallback className={`text-white text-[10px] font-bold bg-gradient-to-br from-[#5C432B] to-[#D98C3B]`}>
                 {initials}
               </AvatarFallback>
             </Avatar>

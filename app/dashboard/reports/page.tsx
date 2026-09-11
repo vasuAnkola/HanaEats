@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { localDateStr } from "@/lib/date";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,9 +38,9 @@ interface Outlet { id: number; name: string; }
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 const fmt = (n: number | string) => "RM " + parseFloat(String(n || 0)).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-const today = () => new Date().toISOString().split("T")[0];
-const monthStart = () => new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
-const weekStart = () => { const d = new Date(); d.setDate(d.getDate() - d.getDay() + 1); return d.toISOString().split("T")[0]; };
+const today = () => localDateStr();
+const monthStart = () => localDateStr(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+const weekStart = () => { const d = new Date(); d.setDate(d.getDate() - d.getDay() + 1); return localDateStr(d); };
 
 function downloadCSV(rows: Record<string, unknown>[], filename: string) {
   if (!rows.length) return;
@@ -150,7 +151,7 @@ export default function ReportsPage() {
   const staffCols: Column<StaffRow>[] = [
     { key: "staff_name", label: "Staff", sortable: true },
     { key: "payment_count", label: "Transactions", sortable: true },
-    { key: "total_sales", label: "Total Sales", sortable: true, render: r => <span className="font-semibold text-indigo-700">{fmt(r.total_sales)}</span> },
+    { key: "total_sales", label: "Total Sales", sortable: true, render: r => <span className="font-semibold text-brand-primary">{fmt(r.total_sales)}</span> },
     { key: "avg_order", label: "Avg Order", render: r => <span className="text-gray-500">{fmt(r.avg_order)}</span> },
   ];
 
@@ -158,7 +159,7 @@ export default function ReportsPage() {
     { key: "name", label: "Customer", sortable: true },
     { key: "visit_count", label: "Visits", sortable: true },
     { key: "loyalty_points", label: "Points", sortable: true, render: r => <span className="text-amber-600 font-medium">{r.loyalty_points}</span> },
-    { key: "total_spent", label: "Total Spent", sortable: true, render: r => <span className="font-semibold text-indigo-700">{fmt(r.total_spent)}</span> },
+    { key: "total_spent", label: "Total Spent", sortable: true, render: r => <span className="font-semibold text-brand-primary">{fmt(r.total_spent)}</span> },
   ];
 
   const invCols: Column<InvRow>[] = [
@@ -204,15 +205,15 @@ export default function ReportsPage() {
             <Button variant="outline" size="sm" onClick={() => { setFrom(weekStart()); setTo(today()); }}>This Week</Button>
             <Button variant="outline" size="sm" onClick={() => { setFrom(monthStart()); setTo(today()); }}>This Month</Button>
           </div>
-          {loading && <Loader2 className="w-4 h-4 animate-spin text-indigo-500 mb-1" />}
+          {loading && <Loader2 className="w-4 h-4 animate-spin text-brand-orange mb-1" />}
         </div>
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="Total Revenue" value={fmt(totalRevenue)} icon={TrendingUp} color="bg-indigo-50 text-indigo-600" />
+          <StatCard label="Total Revenue" value={fmt(totalRevenue)} icon={TrendingUp} color="bg-brand-section text-brand-primary" />
           <StatCard label="Total Orders" value={String(totalOrders)} icon={ShoppingCart} color="bg-emerald-50 text-emerald-600" />
           <StatCard label="Avg Order Value" value={fmt(avgOrder)} icon={TrendingUp} color="bg-amber-50 text-amber-600" />
-          <StatCard label="Tax Collected" value={fmt(totalTax)} icon={Package} color="bg-blue-50 text-blue-600" />
+          <StatCard label="Tax Collected" value={fmt(totalTax)} icon={Package} color="bg-brand-section text-brand-primary" />
         </div>
 
         {/* Tabs */}
@@ -309,10 +310,10 @@ export default function ReportsPage() {
                         <div key={i}>
                           <div className="flex items-center justify-between text-sm mb-1">
                             <span className="font-medium text-gray-700">{o.outlet_name}</span>
-                            <span className="text-indigo-700 font-semibold">{fmt(o.revenue)}</span>
+                            <span className="text-brand-primary font-semibold">{fmt(o.revenue)}</span>
                           </div>
                           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${pct}%` }} />
+                            <div className="h-full bg-brand-orange rounded-full" style={{ width: `${pct}%` }} />
                           </div>
                           <p className="text-xs text-gray-400 mt-0.5">{o.order_count} orders</p>
                         </div>
@@ -374,10 +375,10 @@ export default function ReportsPage() {
           <TabsContent value="customers" className="space-y-6">
             {customers && (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard label="Total Customers" value={String(customers.summary.total)} icon={Users} color="bg-indigo-50 text-indigo-600" />
+                <StatCard label="Total Customers" value={String(customers.summary.total)} icon={Users} color="bg-brand-section text-brand-primary" />
                 <StatCard label="New Customers" value={String(customers.summary.new_customers)} icon={Users} color="bg-emerald-50 text-emerald-600" />
                 <StatCard label="Returning" value={String(customers.summary.returning_customers)} icon={Users} color="bg-amber-50 text-amber-600" />
-                <StatCard label="Avg Spent" value={fmt(customers.summary.avg_spent)} icon={TrendingUp} color="bg-blue-50 text-blue-600" />
+                <StatCard label="Avg Spent" value={fmt(customers.summary.avg_spent)} icon={TrendingUp} color="bg-brand-section text-brand-primary" />
               </div>
             )}
             <div className="bg-white border border-gray-200 rounded-xl p-5">

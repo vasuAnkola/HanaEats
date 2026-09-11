@@ -1,17 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { query } from "@/lib/db";
+import { businessDateStr, businessMonthStartStr } from "@/lib/date";
+import { getTenantTimezone } from "@/lib/tenant";
 
 export async function GET(req: NextRequest) {
   try {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const tenantId = session.user.tenantId;
+  const tz = await getTenantTimezone(tenantId);
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type") ?? "overview";
   const outletId = searchParams.get("outlet_id");
-  const from = searchParams.get("from") ?? new Date(new Date().setDate(1)).toISOString().split("T")[0];
-  const to = searchParams.get("to") ?? new Date().toISOString().split("T")[0];
+  const from = searchParams.get("from") ?? businessMonthStartStr(tz);
+  const to = searchParams.get("to") ?? businessDateStr(tz);
 
   const outletFilter = outletId ? "AND p.outlet_id = " + parseInt(outletId) : "";
   const outletFilterO = outletId ? "AND o.outlet_id = " + parseInt(outletId) : "";
@@ -35,7 +38,7 @@ export async function GET(req: NextRequest) {
       query(`
         SELECT mi.name, SUM(oi.quantity)::int AS qty, SUM(oi.quantity * oi.unit_price)::numeric AS revenue
         FROM order_items oi
-        JOIN menu_items mi ON mi.id = oi.menu_item_id
+        JOIN menu_items mi ON mi.id = oi.item_id
         JOIN orders o ON o.id = oi.order_id
         WHERE o.tenant_id = $1 AND o.status IN ('closed','served')
           AND DATE(o.created_at) BETWEEN $2 AND $3 ${outletFilterO}

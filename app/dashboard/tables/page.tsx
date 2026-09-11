@@ -32,8 +32,8 @@ const STATUS_STYLE: Record<string, { card: string; badge: string; label: string 
     label: "Reserved",
   },
   cleaning: {
-    card:  "bg-blue-50 border-blue-300 text-blue-900",
-    badge: "bg-blue-200 text-blue-800",
+    card:  "bg-brand-section border-brand-gold text-brand-dark",
+    badge: "bg-brand-gold text-brand-dark",
     label: "Cleaning",
   },
 };
@@ -148,7 +148,7 @@ export default function TablesPage() {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
-            <button onClick={() => loadTables()} className="text-gray-400 hover:text-indigo-600 transition-colors">
+            <button onClick={() => loadTables()} className="text-gray-400 hover:text-brand-primary transition-colors">
               <RefreshCw className="w-4 h-4" />
             </button>
             <span className="text-[10px] text-gray-400">Auto-refreshes every 30s</span>
@@ -228,7 +228,7 @@ export default function TablesPage() {
         <div className="mt-6 pt-4 border-t border-gray-100 flex items-center gap-6 flex-wrap text-xs text-gray-500">
           <div className="flex items-center gap-1.5"><Utensils className="w-3.5 h-3.5 text-emerald-500" /><span><strong>Available</strong> — ready for guests</span></div>
           <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-red-500" /><span><strong>Occupied</strong> — order in progress. Freed automatically when payment is collected.</span></div>
-          <div className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-blue-500" /><span><strong>Cleaning</strong> — being cleaned, mark available when ready</span></div>
+          <div className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-brand-orange" /><span><strong>Cleaning</strong> — being cleaned, mark available when ready</span></div>
           <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-amber-500" /><span><strong>Reserved</strong> — booking held</span></div>
         </div>
       </div>

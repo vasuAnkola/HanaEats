@@ -98,7 +98,7 @@ export default function EditTenantPage({ params }: { params: Promise<{ id: strin
         <Card className="border-gray-200 shadow-none">
           <CardHeader className="pb-4">
             <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-indigo-600" /> Business Details
+              <Building2 className="w-4 h-4 text-brand-primary" /> Business Details
             </CardTitle>
             <p className="text-xs text-gray-400">Country cannot be changed after creation.</p>
           </CardHeader>

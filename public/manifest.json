@@ -1,0 +1,13 @@
+{
+  "name": "HANAEats",
+  "short_name": "HANAEats",
+  "description": "Point-of-sale platform for Southeast Asian food outlets",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#FAFAFA",
+  "theme_color": "#1E3A5F",
+  "orientation": "any",
+  "icons": [
+    { "src": "/icon.png", "sizes": "124x129", "type": "image/png", "purpose": "any" }
+  ]
+}

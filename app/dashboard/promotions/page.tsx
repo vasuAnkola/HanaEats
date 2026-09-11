@@ -10,6 +10,7 @@ import { DataTable, type Column } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { Loader2, Plus, Trash2, Pencil, Megaphone, CalendarDays, Zap } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { localDateStr } from "@/lib/date";
 
 interface Promotion {
   id: number; name: string; discount_type: string; discount_value: number;
@@ -22,7 +23,7 @@ const FESTIVAL_LABEL: Record<string,string> = { lunar_new_year:"Lunar New Year",
 const FESTIVAL_COLOR: Record<string,string> = {
   lunar_new_year: "bg-red-50 text-red-700 ring-1 ring-red-200",
   hari_raya: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
-  songkran: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
+  songkran: "bg-brand-section text-brand-primary ring-1 ring-brand-gold",
   diwali: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
   other: "bg-purple-50 text-purple-700 ring-1 ring-purple-200",
 };
@@ -31,7 +32,7 @@ const empty = { name:"", discount_type:"percentage", discount_value:"10", start_
 
 function isActive(p: Promotion) {
   if (!p.is_active) return false;
-  const today = new Date().toISOString().split("T")[0];
+  const today = localDateStr();
   return p.start_date <= today && today <= p.end_date;
 }
 
@@ -82,13 +83,13 @@ export default function PromotionsPage() {
   }
 
   const activeCount = (promotions ?? []).filter(isActive).length;
-  const upcomingCount = (promotions ?? []).filter(p => p.is_active && p.start_date > new Date().toISOString().split("T")[0]).length;
+  const upcomingCount = (promotions ?? []).filter(p => p.is_active && p.start_date > localDateStr()).length;
 
   const columns: Column<Promotion>[] = [
     { key:"name", label:"Promotion", sortable:true, render: p => (
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
-          <Megaphone className="w-4 h-4 text-blue-500" />
+        <div className="w-9 h-9 rounded-lg bg-brand-section border border-brand-section flex items-center justify-center flex-shrink-0">
+          <Megaphone className="w-4 h-4 text-brand-orange" />
         </div>
         <div>
           <p className="font-medium text-gray-900 text-sm">{p.name}</p>
@@ -101,9 +102,9 @@ export default function PromotionsPage() {
       </div>
     )},
     { key:"discount_type", label:"Discount", render: p => (
-      <div className="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1">
-        <Zap className="w-3 h-3 text-blue-500" />
-        <span className="text-sm font-bold text-blue-700">
+      <div className="inline-flex items-center gap-1.5 bg-brand-section border border-brand-section rounded-lg px-2.5 py-1">
+        <Zap className="w-3 h-3 text-brand-orange" />
+        <span className="text-sm font-bold text-brand-primary">
           {p.discount_type==="percentage" ? parseFloat(String(p.discount_value)).toFixed(0)+"%" : parseFloat(String(p.discount_value)).toFixed(2)+" off"}
         </span>
       </div>
@@ -122,11 +123,11 @@ export default function PromotionsPage() {
     { key:"is_active", label:"Status", render: p => (
       <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${
         isActive(p) ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-        : p.is_active && p.start_date > new Date().toISOString().split("T")[0] ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200"
+        : p.is_active && p.start_date > localDateStr() ? "bg-brand-section text-brand-primary ring-1 ring-brand-gold"
         : "bg-gray-100 text-gray-500 ring-1 ring-gray-200"
       }`}>
-        <span className={`w-1.5 h-1.5 rounded-full ${isActive(p) ? "bg-emerald-500" : p.is_active && p.start_date > new Date().toISOString().split("T")[0] ? "bg-blue-500" : "bg-gray-400"}`} />
-        {isActive(p) ? "Active" : p.is_active && p.start_date > new Date().toISOString().split("T")[0] ? "Upcoming" : "Inactive"}
+        <span className={`w-1.5 h-1.5 rounded-full ${isActive(p) ? "bg-emerald-500" : p.is_active && p.start_date > localDateStr() ? "bg-brand-orange" : "bg-gray-400"}`} />
+        {isActive(p) ? "Active" : p.is_active && p.start_date > localDateStr() ? "Upcoming" : "Inactive"}
       </span>
     )},
     { key:"actions", label:"", render: p => (
@@ -140,7 +141,7 @@ export default function PromotionsPage() {
             {togglingId === p.id && <Loader2 className="w-2.5 h-2.5 animate-spin text-gray-400 m-auto mt-0.5" />}
           </span>
         </button>
-        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50" onClick={() => openEdit(p)}><Pencil className="w-3.5 h-3.5" /></Button>
+        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-brand-primary hover:bg-brand-section" onClick={() => openEdit(p)}><Pencil className="w-3.5 h-3.5" /></Button>
         <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50" onClick={() => setConfirmId(p.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
       </div>
     )},
@@ -154,8 +155,8 @@ export default function PromotionsPage() {
 
         {/* Stat cards */}
         <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white border border-blue-100 rounded-xl p-4 flex items-center gap-4 shadow-sm">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
+          <div className="bg-white border border-brand-section rounded-xl p-4 flex items-center gap-4 shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-brand-primary flex items-center justify-center flex-shrink-0">
               <Megaphone className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -172,8 +173,8 @@ export default function PromotionsPage() {
               <p className="text-xs text-gray-500 mt-0.5">Currently Active</p>
             </div>
           </div>
-          <div className="bg-white border border-blue-100 rounded-xl p-4 flex items-center gap-4 shadow-sm">
-            <div className="w-10 h-10 rounded-xl bg-blue-400 flex items-center justify-center flex-shrink-0">
+          <div className="bg-white border border-brand-section rounded-xl p-4 flex items-center gap-4 shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center flex-shrink-0">
               <CalendarDays className="w-5 h-5 text-white" />
             </div>
             <div>

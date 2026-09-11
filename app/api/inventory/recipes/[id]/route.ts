@@ -21,7 +21,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
     const ingredients = await query(
       `SELECT ri.*, i.name AS ingredient_name, i.unit AS ingredient_unit,
-              i.cost_per_unit, i.current_stock AS stock_quantity
+              i.cost_per_unit, i.calories_per_unit, i.current_stock AS stock_quantity
        FROM recipe_ingredients ri
        JOIN ingredients i ON i.id = ri.ingredient_id
        WHERE ri.recipe_id = $1`,
@@ -31,7 +31,17 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const cost = ingredients.reduce((sum: number, ri: Record<string, unknown>) =>
       sum + parseFloat(String(ri.quantity)) * parseFloat(String(ri.cost_per_unit)), 0);
 
-    return NextResponse.json({ ...recipe as object, ingredients, cost_per_serving: cost.toFixed(4) });
+    const yieldQty = parseFloat(String((recipe as { yield_qty: unknown }).yield_qty)) || 1;
+    const hasCalorieData = ingredients.every((ri: Record<string, unknown>) => ri.calories_per_unit != null);
+    const caloriesPerServing = hasCalorieData
+      ? ingredients.reduce((sum: number, ri: Record<string, unknown>) =>
+          sum + parseFloat(String(ri.quantity)) * parseFloat(String(ri.calories_per_unit)), 0) / yieldQty
+      : null;
+
+    return NextResponse.json({
+      ...recipe as object, ingredients, cost_per_serving: cost.toFixed(4),
+      calories_per_serving: caloriesPerServing != null ? Math.round(caloriesPerServing) : null,
+    });
   } catch (error) {
     return apiError(error, "recipes:id:get");
   }

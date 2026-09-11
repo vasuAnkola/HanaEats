@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { Loader2, Plus, ChevronLeft, ChevronRight, Trash2, Clock, CheckCircle, Banknote } from "lucide-react";
+import { localDateStr } from "@/lib/date";
 
 interface Outlet { id: number; name: string; }
 interface StaffUser { id: number; name: string; role: string; }
@@ -17,7 +18,7 @@ interface Shift { id: number; user_id: number; user_name: string; shift_date: st
 interface Attendance { id: number; user_id: number; user_name: string; outlet_name: string | null; clock_in: string; clock_out: string | null; duration_minutes: number | null; notes: string | null; }
 interface Commission { id: number; user_id: number; user_name: string; period_start: string; period_end: string; total_sales: number; commission_rate: number; commission_amount: number; order_count: number; status: string; notes: string | null; }
 
-const STATUS_BADGE: Record<string,string> = { scheduled:"bg-blue-100 text-blue-700", completed:"bg-emerald-100 text-emerald-700", absent:"bg-red-100 text-red-600", pending:"bg-amber-100 text-amber-700", approved:"bg-indigo-100 text-indigo-700", paid:"bg-emerald-100 text-emerald-700" };
+const STATUS_BADGE: Record<string,string> = { scheduled:"bg-brand-section text-brand-primary", completed:"bg-emerald-100 text-emerald-700", absent:"bg-red-100 text-red-600", pending:"bg-amber-100 text-amber-700", approved:"bg-brand-section text-brand-primary", paid:"bg-emerald-100 text-emerald-700" };
 
 function weekStart(date: Date) {
   const d = new Date(date);
@@ -27,7 +28,7 @@ function weekStart(date: Date) {
   return d;
 }
 function addDays(date: Date, n: number) { const d = new Date(date); d.setDate(d.getDate()+n); return d; }
-function fmtDate(d: Date) { return d.toISOString().split("T")[0]; }
+function fmtDate(d: Date) { return localDateStr(d); }
 function fmtShort(d: Date) { return d.toLocaleDateString("en-GB",{weekday:"short",day:"2-digit",month:"short"}); }
 
 export default function StaffPage() {
@@ -143,7 +144,7 @@ export default function StaffPage() {
     { key:"period_start", label:"Period", render: c => <span className="text-xs text-gray-500">{new Date(c.period_start).toLocaleDateString("en-GB",{day:"2-digit",month:"short"})} — {new Date(c.period_end).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})}</span> },
     { key:"total_sales", label:"Sales", sortable:true, render: c => <span className="text-sm font-semibold text-gray-900">{parseFloat(String(c.total_sales)).toFixed(2)}</span> },
     { key:"commission_rate", label:"Rate", render: c => <span className="text-sm text-gray-600">{parseFloat(String(c.commission_rate)).toFixed(1)}%</span> },
-    { key:"commission_amount", label:"Commission", sortable:true, render: c => <span className="text-sm font-bold text-indigo-700">{parseFloat(String(c.commission_amount)).toFixed(2)}</span> },
+    { key:"commission_amount", label:"Commission", sortable:true, render: c => <span className="text-sm font-bold text-brand-primary">{parseFloat(String(c.commission_amount)).toFixed(2)}</span> },
     { key:"status", label:"Status", render: c => <span className={"text-[10px] font-bold px-2 py-0.5 rounded-full uppercase " + (STATUS_BADGE[c.status]??"bg-gray-100 text-gray-500")}>{c.status}</span> },
     { key:"actions", label:"", render: c => (
       <div className="flex items-center gap-1">
@@ -204,10 +205,10 @@ export default function StaffPage() {
                     return (
                       <div key={dayStr} className="p-1.5 space-y-1">
                         {dayShifts.map(s => (
-                          <div key={s.id} className="bg-indigo-50 border border-indigo-200 rounded-lg p-1.5 group relative">
-                            <p className="text-[11px] font-semibold text-indigo-800 truncate">{s.user_name}</p>
-                            <p className="text-[10px] text-indigo-600">{s.start_time.slice(0,5)}–{s.end_time.slice(0,5)}</p>
-                            {s.role_label && <p className="text-[10px] text-indigo-400 truncate">{s.role_label}</p>}
+                          <div key={s.id} className="bg-brand-section border border-brand-gold rounded-lg p-1.5 group relative">
+                            <p className="text-[11px] font-semibold text-brand-dark truncate">{s.user_name}</p>
+                            <p className="text-[10px] text-brand-primary">{s.start_time.slice(0,5)}–{s.end_time.slice(0,5)}</p>
+                            {s.role_label && <p className="text-[10px] text-brand-light truncate">{s.role_label}</p>}
                             <button onClick={() => deleteShift(s.id)} className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-opacity">
                               <Trash2 className="w-3 h-3" />
                             </button>

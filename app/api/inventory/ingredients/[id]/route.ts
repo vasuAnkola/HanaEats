@@ -13,7 +13,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     if (!tenantId) return tenantRequired();
     const { id } = await params;
     const row = await queryOne(
-      `SELECT i.id, i.name, i.unit, i.cost_per_unit,
+      `SELECT i.id, i.name, i.unit, i.cost_per_unit, i.calories_per_unit, i.barcode,
               i.current_stock AS stock_quantity,
               i.reorder_level AS low_stock_threshold,
               i.outlet_id, i.category_id, i.is_active,
@@ -72,7 +72,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     // Regular update
-    const { name, unit, cost_per_unit, low_stock_threshold, category_id, is_active } = body;
+    const { name, unit, cost_per_unit, calories_per_unit, barcode, low_stock_threshold, category_id, is_active } = body;
+
+    if (barcode) {
+      const dupe = await queryOne(`SELECT id FROM ingredients WHERE tenant_id = $1 AND barcode = $2 AND id != $3`, [tenantId, barcode, id]);
+      if (dupe) return NextResponse.json({ error: "Another ingredient already uses this barcode" }, { status: 409 });
+    }
+
     const row = await queryOne(
       `UPDATE ingredients SET
          name = COALESCE($1, name),
@@ -81,9 +87,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
          reorder_level = COALESCE($4, reorder_level),
          category_id = COALESCE($5, category_id),
          is_active = COALESCE($6, is_active),
+         calories_per_unit = COALESCE($9, calories_per_unit),
+         barcode = COALESCE($10, barcode),
          updated_at = NOW()
        WHERE id = $7 AND tenant_id = $8
-       RETURNING id, name, unit, cost_per_unit,
+       RETURNING id, name, unit, cost_per_unit, calories_per_unit, barcode,
          current_stock AS stock_quantity,
          reorder_level AS low_stock_threshold,
          outlet_id, category_id, is_active`,
@@ -92,7 +100,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
        low_stock_threshold != null ? parseFloat(String(low_stock_threshold)) : null,
        category_id || null,
        is_active != null ? is_active : null,
-       id, tenantId]
+       id, tenantId,
+       calories_per_unit != null && calories_per_unit !== "" ? parseFloat(String(calories_per_unit)) : null,
+       barcode || null]
     );
     return NextResponse.json(row);
   } catch (error) {

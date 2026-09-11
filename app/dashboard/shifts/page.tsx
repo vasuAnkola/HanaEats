@@ -127,7 +127,7 @@ export default function ShiftsPage() {
     {
       key: "actions", label: "",
       render: s => (
-        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-indigo-600" onClick={() => viewDetail(s)}>
+        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-400 hover:text-brand-primary" onClick={() => viewDetail(s)}>
           <Eye className="w-3.5 h-3.5" />
         </Button>
       ),

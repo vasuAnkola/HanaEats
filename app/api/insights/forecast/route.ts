@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { query } from "@/lib/db";
+import { businessDateStr } from "@/lib/date";
+import { getTenantTimezone } from "@/lib/tenant";
 
 interface WeekdayAvg { item_id: number; item_name: string; dow: number; avg_qty: number; sample_days: number; }
 
@@ -15,6 +17,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const outletId = searchParams.get("outlet_id");
   if (!outletId) return NextResponse.json({ error: "outlet_id required" }, { status: 400 });
+
+  const tz = await getTenantTimezone(session.user.tenantId);
 
   const rows = await query<WeekdayAvg>(
     `WITH daily AS (
@@ -49,8 +53,12 @@ export async function GET(req: NextRequest) {
   for (let offset = 0; offset < 7; offset++) {
     const d = new Date();
     d.setDate(d.getDate() + offset);
-    const dow = d.getDay();
-    const dateStr = d.toISOString().split("T")[0];
+    // Compute the date string in the outlet's own timezone first, then derive
+    // day-of-week from that calendar date directly (via a UTC-midnight parse)
+    // rather than the server's ambient getDay() — otherwise the two can
+    // disagree right at the outlet's local midnight boundary.
+    const dateStr = businessDateStr(tz, d);
+    const dow = new Date(`${dateStr}T00:00:00Z`).getUTCDay();
 
     const items: { item_id: number; item_name: string; predicted_qty: number }[] = [];
     let total = 0;

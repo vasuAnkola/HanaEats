@@ -22,14 +22,14 @@ interface Outlet { id: number; name: string; }
 
 const ROLE_BADGE: Record<string, string> = {
   super_admin: "bg-purple-50 text-purple-700 ring-purple-200",
-  admin:       "bg-blue-50 text-blue-700 ring-blue-200",
+  admin:       "bg-brand-section text-brand-primary ring-brand-gold",
   manager:     "bg-emerald-50 text-emerald-700 ring-emerald-200",
   cashier:     "bg-amber-50 text-amber-700 ring-amber-200",
-  waiter:      "bg-sky-50 text-sky-700 ring-sky-200",
+  waiter:      "bg-brand-section text-brand-primary ring-brand-gold",
   kitchen:     "bg-red-50 text-red-700 ring-red-200",
 };
 
-const ROLE_AVATAR = "bg-gradient-to-br from-[#1E3A5F] to-[#2563EB]";
+const ROLE_AVATAR = "bg-gradient-to-br from-[#5C432B] to-[#D98C3B]";
 
 const ROLE_LABEL: Record<string, string> = {
   super_admin: "Super Admin", admin: "Admin", manager: "Manager",
@@ -158,7 +158,7 @@ export default function UsersPage() {
       key: "actions", label: "",
       render: u => canManage ? (
         <div className="flex items-center gap-1 justify-end">
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50" onClick={() => openEdit(u)}>
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-brand-primary hover:bg-brand-section" onClick={() => openEdit(u)}>
             <Pencil className="w-3.5 h-3.5" />
           </Button>
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50" onClick={() => setConfirmUser(u)}>

@@ -133,7 +133,7 @@ export default function DeliveryPage() {
         {r.customer_phone && <p className="text-xs text-gray-400">{r.customer_phone}</p>}
       </div>
     )},
-    { key: "total", label: "Total", sortable: true, render: r => <span className="font-semibold text-indigo-700">{fmt(r.total)}</span> },
+    { key: "total", label: "Total", sortable: true, render: r => <span className="font-semibold text-brand-primary">{fmt(r.total)}</span> },
     { key: "platform_status", label: "Status", render: r => (
       <Select value={r.platform_status} onValueChange={v => v && updateStatus(r, v)}>
         <SelectTrigger className="h-8 w-32 text-xs"><SelectValue /></SelectTrigger>

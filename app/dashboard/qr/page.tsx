@@ -23,7 +23,7 @@ const STATUS_BADGE: Record<string, string> = {
   available: "bg-emerald-100 text-emerald-700",
   occupied:  "bg-red-100 text-red-600",
   reserved:  "bg-amber-100 text-amber-700",
-  cleaning:  "bg-blue-100 text-blue-700",
+  cleaning:  "bg-brand-section text-brand-primary",
 };
 
 export default function QrPage() {
@@ -90,7 +90,7 @@ export default function QrPage() {
             <SelectTrigger className="w-48 h-9"><SelectValue placeholder="Select outlet" /></SelectTrigger>
             <SelectContent>{outlets.map(o => <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>)}</SelectContent>
           </Select>
-          <Button onClick={loadTables} variant="ghost" size="icon" className="text-gray-400 hover:text-indigo-600">
+          <Button onClick={loadTables} variant="ghost" size="icon" className="text-gray-400 hover:text-brand-primary">
             <RefreshCw className="w-4 h-4" />
           </Button>
         </div>
@@ -144,7 +144,7 @@ export default function QrPage() {
                           href={getQrPageUrl(qr.token)}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex-1 flex items-center justify-center gap-1 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg py-1.5 font-medium transition-colors"
+                          className="flex-1 flex items-center justify-center gap-1 text-xs bg-brand-section hover:bg-brand-section text-brand-primary rounded-lg py-1.5 font-medium transition-colors"
                         >
                           Preview
                         </a>

@@ -29,13 +29,13 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 const TYPE_COLOR: Record<string, string> = {
-  restaurant: "bg-blue-50 text-blue-700 ring-blue-200",
+  restaurant: "bg-brand-section text-brand-primary ring-brand-gold",
   cafe: "bg-amber-50 text-amber-700 ring-amber-200",
   bakery: "bg-orange-50 text-orange-700 ring-orange-200",
   food_truck: "bg-violet-50 text-violet-700 ring-violet-200",
   hawker: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   qsr: "bg-red-50 text-red-700 ring-red-200",
-  cloud_kitchen: "bg-sky-50 text-sky-700 ring-sky-200",
+  cloud_kitchen: "bg-brand-section text-brand-primary ring-brand-gold",
   bar: "bg-purple-50 text-purple-700 ring-purple-200",
   tea_house: "bg-teal-50 text-teal-700 ring-teal-200",
   juice_shop: "bg-lime-50 text-lime-700 ring-lime-200",
@@ -84,7 +84,7 @@ export default function OutletsPage() {
       key: "name", label: "Outlet", sortable: true,
       render: (o) => (
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+          <div className="w-10 h-10 bg-brand-primary rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
             <Store className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -100,7 +100,7 @@ export default function OutletsPage() {
       key: "address", label: "Address",
       render: (o) => o.address ? (
         <div className="flex items-start gap-1.5 max-w-xs">
-          <MapPin className="w-3.5 h-3.5 text-blue-400 flex-shrink-0 mt-0.5" />
+          <MapPin className="w-3.5 h-3.5 text-brand-light flex-shrink-0 mt-0.5" />
           <span className="text-sm text-gray-600 leading-snug">{o.address}</span>
         </div>
       ) : <span className="text-gray-300 text-sm">—</span>,
@@ -109,7 +109,7 @@ export default function OutletsPage() {
       key: "phone", label: "Phone",
       render: (o) => o.phone ? (
         <div className="flex items-center gap-1.5">
-          <Phone className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+          <Phone className="w-3.5 h-3.5 text-brand-light flex-shrink-0" />
           <span className="text-sm text-gray-600">{o.phone}</span>
         </div>
       ) : <span className="text-gray-300 text-sm">—</span>,
@@ -168,8 +168,8 @@ export default function OutletsPage() {
 
         {/* Stat cards */}
         <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white border border-blue-100 rounded-2xl p-5 flex items-center gap-4 shadow-sm">
-            <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
+          <div className="bg-white border border-brand-section rounded-2xl p-5 flex items-center gap-4 shadow-sm">
+            <div className="w-12 h-12 rounded-xl bg-brand-primary flex items-center justify-center flex-shrink-0">
               <Store className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -215,7 +215,7 @@ export default function OutletsPage() {
           <div className="p-4" data-tour="outlets-table">
             {loading ? (
               <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-6 h-6 animate-spin text-blue-300" />
+                <Loader2 className="w-6 h-6 animate-spin text-brand-gold" />
               </div>
             ) : (
               <DataTable
