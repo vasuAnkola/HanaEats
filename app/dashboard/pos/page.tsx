@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Minus, Trash2, ShoppingCart, Loader2, UtensilsCrossed, CheckCircle, CreditCard, Pencil, ArrowLeft } from "lucide-react";
+import { Search, Plus, Minus, Trash2, ShoppingCart, Loader2, UtensilsCrossed, CheckCircle, CreditCard, Pencil, ArrowLeft, WifiOff, CloudUpload } from "lucide-react";
+import { queueOrder, syncQueuedOrders, getQueuedOrders, newClientOrderId } from "@/lib/offline-queue";
 
 interface Outlet { id: number; name: string; }
 interface Category { id: number; name: string; }
@@ -77,6 +78,11 @@ export default function POSPage() {
   const [note, setNote] = useState("");
   const [taxRate] = useState(0);
   const [placing, setPlacing] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
+  const [pendingSync, setPendingSync] = useState(0);
+  const [queuedOffline, setQueuedOffline] = useState(false);
+  const [popularIds, setPopularIds] = useState<Set<number>>(new Set());
+  const [upsell, setUpsell] = useState<{ id: number; name: string; price: number; times_together: number }[]>([]);
 
   // Success state
   const [success, setSuccess] = useState(false);
@@ -116,6 +122,29 @@ export default function POSPage() {
     });
   }, []);
 
+  // ── Offline queue: sync any orders taken while the connection was down ───────
+  useEffect(() => {
+    setIsOnline(navigator.onLine);
+    getQueuedOrders().then(q => setPendingSync(q.length)).catch(() => {});
+
+    async function trySync() {
+      const n = await syncQueuedOrders().catch(() => 0);
+      if (n > 0) getQueuedOrders().then(q => setPendingSync(q.length)).catch(() => {});
+    }
+    function handleOnline() { setIsOnline(true); trySync(); }
+    function handleOffline() { setIsOnline(false); }
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    trySync();
+    const interval = setInterval(trySync, 30000);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+      clearInterval(interval);
+    };
+  }, []);
+
   useEffect(() => {
     if (!outletId) return;
     fetch(`/api/menu/categories?outlet_id=${outletId}`).then(r => r.json()).then(d => {
@@ -134,6 +163,24 @@ export default function POSPage() {
       setItems(Array.isArray(d) ? d.filter((i: MenuItem) => i.is_available) : []);
     });
   }, [selectedCat]);
+
+  // "Popular right now" badges — informs upselling without interrupting the flow
+  useEffect(() => {
+    if (!outletId) return;
+    fetch(`/api/insights/popular?outlet_id=${outletId}`).then(r => r.ok ? r.json() : []).then(d => {
+      setPopularIds(new Set(Array.isArray(d) ? d.map((p: { id: number }) => p.id) : []));
+    }).catch(() => {});
+  }, [outletId]);
+
+  // Suggest what's frequently bought with whatever was just added to the cart
+  useEffect(() => {
+    if (!outletId || cart.length === 0) { setUpsell([]); return; }
+    const lastItemId = cart[cart.length - 1].item_id;
+    fetch(`/api/insights/upsell?outlet_id=${outletId}&item_id=${lastItemId}`).then(r => r.ok ? r.json() : []).then(d => {
+      const inCart = new Set(cart.map(c => c.item_id));
+      setUpsell(Array.isArray(d) ? d.filter((s: { id: number }) => !inCart.has(s.id)) : []);
+    }).catch(() => {});
+  }, [outletId, cart]);
 
   const filteredItems = search.trim()
     ? items.filter(i => i.name.toLowerCase().includes(search.toLowerCase()))
@@ -233,36 +280,60 @@ export default function POSPage() {
   async function placeOrder() {
     if (!cart.length || !outletId) return;
     setPlacing(true);
-    const res = await fetch("/api/orders", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        outlet_id: parseInt(outletId),
-        table_id: tableId ? parseInt(tableId) : null,
-        order_type: orderType,
-        customer_name: customerName || undefined,
-        customer_note: note || undefined,
-        tax_rate: taxRate,
-        items: cart.map(i => ({
-          item_id: i.item_id,
-          item_name: i.item_name,
-          quantity: i.quantity,
-          unit_price: parseFloat(String(i.unit_price)) || 0,
-          note: i.note || undefined,
-          variants: i.variants.map(v => ({ ...v, price_modifier: parseFloat(String(v.price_modifier)) || 0 })),
-          addons: i.addons.map(a => ({ ...a, price: parseFloat(String(a.price)) || 0 })),
-        })),
-      }),
-    });
-    const data = await res.json();
-    if (!res.ok) { setPlacing(false); alert(data.error ?? "Failed"); return; }
-    setOrderNum(data.order_number);
-    setOrderId(data.id);
-    setOrderTotal(parseFloat(data.total));
-    setOrderTaxAmt(parseFloat(data.tax_amount));
+    const clientOrderId = newClientOrderId();
+    const payload = {
+      outlet_id: parseInt(outletId),
+      table_id: tableId ? parseInt(tableId) : null,
+      order_type: orderType,
+      customer_name: customerName || undefined,
+      customer_note: note || undefined,
+      tax_rate: taxRate,
+      client_order_id: clientOrderId,
+      items: cart.map(i => ({
+        item_id: i.item_id,
+        item_name: i.item_name,
+        quantity: i.quantity,
+        unit_price: parseFloat(String(i.unit_price)) || 0,
+        note: i.note || undefined,
+        variants: i.variants.map(v => ({ ...v, price_modifier: parseFloat(String(v.price_modifier)) || 0 })),
+        addons: i.addons.map(a => ({ ...a, price: parseFloat(String(a.price)) || 0 })),
+      })),
+    };
+
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      await queueOrderOffline(payload, clientOrderId);
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) { setPlacing(false); alert(data.error ?? "Failed"); return; }
+      setOrderNum(data.order_number);
+      setOrderId(data.id);
+      setOrderTotal(parseFloat(data.total));
+      setOrderTaxAmt(parseFloat(data.tax_amount));
+      setCart([]);
+      setSuccess(true);
+      setPlacing(false);
+    } catch {
+      // fetch throws on a dropped connection — fall back to the offline queue
+      await queueOrderOffline(payload, clientOrderId);
+    }
+  }
+
+  async function queueOrderOffline(payload: Record<string, unknown>, clientOrderId: string) {
+    await queueOrder({ client_order_id: clientOrderId, payload, queued_at: new Date().toISOString() });
+    setPendingSync(p => p + 1);
+    setIsOnline(false);
+    setQueuedOffline(true);
     setCart([]);
-    setSuccess(true);
     setPlacing(false);
+    setTimeout(() => setQueuedOffline(false), 4000);
   }
 
   // ── Edit mode helpers ────────────────────────────────────────────────────────
@@ -360,7 +431,7 @@ export default function POSPage() {
   // ── Edit mode screen ─────────────────────────────────────────────────────────
   if (editMode) {
     return (
-      <div className="flex h-screen overflow-hidden bg-gray-50">
+      <div className="flex flex-col md:flex-row h-screen overflow-hidden bg-gray-50">
         {/* Left — Menu */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
@@ -417,7 +488,7 @@ export default function POSPage() {
         </div>
 
         {/* Right — Order items */}
-        <div className="w-80 flex-shrink-0 bg-white border-l border-gray-200 flex flex-col">
+        <div className="w-full md:w-80 flex-shrink-0 bg-white border-t md:border-t-0 md:border-l border-gray-200 flex flex-col min-h-[45vh] md:min-h-0">
           <div className="px-4 py-3 border-b border-gray-100">
             <p className="font-semibold text-sm text-gray-800">Current Items</p>
             <p className="text-xs text-gray-400">Tap items on left to add · Use controls to remove or change qty</p>
@@ -599,9 +670,19 @@ export default function POSPage() {
 
   // ── Main POS screen ──────────────────────────────────────────────────────────
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <div className="flex flex-col md:flex-row h-screen overflow-hidden bg-gray-50">
       {/* Left — Menu */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {(!isOnline || pendingSync > 0 || queuedOffline) && (
+          <div className={`px-4 py-1.5 text-xs font-medium flex items-center gap-1.5 ${!isOnline ? "bg-amber-50 text-amber-700" : "bg-blue-50 text-blue-700"}`}>
+            {!isOnline ? <WifiOff className="w-3.5 h-3.5" /> : <CloudUpload className="w-3.5 h-3.5" />}
+            {!isOnline
+              ? `You're offline — orders are being saved on this device${pendingSync > 0 ? ` (${pendingSync} queued)` : ""} and will sync automatically once you're back online.`
+              : pendingSync > 0
+              ? `Syncing ${pendingSync} queued order${pendingSync > 1 ? "s" : ""}...`
+              : "Queued order synced."}
+          </div>
+        )}
         <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 flex-wrap">
           <Select value={outletId} onValueChange={(v) => v && setOutletId(v)}>
             <SelectTrigger className="w-40 h-8 text-sm"><SelectValue placeholder="Outlet" /></SelectTrigger>
@@ -631,7 +712,10 @@ export default function POSPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {filteredItems.map(item => (
                 <button key={item.id} onClick={() => openCustom(item)}
-                  className="bg-white border border-gray-100 rounded-xl p-3 text-left hover:border-blue-300 hover:shadow-md transition-all active:scale-95">
+                  className="relative bg-white border border-gray-100 rounded-xl p-3 text-left hover:border-blue-300 hover:shadow-md transition-all active:scale-95">
+                  {popularIds.has(item.id) && (
+                    <span className="absolute top-1.5 right-1.5 text-[9px] font-bold px-1.5 py-0.5 bg-orange-50 text-orange-600 rounded-full ring-1 ring-orange-200 flex items-center gap-0.5">🔥 Popular</span>
+                  )}
                   <div className="w-full h-20 bg-blue-400 rounded-lg flex items-center justify-center mb-2.5">
                     <UtensilsCrossed className="w-8 h-8 text-white opacity-90" />
                   </div>
@@ -646,7 +730,7 @@ export default function POSPage() {
       </div>
 
       {/* Right — Cart */}
-      <div className="w-80 flex-shrink-0 bg-white border-l border-gray-200 flex flex-col">
+      <div className="w-full md:w-80 flex-shrink-0 bg-white border-t md:border-t-0 md:border-l border-gray-200 flex flex-col min-h-[45vh] md:min-h-0">
         <div className="px-4 py-3 border-b border-gray-100">
           <div className="flex items-center gap-2 mb-3">
             <ShoppingCart className="w-4 h-4 text-blue-600" />
@@ -722,6 +806,21 @@ export default function POSPage() {
             );
           })}
         </div>
+
+        {upsell.length > 0 && (
+          <div className="px-4 py-2 border-t border-gray-100 bg-amber-50/50">
+            <p className="text-[11px] font-semibold text-amber-700 mb-1.5">Customers often add</p>
+            <div className="flex flex-wrap gap-1.5">
+              {upsell.slice(0, 3).map(s => (
+                <button key={s.id}
+                  onClick={() => addToCart({ id: s.id, name: s.name, price: s.price, description: null, category_name: "", is_available: true, is_halal: false, variant_count: 0, addon_group_count: 0 }, 1, [], [])}
+                  className="text-xs font-medium bg-white border border-amber-200 text-amber-800 rounded-full px-2.5 py-1 hover:bg-amber-100 transition-colors">
+                  + {s.name} · {parseFloat(String(s.price)).toFixed(2)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="border-t border-gray-100 px-4 py-3 space-y-2">
           <div className="flex justify-between text-xs text-gray-500">

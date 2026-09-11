@@ -7,6 +7,7 @@ import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { getNavGroups } from "./nav-items";
 import type { UserRole } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 import { LogOut, ChevronsUpDown, ChevronDown } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -64,6 +65,7 @@ interface AppSidebarProps {
 export function AppSidebar({ userName, userEmail, userRole }: AppSidebarProps) {
   const pathname = usePathname();
   const groups = getNavGroups(userRole);
+  const { tn } = useI18n();
 
   const initials = userName
     .split(" ")
@@ -132,7 +134,7 @@ export function AppSidebar({ userName, userEmail, userRole }: AppSidebarProps) {
                             }
                           >
                             <item.icon className={cn("w-4 h-4", isOpen ? "!text-white" : "text-sidebar-foreground/50")} />
-                            <span>{item.label}</span>
+                            <span>{tn(item.label)}</span>
                             <ChevronDown className="ml-auto w-3.5 h-3.5 transition-transform group-data-open/collapsible:rotate-180" />
                           </CollapsibleTrigger>
                           <CollapsibleContent>
@@ -147,7 +149,7 @@ export function AppSidebar({ userName, userEmail, userRole }: AppSidebarProps) {
                                       className={cn(childActive && "bg-sidebar-accent !text-white font-medium")}
                                     >
                                       <child.icon className="w-4 h-4" />
-                                      <span>{child.label}</span>
+                                      <span>{tn(child.label)}</span>
                                     </SidebarMenuSubButton>
                                   </SidebarMenuSubItem>
                                 );
@@ -173,7 +175,7 @@ export function AppSidebar({ userName, userEmail, userRole }: AppSidebarProps) {
                         )}
                       >
                         <item.icon className={cn("w-4 h-4", active ? "!text-white" : "text-sidebar-foreground/50")} />
-                        <span>{item.label}</span>
+                        <span>{tn(item.label)}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );

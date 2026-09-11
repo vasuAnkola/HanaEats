@@ -31,6 +31,9 @@ const Schema = z.object({
   customer_note: z.string().optional(),
   tax_rate: numStr.default(0),
   items: z.array(ItemSchema).min(1),
+  // Set when an order was queued offline (POS) and is being retried — lets a
+  // repeated sync attempt return the already-created order instead of duplicating it.
+  client_order_id: z.string().max(64).optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -70,8 +73,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: Object.values(parsed.error.flatten().fieldErrors).flat()[0] ?? "Invalid input" }, { status: 400 });
   }
 
-  const { outlet_id, table_id, order_type, customer_name, customer_note, tax_rate, items } = parsed.data;
+  const { outlet_id, table_id, order_type, customer_name, customer_note, tax_rate, items, client_order_id } = parsed.data;
   const tenantId = session.user.tenantId ?? body.tenant_id;
+
+  if (client_order_id) {
+    const existing = await queryOne(
+      `SELECT * FROM orders WHERE client_order_id = $1 AND tenant_id = $2`,
+      [client_order_id, tenantId]
+    );
+    if (existing) return NextResponse.json(existing, { status: 200 });
+  }
 
   // Calculate totals
   let subtotal = 0;
@@ -90,9 +101,9 @@ export async function POST(req: NextRequest) {
 
     const orderNum = `ORD-${Date.now().toString().slice(-6)}`;
     const orderRes = await client.query(
-      `INSERT INTO orders (outlet_id, tenant_id, table_id, order_type, status, order_number, customer_name, customer_note, subtotal, tax_amount, total, served_by)
-       VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
-      [outlet_id, tenantId, table_id ?? null, order_type, orderNum, customer_name ?? null, customer_note ?? null, subtotal, taxAmount, total, session.user.id]
+      `INSERT INTO orders (outlet_id, tenant_id, table_id, order_type, status, order_number, customer_name, customer_note, subtotal, tax_amount, total, served_by, client_order_id)
+       VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+      [outlet_id, tenantId, table_id ?? null, order_type, orderNum, customer_name ?? null, customer_note ?? null, subtotal, taxAmount, total, session.user.id, client_order_id ?? null]
     );
     const order = orderRes.rows[0];
 

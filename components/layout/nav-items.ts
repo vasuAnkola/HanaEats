@@ -23,6 +23,8 @@ import {
   Tag,
   Megaphone,
   Users2,
+  Bike,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 
@@ -78,6 +80,7 @@ export function getNavGroups(role: UserRole): NavGroup[] {
           { label: "Tables", href: "/dashboard/tables", icon: Armchair },
           { label: "Reservations", href: "/dashboard/reservations", icon: CalendarDays },
           { label: "QR Codes", href: "/dashboard/qr", icon: QrCode },
+          { label: "Delivery", href: "/dashboard/delivery", icon: Bike },
           { label: "Payments", href: "/dashboard/payments", icon: Banknote },
           { label: "Shifts", href: "/dashboard/shifts", icon: Clock },
           { label: "Inventory", href: "/dashboard/inventory", icon: Package, children: INVENTORY_CHILDREN },
@@ -86,6 +89,7 @@ export function getNavGroups(role: UserRole): NavGroup[] {
           { label: "Promotions", href: "/dashboard/promotions", icon: Megaphone },
           { label: "Staff", href: "/dashboard/staff", icon: Users2 },
           { label: "Reports", href: "/dashboard/reports", icon: BarChart3 },
+          { label: "Insights", href: "/dashboard/insights", icon: Sparkles },
         ],
       },
       {
@@ -109,6 +113,7 @@ export function getNavGroups(role: UserRole): NavGroup[] {
           { label: "Tables", href: "/dashboard/tables", icon: Armchair },
           { label: "Reservations", href: "/dashboard/reservations", icon: CalendarDays },
           { label: "QR Codes", href: "/dashboard/qr", icon: QrCode },
+          { label: "Delivery", href: "/dashboard/delivery", icon: Bike },
           { label: "Payments", href: "/dashboard/payments", icon: Banknote },
           { label: "Shifts", href: "/dashboard/shifts", icon: Clock },
           { label: "Inventory", href: "/dashboard/inventory", icon: Package, children: INVENTORY_CHILDREN },
@@ -118,6 +123,7 @@ export function getNavGroups(role: UserRole): NavGroup[] {
           { label: "Staff", href: "/dashboard/staff", icon: Users2 },
           { label: "Team", href: "/dashboard/users", icon: Users },
           { label: "Reports", href: "/dashboard/reports", icon: BarChart3 },
+          { label: "Insights", href: "/dashboard/insights", icon: Sparkles },
         ],
       },
     ];

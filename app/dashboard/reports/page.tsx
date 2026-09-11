@@ -8,11 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Download, TrendingUp, ShoppingCart, Users, Package } from "lucide-react";
+import { Loader2, Download, FileDown, TrendingUp, ShoppingCart, Users, Package } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
   BarChart, Bar, Cell,
 } from "recharts";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -47,6 +49,27 @@ function downloadCSV(rows: Record<string, unknown>[], filename: string) {
   a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
   a.download = filename;
   a.click();
+}
+
+function downloadPDF(title: string, rows: Record<string, unknown>[], filename: string, subtitle?: string) {
+  if (!rows.length) return;
+  const headers = Object.keys(rows[0]);
+  const doc = new jsPDF();
+  doc.setFontSize(14);
+  doc.text(title, 14, 16);
+  if (subtitle) {
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(subtitle, 14, 22);
+  }
+  autoTable(doc, {
+    startY: subtitle ? 27 : 22,
+    head: [headers.map(h => h.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()))],
+    body: rows.map(r => headers.map(h => String(r[h] ?? ""))),
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [99, 102, 241] },
+  });
+  doc.save(filename);
 }
 
 const HEATMAP_COLORS = ["#f0f9ff","#bae6fd","#7dd3fc","#38bdf8","#0284c7","#075985"];
@@ -207,10 +230,16 @@ export default function ReportsPage() {
             <div className="bg-white border border-gray-200 rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-gray-700">Daily Revenue</h3>
-                <Button variant="outline" size="sm" className="gap-1.5 text-xs"
-                  onClick={() => overview && downloadCSV(overview.sales as unknown as Record<string, unknown>[], "daily-revenue.csv")}>
-                  <Download className="w-3.5 h-3.5" /> Export
-                </Button>
+                <div className="flex gap-1.5">
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs"
+                    onClick={() => overview && downloadCSV(overview.sales as unknown as Record<string, unknown>[], "daily-revenue.csv")}>
+                    <Download className="w-3.5 h-3.5" /> CSV
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs"
+                    onClick={() => overview && downloadPDF("Daily Revenue", overview.sales as unknown as Record<string, unknown>[], "daily-revenue.pdf", `${from} to ${to}`)}>
+                    <FileDown className="w-3.5 h-3.5" /> PDF
+                  </Button>
+                </div>
               </div>
               {overview === null ? (
                 <div className="h-48 flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-gray-300" /></div>
@@ -235,10 +264,16 @@ export default function ReportsPage() {
               <div className="bg-white border border-gray-200 rounded-xl p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-semibold text-gray-700">Top Selling Items</h3>
-                  <Button variant="outline" size="sm" className="gap-1.5 text-xs"
-                    onClick={() => overview && downloadCSV(overview.topItems as unknown as Record<string, unknown>[], "top-items.csv")}>
-                    <Download className="w-3.5 h-3.5" /> Export
-                  </Button>
+                  <div className="flex gap-1.5">
+                    <Button variant="outline" size="sm" className="gap-1.5 text-xs"
+                      onClick={() => overview && downloadCSV(overview.topItems as unknown as Record<string, unknown>[], "top-items.csv")}>
+                      <Download className="w-3.5 h-3.5" /> CSV
+                    </Button>
+                    <Button variant="outline" size="sm" className="gap-1.5 text-xs"
+                      onClick={() => overview && downloadPDF("Top Selling Items", overview.topItems as unknown as Record<string, unknown>[], "top-items.pdf", `${from} to ${to}`)}>
+                      <FileDown className="w-3.5 h-3.5" /> PDF
+                    </Button>
+                  </div>
                 </div>
                 {overview === null ? (
                   <div className="h-48 flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-gray-300" /></div>
@@ -318,10 +353,16 @@ export default function ReportsPage() {
             <div className="bg-white border border-gray-200 rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-gray-700">Staff Performance</h3>
-                <Button variant="outline" size="sm" className="gap-1.5 text-xs"
-                  onClick={() => staff && downloadCSV(staff as unknown as Record<string, unknown>[], "staff-performance.csv")}>
-                  <Download className="w-3.5 h-3.5" /> Export
-                </Button>
+                <div className="flex gap-1.5">
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs"
+                    onClick={() => staff && downloadCSV(staff as unknown as Record<string, unknown>[], "staff-performance.csv")}>
+                    <Download className="w-3.5 h-3.5" /> CSV
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs"
+                    onClick={() => staff && downloadPDF("Staff Performance", staff as unknown as Record<string, unknown>[], "staff-performance.pdf", `${from} to ${to}`)}>
+                    <FileDown className="w-3.5 h-3.5" /> PDF
+                  </Button>
+                </div>
               </div>
               {staff === null ? <TableSkeleton rows={6} cols={4} /> : (
                 <DataTable data={staff} columns={staffCols} searchKeys={["staff_name"]} searchPlaceholder="Search staff..." pageSize={20} emptyMessage="No data for this period." />
@@ -342,10 +383,16 @@ export default function ReportsPage() {
             <div className="bg-white border border-gray-200 rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-gray-700">Top Customers</h3>
-                <Button variant="outline" size="sm" className="gap-1.5 text-xs"
-                  onClick={() => customers && downloadCSV(customers.topCustomers as unknown as Record<string, unknown>[], "top-customers.csv")}>
-                  <Download className="w-3.5 h-3.5" /> Export
-                </Button>
+                <div className="flex gap-1.5">
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs"
+                    onClick={() => customers && downloadCSV(customers.topCustomers as unknown as Record<string, unknown>[], "top-customers.csv")}>
+                    <Download className="w-3.5 h-3.5" /> CSV
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs"
+                    onClick={() => customers && downloadPDF("Top Customers", customers.topCustomers as unknown as Record<string, unknown>[], "top-customers.pdf")}>
+                    <FileDown className="w-3.5 h-3.5" /> PDF
+                  </Button>
+                </div>
               </div>
               {customers === null ? <TableSkeleton rows={6} cols={4} /> : (
                 <DataTable data={customers.topCustomers} columns={custCols} searchKeys={["name"]} searchPlaceholder="Search customers..." pageSize={10} emptyMessage="No customer data." />
@@ -358,10 +405,16 @@ export default function ReportsPage() {
             <div className="bg-white border border-gray-200 rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-gray-700">Inventory Value</h3>
-                <Button variant="outline" size="sm" className="gap-1.5 text-xs"
-                  onClick={() => inventory && downloadCSV(inventory as unknown as Record<string, unknown>[], "inventory-value.csv")}>
-                  <Download className="w-3.5 h-3.5" /> Export
-                </Button>
+                <div className="flex gap-1.5">
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs"
+                    onClick={() => inventory && downloadCSV(inventory as unknown as Record<string, unknown>[], "inventory-value.csv")}>
+                    <Download className="w-3.5 h-3.5" /> CSV
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs"
+                    onClick={() => inventory && downloadPDF("Inventory Value", inventory as unknown as Record<string, unknown>[], "inventory-value.pdf")}>
+                    <FileDown className="w-3.5 h-3.5" /> PDF
+                  </Button>
+                </div>
               </div>
               {inventory === null ? <TableSkeleton rows={8} cols={5} /> : (
                 <DataTable data={inventory} columns={invCols} searchKeys={["name"]} searchPlaceholder="Search ingredients..." pageSize={25} emptyMessage="No inventory data." />
