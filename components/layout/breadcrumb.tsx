@@ -44,12 +44,16 @@ function isId(segment: string): boolean {
   return /^\d+$/.test(segment) || /^[0-9a-f-]{36}$/i.test(segment);
 }
 
+// Segments that only ever appear as part of a deeper route (e.g. .../items/new,
+// .../items/[itemId]) and have no listing page of their own to link to.
+const NON_NAVIGABLE_SEGMENTS = new Set(["items"]);
+
 export function AppBreadcrumb() {
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
 
   // Build crumb list — skip numeric IDs as standalone crumbs
-  const crumbs: { label: string; href: string }[] = [];
+  const crumbs: { label: string; href: string; navigable: boolean }[] = [];
   let path = "";
 
   for (let i = 0; i < segments.length; i++) {
@@ -61,7 +65,7 @@ export function AppBreadcrumb() {
       continue;
     }
 
-    crumbs.push({ label: getLabel(seg), href: path });
+    crumbs.push({ label: getLabel(seg), href: path, navigable: !NON_NAVIGABLE_SEGMENTS.has(seg) });
   }
 
   if (crumbs.length <= 1) return null;
@@ -74,8 +78,8 @@ export function AppBreadcrumb() {
           return (
             <span key={crumb.href} className="flex items-center gap-1.5">
               <BreadcrumbItem>
-                {isLast ? (
-                  <BreadcrumbPage className="text-gray-900 font-medium text-sm">
+                {isLast || !crumb.navigable ? (
+                  <BreadcrumbPage className={isLast ? "text-gray-900 font-medium text-sm" : "text-gray-400 text-sm"}>
                     {crumb.label}
                   </BreadcrumbPage>
                 ) : (

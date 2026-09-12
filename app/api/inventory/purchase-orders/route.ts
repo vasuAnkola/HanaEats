@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
 import { query, queryOne } from "@/lib/db";
+import pool from "@/lib/db";
 import { apiError, getTenantId, tenantRequired, canManageInventory, inventoryForbidden } from "../_utils";
 
 function genPoNumber() {
@@ -48,22 +49,32 @@ export async function POST(req: NextRequest) {
     const total = items.reduce((sum: number, it: { quantity: number; unit_cost: number }) =>
       sum + parseFloat(String(it.quantity)) * parseFloat(String(it.unit_cost)), 0);
 
-    const po = await queryOne(
-      `INSERT INTO purchase_orders (tenant_id, vendor_id, outlet_id, po_number, total_amount, notes, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-      [tenantId, vendor_id || null, outlet_id || null, genPoNumber(),
-       total, notes || null, session.user.id || null]
-    );
-
-    for (const it of items) {
-      await queryOne(
-        `INSERT INTO purchase_order_items (purchase_order_id, ingredient_id, quantity, unit_cost)
-         VALUES ($1,$2,$3,$4)`,
-        [(po as Record<string, unknown>)?.id, it.ingredient_id,
-         parseFloat(String(it.quantity)), parseFloat(String(it.unit_cost))]
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const poResult = await client.query(
+        `INSERT INTO purchase_orders (tenant_id, vendor_id, outlet_id, po_number, total_amount, notes, created_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+        [tenantId, vendor_id || null, outlet_id || null, genPoNumber(),
+         total, notes || null, session.user.id || null]
       );
+      const po = poResult.rows[0];
+
+      for (const it of items) {
+        await client.query(
+          `INSERT INTO purchase_order_items (purchase_order_id, ingredient_id, quantity, unit_cost)
+           VALUES ($1,$2,$3,$4)`,
+          [po.id, it.ingredient_id, parseFloat(String(it.quantity)), parseFloat(String(it.unit_cost))]
+        );
+      }
+      await client.query("COMMIT");
+      return NextResponse.json(po, { status: 201 });
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
     }
-    return NextResponse.json(po, { status: 201 });
   } catch (error) {
     return apiError(error, "purchase-orders:post");
   }

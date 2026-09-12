@@ -33,6 +33,7 @@ export default function QrPage() {
   const [loading, setLoading] = useState(false);
   const [generatingId, setGeneratingId] = useState<number | null>(null);
   const [qrMap, setQrMap] = useState<Record<number, QrInfo>>({});
+  const [errorMap, setErrorMap] = useState<Record<number, string>>({});
 
   useEffect(() => {
     fetch("/api/outlets").then(r => r.json()).then(d => {
@@ -58,6 +59,7 @@ export default function QrPage() {
 
   async function generateQr(tableId: number) {
     setGeneratingId(tableId);
+    setErrorMap(prev => ({ ...prev, [tableId]: "" }));
     const res = await fetch("/api/qr", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -66,6 +68,8 @@ export default function QrPage() {
     const data = await res.json();
     if (res.ok) {
       setQrMap(prev => ({ ...prev, [tableId]: data as QrInfo }));
+    } else {
+      setErrorMap(prev => ({ ...prev, [tableId]: data.error ?? "Couldn't generate QR code" }));
     }
     setGeneratingId(null);
   }
@@ -154,11 +158,15 @@ export default function QrPage() {
                         size="sm"
                         className="w-full text-xs"
                         onClick={() => generateQr(table.id)}
-                        disabled={isGenerating}
+                        disabled={isGenerating || table.status === "occupied"}
+                        title={table.status === "occupied" ? "Can't regenerate while the table is occupied — it would cut off the seated customer's session" : undefined}
                       >
                         {isGenerating ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <RefreshCw className="w-3 h-3 mr-1" />}
                         Regenerate
                       </Button>
+                      {errorMap[table.id] && (
+                        <p className="text-[10px] text-red-500 text-center leading-snug">{errorMap[table.id]}</p>
+                      )}
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-3 py-4">
@@ -173,6 +181,9 @@ export default function QrPage() {
                         {isGenerating ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <QrCode className="w-3 h-3 mr-1" />}
                         Generate QR
                       </Button>
+                      {errorMap[table.id] && (
+                        <p className="text-[10px] text-red-500 text-center leading-snug px-2">{errorMap[table.id]}</p>
+                      )}
                     </div>
                   )}
                 </div>

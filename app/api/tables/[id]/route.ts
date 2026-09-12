@@ -26,12 +26,19 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (!keys.length) return NextResponse.json({ error: "No fields" }, { status: 400 });
 
   const setClauses = keys.map((k, i) => `${k} = $${i + 1}`).join(", ");
-  const row = await queryOne(
-    `UPDATE outlet_tables SET ${setClauses} WHERE id = $${keys.length + 1} AND tenant_id = $${keys.length + 2} RETURNING *`,
-    [...keys.map((k) => fields[k]), id, session.user.tenantId]
-  );
-  if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(row);
+  try {
+    const row = await queryOne(
+      `UPDATE outlet_tables SET ${setClauses} WHERE id = $${keys.length + 1} AND tenant_id = $${keys.length + 2} RETURNING *`,
+      [...keys.map((k) => fields[k]), id, session.user.tenantId]
+    );
+    if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json(row);
+  } catch (err) {
+    if (err instanceof Error && "code" in err && (err as { code: string }).code === "23505") {
+      return NextResponse.json({ error: "A table with that number already exists for this outlet" }, { status: 409 });
+    }
+    throw err;
+  }
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {

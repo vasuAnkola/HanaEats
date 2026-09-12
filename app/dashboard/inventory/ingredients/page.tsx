@@ -33,6 +33,7 @@ export default function IngredientsPage() {
   const [selected, setSelected] = useState<Ingredient | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [movements, setMovements] = useState<Movement[]>([]);
   const [form, setForm] = useState({ name: "", unit: "kg", cost_per_unit: "0", calories_per_unit: "", barcode: "", stock_quantity: "0", low_stock_threshold: "0" });
   const [adjForm, setAdjForm] = useState({ quantity: "0", movement_type: "adjustment", notes: "" });
@@ -41,14 +42,12 @@ export default function IngredientsPage() {
   const load = useCallback(async () => {
     const res = await fetch("/api/inventory/ingredients");
     const data = await readJson(res);
+    if (!res.ok) { setLoadError(apiErrorMessage(data)); setIngredients([]); return; }
+    setLoadError("");
     setIngredients(Array.isArray(data) ? data : []);
   }, []);
 
-  useEffect(() => {
-    fetch("/api/inventory/ingredients")
-      .then(readJson)
-      .then((data) => setIngredients(Array.isArray(data) ? data : []));
-  }, []);
+  useEffect(() => { load(); }, [load]);
 
   function openAdd(prefillBarcode?: string) {
     setForm({ name: "", unit: "kg", cost_per_unit: "0", calories_per_unit: "", barcode: prefillBarcode ?? "", stock_quantity: "0", low_stock_threshold: "0" });
@@ -168,6 +167,9 @@ export default function IngredientsPage() {
       <BarcodeScanner open={scannerOpen} onClose={() => setScannerOpen(false)} onScan={handleScan} />
       <Header title="Ingredients" subtitle="Track stock levels and ingredient costs" />
       <div className="p-6">
+        {loadError && (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-4">{loadError}</p>
+        )}
         <div className="flex items-center justify-between mb-6">
           <div>
             {lowCount > 0 && (

@@ -5,8 +5,43 @@ import { Header } from "@/components/layout/header";
 import {
   Building2, Store, Users, Globe, TrendingUp, Activity,
   ArrowRight, ShoppingCart, BarChart3, UserPlus, MapPin, Settings,
+  LogIn, LogOut, UserCog, KeyRound, Trash2, Ban, ShieldCheck,
 } from "lucide-react";
 import type { UserRole } from "@/lib/auth";
+import { businessDateStr } from "@/lib/date";
+import { getTenantTimezone } from "@/lib/tenant";
+
+interface ActivityRow {
+  action: string;
+  entity: string | null;
+  created_at: string;
+  user_name: string | null;
+}
+
+const ACTIVITY_META: Record<string, { label: string; icon: typeof ShieldCheck; color: string }> = {
+  "auth.login": { label: "signed in", icon: LogIn, color: "text-emerald-600 bg-emerald-50" },
+  "auth.login_failed": { label: "failed to sign in", icon: LogOut, color: "text-red-600 bg-red-50" },
+  "user.create": { label: "invited a user", icon: UserPlus, color: "text-brand-primary bg-brand-section" },
+  "user.update": { label: "updated a user", icon: UserCog, color: "text-brand-primary bg-brand-section" },
+  "user.reset_password": { label: "reset a password", icon: KeyRound, color: "text-amber-600 bg-amber-50" },
+  "user.delete": { label: "removed a user", icon: Trash2, color: "text-red-600 bg-red-50" },
+  "account.change_password": { label: "changed their password", icon: KeyRound, color: "text-amber-600 bg-amber-50" },
+  "outlet.create": { label: "added an outlet", icon: Store, color: "text-brand-primary bg-brand-section" },
+  "payment.void": { label: "voided a payment", icon: Ban, color: "text-red-600 bg-red-50" },
+};
+
+async function getRecentActivity(tenantId: string): Promise<ActivityRow[]> {
+  try {
+    return await query<ActivityRow>(
+      `SELECT a.action, a.entity, a.created_at, u.name as user_name
+       FROM audit_logs a LEFT JOIN users u ON u.id = a.user_id
+       WHERE a.tenant_id = $1 ORDER BY a.created_at DESC LIMIT 6`,
+      [tenantId]
+    );
+  } catch {
+    return [];
+  }
+}
 
 async function getSuperAdminStats() {
   try {
@@ -29,13 +64,20 @@ async function getSuperAdminStats() {
 
 async function getAdminStats(tenantId: string) {
   try {
-    const [outlets, users] = await Promise.all([
+    const timezone = await getTenantTimezone(tenantId);
+    const today = businessDateStr(timezone);
+    const [outlets, users, todaysOrders] = await Promise.all([
       query<{ count: string }>("SELECT COUNT(*) as count FROM outlets WHERE tenant_id = $1 AND is_active = true", [tenantId]),
       query<{ count: string }>("SELECT COUNT(*) as count FROM users WHERE tenant_id = $1 AND is_active = true", [tenantId]),
+      query<{ count: string }>(
+        `SELECT COUNT(*) as count FROM orders o JOIN outlets ou ON ou.id = o.outlet_id
+         WHERE ou.tenant_id = $1 AND DATE(o.created_at) = $2`,
+        [tenantId, today]
+      ),
     ]);
-    return { outlets: Number(outlets[0].count), users: Number(users[0].count) };
+    return { outlets: Number(outlets[0].count), users: Number(users[0].count), todaysOrders: Number(todaysOrders[0].count) };
   } catch {
-    return { outlets: 0, users: 0 };
+    return { outlets: 0, users: 0, todaysOrders: 0 };
   }
 }
 
@@ -83,6 +125,7 @@ export default async function DashboardPage() {
 
   if (role === "admin" && session.user.tenantId) {
     const stats = await getAdminStats(session.user.tenantId);
+    const activity = await getRecentActivity(session.user.tenantId);
     return (
       <div>
         <Header />
@@ -102,13 +145,13 @@ export default async function DashboardPage() {
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
             <StatCard icon={Store} label="Active Outlets" value={stats.outlets} color="emerald" />
             <StatCard icon={Users} label="Team Members" value={stats.users} color="violet" />
-            <StatCard icon={TrendingUp} label="Today's Orders" value={0} color="blue" />
+            <StatCard icon={TrendingUp} label="Today's Orders" value={stats.todaysOrders} color="blue" />
           </div>
 
           {/* Bottom grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <QuickActions role={role} />
-            <RecentActivity />
+            <RecentActivity activities={activity} />
           </div>
         </div>
       </div>
@@ -241,7 +284,7 @@ function PlatformHealth({ stats }: { stats: { tenants: number; outlets: number; 
   );
 }
 
-function RecentActivity() {
+function RecentActivity({ activities }: { activities: ActivityRow[] }) {
   return (
     <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
       <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
@@ -251,13 +294,37 @@ function RecentActivity() {
           <p className="text-xs text-gray-400 mt-0.5">Latest updates</p>
         </div>
       </div>
-      <div className="flex flex-col items-center justify-center py-12 text-center px-6">
-        <div className="w-12 h-12 rounded-full bg-brand-section flex items-center justify-center mb-3">
-          <Activity className="w-5 h-5 text-brand-gold" />
+      {activities.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 text-center px-6">
+          <div className="w-12 h-12 rounded-full bg-brand-section flex items-center justify-center mb-3">
+            <Activity className="w-5 h-5 text-brand-gold" />
+          </div>
+          <p className="text-sm font-medium text-gray-500">No recent activity</p>
+          <p className="text-xs text-gray-400 mt-1">Activity will appear here as your team works.</p>
         </div>
-        <p className="text-sm font-medium text-gray-500">No recent activity</p>
-        <p className="text-xs text-gray-400 mt-1">Activity will appear here as your team works.</p>
-      </div>
+      ) : (
+        <div className="divide-y divide-gray-50">
+          {activities.map((a, i) => {
+            const meta = ACTIVITY_META[a.action] ?? { label: a.action.replace(/[._]/g, " "), icon: ShieldCheck, color: "text-gray-600 bg-gray-100" };
+            const Icon = meta.icon;
+            return (
+              <div key={i} className="flex items-center gap-3 px-5 py-3">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${meta.color}`}>
+                  <Icon className="w-3.5 h-3.5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-gray-700 truncate">
+                    <span className="font-semibold">{a.user_name ?? "Someone"}</span> {meta.label}
+                  </p>
+                </div>
+                <span className="text-[10px] text-gray-400 shrink-0">
+                  {new Date(a.created_at).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

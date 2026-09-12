@@ -50,6 +50,21 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
+
+        // Atomically claim the PO for receiving — only succeeds once, from 'sent'.
+        // Prevents a double-click or retried request from crediting stock twice.
+        const claimed = await client.query(
+          `UPDATE purchase_orders SET status='received', received_at=NOW()
+           WHERE id=$1 AND tenant_id=$2 AND status='sent' RETURNING id`,
+          [id, tenantId]
+        );
+        if (claimed.rows.length === 0) {
+          await client.query("ROLLBACK");
+          const existing = await queryOne<{ status: string }>(`SELECT status FROM purchase_orders WHERE id=$1 AND tenant_id=$2`, [id, tenantId]);
+          if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+          return NextResponse.json({ error: `Can't receive — this PO is already "${existing.status}"` }, { status: 409 });
+        }
+
         const items = await query(
           `SELECT poi.*, i.name AS ingredient_name FROM purchase_order_items poi
            JOIN ingredients i ON i.id = poi.ingredient_id
@@ -76,10 +91,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           );
         }
 
-        await client.query(
-          `UPDATE purchase_orders SET status='received', received_at=NOW() WHERE id=$1 AND tenant_id=$2`,
-          [id, tenantId]
-        );
         await client.query("COMMIT");
         const updated = await queryOne(`SELECT * FROM purchase_orders WHERE id=$1 AND tenant_id=$2`, [id, tenantId]);
         return NextResponse.json(updated);

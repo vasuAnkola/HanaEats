@@ -78,10 +78,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (ingredients) {
       await queryOne(`DELETE FROM recipe_ingredients WHERE recipe_id = $1`, [id]);
       for (const ing of ingredients) {
+        // Always use the ingredient's own stock unit — see note in POST /recipes.
+        const ingredientRow = await queryOne<{ unit: string }>(
+          `SELECT unit FROM ingredients WHERE id = $1 AND tenant_id = $2`,
+          [ing.ingredient_id, tenantId]
+        );
+        if (!ingredientRow) continue;
         await queryOne(
           `INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit)
            VALUES ($1,$2,$3,$4)`,
-          [id, ing.ingredient_id, parseFloat(String(ing.quantity)), ing.unit]
+          [id, ing.ingredient_id, parseFloat(String(ing.quantity)), ingredientRow.unit]
         );
       }
     }

@@ -39,6 +39,7 @@ export default function PurchaseOrdersPage() {
   const [saving, setSaving] = useState(false);
   const [receiving, setReceiving] = useState(false);
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [form, setForm] = useState({ vendor_id: "", notes: "" });
   const [lines, setLines] = useState<LineItem[]>([{ ingredient_id: "", quantity: "1", unit_cost: "0" }]);
@@ -48,15 +49,12 @@ export default function PurchaseOrdersPage() {
     const url = "/api/inventory/purchase-orders" + (statusFilter !== "all" ? "?status=" + statusFilter : "");
     const res = await fetch(url);
     const data = await readJson(res);
+    if (!res.ok) { setLoadError(apiErrorMessage(data)); setPos([]); return; }
+    setLoadError("");
     setPos(Array.isArray(data) ? data : []);
   }, [statusFilter]);
 
-  useEffect(() => {
-    const url = "/api/inventory/purchase-orders" + (statusFilter !== "all" ? "?status=" + statusFilter : "");
-    fetch(url)
-      .then(readJson)
-      .then((data) => setPos(Array.isArray(data) ? data : []));
-  }, [statusFilter]);
+  useEffect(() => { load(); }, [load]);
   useEffect(() => {
     fetch("/api/inventory/vendors").then(readJson).then(d => setVendors(Array.isArray(d) ? d : []));
     fetch("/api/inventory/ingredients").then(readJson).then(d => setIngredients(Array.isArray(d) ? d : []));
@@ -72,6 +70,7 @@ export default function PurchaseOrdersPage() {
     const res = await fetch("/api/inventory/purchase-orders/" + id);
     const data = await readJson<PODetail>(res);
     if (res.ok && data) {
+      setError("");
       setDetail(data);
       setDialog("detail");
     }
@@ -104,9 +103,13 @@ export default function PurchaseOrdersPage() {
 
   async function updateStatus(id: number, action: string) {
     if (action === "receive") setReceiving(true);
+    setError("");
     const body = action === "receive" ? { action: "receive" } : { status: action };
-    await fetch("/api/inventory/purchase-orders/" + id, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    setReceiving(false); setDialog(null); setDetail(null); load();
+    const res = await fetch("/api/inventory/purchase-orders/" + id, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const data = await readJson(res);
+    setReceiving(false);
+    if (!res.ok) { setError(apiErrorMessage(data)); return; }
+    setDialog(null); setDetail(null); load();
   }
 
   const columns: Column<PO>[] = [
@@ -149,6 +152,9 @@ export default function PurchaseOrdersPage() {
     <div>
       <Header title="Purchase Orders" subtitle="Create and receive stock from vendors" />
       <div className="p-6">
+        {loadError && (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-4">{loadError}</p>
+        )}
         <div className="flex items-center gap-3 mb-6 flex-wrap">
           <Select value={statusFilter} onValueChange={v => v && setStatusFilter(v)}>
             <SelectTrigger className="w-36 h-9"><SelectValue /></SelectTrigger>
@@ -235,6 +241,7 @@ export default function PurchaseOrdersPage() {
           </DialogHeader>
           {detail && (
             <div className="space-y-4">
+              {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
               <div className="flex items-center gap-2 flex-wrap">
                 <span className={"text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide " + (STATUS_COLOR[detail.status] ?? "")}>{detail.status}</span>
                 {detail.vendor_name && <span className="text-sm text-gray-500">{detail.vendor_name}</span>}

@@ -36,6 +36,7 @@ export default function RecipesPage() {
   const [syncingCalories, setSyncingCalories] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [form, setForm] = useState({ name: "", menu_item_id: "", yield_qty: "1", yield_unit: "serving", instructions: "" });
   const [lines, setLines] = useState<IngLine[]>([{ ingredient_id: "", quantity: "0", unit: "g" }]);
@@ -43,14 +44,12 @@ export default function RecipesPage() {
   const load = useCallback(async () => {
     const res = await fetch("/api/inventory/recipes");
     const data = await readJson(res);
+    if (!res.ok) { setLoadError(apiErrorMessage(data)); setRecipes([]); return; }
+    setLoadError("");
     setRecipes(Array.isArray(data) ? data : []);
   }, []);
 
-  useEffect(() => {
-    fetch("/api/inventory/recipes")
-      .then(readJson)
-      .then((data) => setRecipes(Array.isArray(data) ? data : []));
-  }, []);
+  useEffect(() => { load(); }, [load]);
   useEffect(() => {
     // Fetch menu items via outlets → first outlet's items
     fetch("/api/outlets").then(r => r.json()).then(async (outlets) => {
@@ -224,7 +223,13 @@ export default function RecipesPage() {
                     <SelectContent>{ingredients.map(x => <SelectItem key={x.id} value={String(x.id)}>{x.name}</SelectItem>)}</SelectContent>
                   </Select>
                   <Input type="number" min="0" step="0.001" className="h-8 text-xs" placeholder="Qty" value={line.quantity} onChange={e => updateLine(i, "quantity", e.target.value)} />
-                  <Input className="h-8 text-xs" placeholder="unit" value={line.unit} onChange={e => updateLine(i, "unit", e.target.value)} />
+                  <Input
+                    className="h-8 text-xs bg-gray-50 text-gray-500"
+                    placeholder="unit"
+                    value={line.unit}
+                    readOnly
+                    title="Locked to the ingredient's own stock unit — there's no unit conversion, so quantities here are always in that unit"
+                  />
                   <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-gray-300 hover:text-red-500" onClick={() => removeLine(i)}>
                     <X className="w-4 h-4" />
                   </Button>
@@ -248,6 +253,9 @@ export default function RecipesPage() {
       <ConfirmDialog open={confirmId !== null} description="Delete this recipe? This cannot be undone." onConfirm={confirmDel} onCancel={() => setConfirmId(null)} />
       <Header title="Recipes" subtitle="Ingredient usage per dish and cost tracking" />
       <div className="p-6">
+        {loadError && (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-4">{loadError}</p>
+        )}
         <div className="flex justify-end mb-6">
           <Button className="gap-2" onClick={openAdd}>
             <Plus className="w-4 h-4" /> New Recipe

@@ -98,10 +98,11 @@ export default function OutletsPage() {
     },
     {
       key: "address", label: "Address",
+      className: "!whitespace-normal max-w-[260px]",
       render: (o) => o.address ? (
-        <div className="flex items-start gap-1.5 max-w-xs">
+        <div className="flex items-start gap-1.5">
           <MapPin className="w-3.5 h-3.5 text-brand-light flex-shrink-0 mt-0.5" />
-          <span className="text-sm text-gray-600 leading-snug">{o.address}</span>
+          <span className="text-sm text-gray-600 leading-snug break-words">{o.address}</span>
         </div>
       ) : <span className="text-gray-300 text-sm">—</span>,
     },

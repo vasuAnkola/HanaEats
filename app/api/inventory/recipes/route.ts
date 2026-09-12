@@ -46,11 +46,19 @@ export async function POST(req: NextRequest) {
 
     if (ingredients?.length) {
       for (const ing of ingredients) {
+        // Always use the ingredient's own stock unit — there's no unit conversion
+        // anywhere downstream (cost calc, stock deduction), so a mismatched unit
+        // here would silently corrupt those numbers.
+        const ingredientRow = await queryOne<{ unit: string }>(
+          `SELECT unit FROM ingredients WHERE id = $1 AND tenant_id = $2`,
+          [ing.ingredient_id, tenantId]
+        );
+        if (!ingredientRow) continue;
         await queryOne(
           `INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit)
            VALUES ($1,$2,$3,$4)`,
           [(recipe as Record<string, unknown>)?.id, ing.ingredient_id,
-           parseFloat(String(ing.quantity)), ing.unit]
+           parseFloat(String(ing.quantity)), ingredientRow.unit]
         );
       }
     }

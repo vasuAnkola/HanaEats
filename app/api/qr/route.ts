@@ -16,6 +16,20 @@ export async function POST(req: NextRequest) {
 
   const tenantId = session.user.tenantId;
 
+  const existingActive = await queryOne<{ id: number }>(
+    "SELECT id FROM qr_sessions WHERE table_id = $1 AND is_active = true",
+    [table_id]
+  );
+  if (existingActive) {
+    const table = await queryOne<{ status: string }>("SELECT status FROM outlet_tables WHERE id = $1", [table_id]);
+    if (table?.status === "occupied") {
+      return NextResponse.json(
+        { error: "This table is occupied — regenerating would cut off the seated customer's active order session" },
+        { status: 409 }
+      );
+    }
+  }
+
   // Deactivate existing active QR for this table
   await query(
     "UPDATE qr_sessions SET is_active = false WHERE table_id = $1 AND is_active = true",

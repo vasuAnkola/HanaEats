@@ -43,10 +43,17 @@ export async function POST(req: NextRequest) {
   const { outlet_id, table_number, capacity, section_id } = parsed.data;
   const tenantId = session.user.tenantId ?? body.tenant_id;
 
-  const table = await queryOne(
-    `INSERT INTO outlet_tables (outlet_id, tenant_id, table_number, capacity, section_id)
-     VALUES ($1,$2,$3,$4,$5) RETURNING *`,
-    [outlet_id, tenantId, table_number, capacity, section_id ?? null]
-  );
-  return NextResponse.json(table, { status: 201 });
+  try {
+    const table = await queryOne(
+      `INSERT INTO outlet_tables (outlet_id, tenant_id, table_number, capacity, section_id)
+       VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+      [outlet_id, tenantId, table_number, capacity, section_id ?? null]
+    );
+    return NextResponse.json(table, { status: 201 });
+  } catch (err) {
+    if (err instanceof Error && "code" in err && (err as { code: string }).code === "23505") {
+      return NextResponse.json({ error: `Table "${table_number}" already exists for this outlet` }, { status: 409 });
+    }
+    throw err;
+  }
 }

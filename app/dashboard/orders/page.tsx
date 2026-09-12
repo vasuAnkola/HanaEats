@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Loader2, Eye, RefreshCw, CreditCard, CheckCircle, Plus, Minus, Trash2, Pencil, UtensilsCrossed, Search } from "lucide-react";
+import { useTourUser } from "@/lib/tour";
 
 interface Outlet { id: number; name: string; }
 interface Order {
@@ -67,6 +68,8 @@ const PAYMENT_METHODS = [
 const EDITABLE_STATUSES = ["pending", "preparing"];
 
 export default function OrdersPage() {
+  const { role } = useTourUser();
+  const canCollectPayment = ["super_admin", "admin", "manager", "cashier"].includes(role);
   const [outlets, setOutlets] = useState<Outlet[]>([]);
   const [outletId, setOutletId] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -101,6 +104,10 @@ export default function OrdersPage() {
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState("");
   const [paySuccess, setPaySuccess] = useState<{ change: number; payNum: string } | null>(null);
+  const [voucherCode, setVoucherCode] = useState("");
+  const [appliedVoucher, setAppliedVoucher] = useState<{ id: number; name: string; discount_type: string; discount_value: number } | null>(null);
+  const [voucherChecking, setVoucherChecking] = useState(false);
+  const [voucherError, setVoucherError] = useState("");
 
   useEffect(() => {
     fetch("/api/outlets").then(r => r.json()).then(d => {
@@ -278,18 +285,51 @@ export default function OrdersPage() {
     setPayMethod("cash");
     setAmountPaid(parseFloat(String(order.total)).toFixed(2));
     setPayRef(""); setPayError(""); setPaySuccess(null);
+    setVoucherCode(""); setAppliedVoucher(null); setVoucherError("");
     setPayDialog(true);
+  }
+
+  function computeDiscountPreview(discountType: string, discountValue: number, subtotal: number) {
+    const raw = discountType === "percentage" ? (subtotal * discountValue) / 100 : discountValue;
+    return parseFloat(Math.min(Math.max(raw, 0), subtotal).toFixed(2));
+  }
+
+  const payOrderTotal = parseFloat(String(payOrder?.total ?? 0));
+  const payDiscountAmount = appliedVoucher
+    ? computeDiscountPreview(appliedVoucher.discount_type, appliedVoucher.discount_value, payOrderTotal)
+    : 0;
+  const payNetTotal = parseFloat((payOrderTotal - payDiscountAmount).toFixed(2));
+
+  async function applyVoucher() {
+    if (!voucherCode.trim()) return;
+    setVoucherChecking(true); setVoucherError("");
+    const res = await fetch("/api/vouchers/validate", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: voucherCode.trim(), order_amount: payOrderTotal }),
+    });
+    const data = await res.json();
+    setVoucherChecking(false);
+    if (!data.valid) { setVoucherError(data.reason ?? "Invalid voucher"); return; }
+    const voucher = { id: data.voucher.id, name: data.voucher.name, discount_type: data.voucher.discount_type, discount_value: parseFloat(data.voucher.discount_value) };
+    setAppliedVoucher(voucher);
+    const discount = computeDiscountPreview(voucher.discount_type, voucher.discount_value, payOrderTotal);
+    setAmountPaid((payOrderTotal - discount).toFixed(2));
+  }
+  function clearVoucher() {
+    setAppliedVoucher(null); setVoucherCode(""); setVoucherError("");
+    setAmountPaid(payOrderTotal.toFixed(2));
   }
 
   async function processPayment() {
     if (!payOrder || !outletId) return;
     setPaying(true); setPayError("");
-    const paid = parseFloat(amountPaid) || parseFloat(String(payOrder.total));
+    const paid = parseFloat(amountPaid) || payNetTotal;
     const res = await fetch("/api/payments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         order_id: payOrder.id, outlet_id: parseInt(outletId), amount_paid: paid,
+        voucher_id: appliedVoucher?.id,
         splits: [{ method: payMethod, amount: paid, reference: payRef || undefined }],
       }),
     });
@@ -357,7 +397,7 @@ export default function OrdersPage() {
               <Pencil className="w-3 h-3" /> Edit
             </Button>
           )}
-          {o.status === "served" && (
+          {o.status === "served" && canCollectPayment && (
             <Button size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-2 gap-1" onClick={() => openPayment(o)}>
               <CreditCard className="w-3 h-3" /> Pay
             </Button>
@@ -460,7 +500,7 @@ export default function OrdersPage() {
                   Move to {STATUS_FLOW[detail.status]}
                 </Button>
               )}
-              {detail.status === "served" && (
+              {detail.status === "served" && canCollectPayment && (
                 <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white gap-2" onClick={() => { setDetailOpen(false); openPayment(detail); }}>
                   <CreditCard className="w-4 h-4" /> Collect Payment
                 </Button>
@@ -711,10 +751,41 @@ export default function OrdersPage() {
           ) : (
             <div className="space-y-4 py-2">
               {payError && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{payError}</p>}
-                <div className="bg-brand-section border border-brand-section rounded-xl px-4 py-3 flex items-center justify-between">
-                <span className="text-sm text-brand-primary font-semibold">Order Total</span>
-                <span className="text-lg font-bold text-brand-primary">{parseFloat(String(payOrder?.total ?? 0)).toFixed(2)}</span>
-              </div>
+                <div className="bg-brand-section border border-brand-section rounded-xl px-4 py-3 space-y-1.5">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-brand-primary">Order Total</span>
+                    <span className="font-semibold text-brand-primary">{payOrderTotal.toFixed(2)}</span>
+                  </div>
+                  {payDiscountAmount > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-emerald-700">Discount ({appliedVoucher?.name})</span>
+                      <span className="font-semibold text-emerald-700">−{payDiscountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between pt-1 border-t border-brand-gold">
+                    <span className="text-sm font-semibold text-brand-primary">Amount Due</span>
+                    <span className="text-xl font-bold text-brand-primary">{payNetTotal.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  {appliedVoucher ? (
+                    <div className="flex items-center justify-between text-xs bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                      <span className="text-emerald-800 font-medium">Voucher &quot;{appliedVoucher.name}&quot; applied</span>
+                      <button onClick={clearVoucher} className="text-emerald-600 hover:text-emerald-800 underline">Remove</button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex gap-1.5">
+                        <Input placeholder="Voucher code" value={voucherCode} onChange={e => setVoucherCode(e.target.value.toUpperCase())} className="h-8 text-xs" />
+                        <Button variant="outline" size="sm" className="h-8 text-xs" onClick={applyVoucher} disabled={voucherChecking || !voucherCode.trim()}>
+                          {voucherChecking ? <Loader2 className="w-3 h-3 animate-spin" /> : "Apply"}
+                        </Button>
+                      </div>
+                      {voucherError && <p className="text-[11px] text-red-600 mt-1">{voucherError}</p>}
+                    </div>
+                  )}
+                </div>
               <div>
                 <label className="text-xs font-medium text-gray-600 block mb-2">Payment Method</label>
                 <div className="grid grid-cols-3 gap-2">
@@ -733,8 +804,8 @@ export default function OrdersPage() {
               <div>
                 <label className="text-xs font-medium text-gray-600 block mb-1">{payMethod === "cash" ? "Cash Received" : "Amount"}</label>
                 <Input type="number" min="0" step="0.01" value={amountPaid} onChange={e => setAmountPaid(e.target.value)} className="text-lg font-semibold" />
-                {payMethod === "cash" && parseFloat(amountPaid) > parseFloat(String(payOrder?.total ?? 0)) && (
-                  <p className="text-xs text-emerald-600 mt-1">Change: {(parseFloat(amountPaid) - parseFloat(String(payOrder?.total ?? 0))).toFixed(2)}</p>
+                {payMethod === "cash" && parseFloat(amountPaid) > payNetTotal && (
+                  <p className="text-xs text-emerald-600 mt-1">Change: {(parseFloat(amountPaid) - payNetTotal).toFixed(2)}</p>
                 )}
               </div>
               {payMethod !== "cash" && (

@@ -78,6 +78,10 @@ export async function POST(req: NextRequest) {
   const { outlet_id, table_id, order_type, customer_name, customer_id, customer_note, tax_rate, items, client_order_id } = parsed.data;
   const tenantId = session.user.tenantId ?? body.tenant_id;
 
+  if (order_type === "dine_in" && !table_id) {
+    return NextResponse.json({ error: "A table is required for dine-in orders" }, { status: 400 });
+  }
+
   if (client_order_id) {
     const existing = await queryOne(
       `SELECT * FROM orders WHERE client_order_id = $1 AND tenant_id = $2`,

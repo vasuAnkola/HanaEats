@@ -983,7 +983,15 @@ export default function POSPage() {
             <span>Total</span><span className="text-brand-primary">{total.toFixed(2)}</span>
           </div>
           <Input placeholder="Order note..." value={note} onChange={e => setNote(e.target.value)} className="h-8 text-xs mt-1" />
-          <Button data-tour="pos-place-order" className="w-full h-11 font-bold text-base shadow-sm" disabled={cart.length === 0 || placing} onClick={placeOrder}>
+          {orderType === "dine_in" && !tableId && (
+            <p className="text-[11px] text-amber-600">Select a table before placing a dine-in order.</p>
+          )}
+          <Button
+            data-tour="pos-place-order"
+            className="w-full h-11 font-bold text-base shadow-sm"
+            disabled={cart.length === 0 || placing || (orderType === "dine_in" && !tableId)}
+            onClick={placeOrder}
+          >
             {placing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShoppingCart className="w-4 h-4 mr-2" />}
             Place Order · {total.toFixed(2)}
           </Button>

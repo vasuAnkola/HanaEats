@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Loader2, Trash2, Users, RefreshCw, Sparkles, Utensils, Clock, Ban } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useTourUser } from "@/lib/tour";
 
 interface Outlet { id: number; name: string; }
 interface TableRow {
@@ -47,6 +48,8 @@ const STATUS_ACTIONS: Record<string, { next: string; label: string; icon: React.
 };
 
 export default function TablesPage() {
+  const { role } = useTourUser();
+  const canManageTables = ["super_admin", "admin", "manager"].includes(role);
   const [outlets, setOutlets] = useState<Outlet[]>([]);
   const [selectedOutlet, setSelectedOutlet] = useState<string>("");
   const [tables, setTables] = useState<TableRow[]>([]);
@@ -152,9 +155,11 @@ export default function TablesPage() {
               <RefreshCw className="w-4 h-4" />
             </button>
             <span className="text-[10px] text-gray-400">Auto-refreshes every 30s</span>
-            <Button className="gap-1.5 h-9 ml-2" onClick={() => { setError(""); setDialog(true); }}>
-              <Plus className="w-4 h-4" /> Add Table
-            </Button>
+            {canManageTables && (
+              <Button className="gap-1.5 h-9 ml-2" onClick={() => { setError(""); setDialog(true); }}>
+                <Plus className="w-4 h-4" /> Add Table
+              </Button>
+            )}
           </div>
         </div>
 
@@ -212,10 +217,12 @@ export default function TablesPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <button onClick={() => deleteTable(t.id)}
-                        className="w-full flex items-center justify-center gap-1 text-[10px] text-red-400 hover:text-red-600 py-0.5 transition-colors">
-                        <Trash2 className="w-3 h-3" /> Delete
-                      </button>
+                      {canManageTables && (
+                        <button onClick={() => deleteTable(t.id)}
+                          className="w-full flex items-center justify-center gap-1 text-[10px] text-red-400 hover:text-red-600 py-0.5 transition-colors">
+                          <Trash2 className="w-3 h-3" /> Delete
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
