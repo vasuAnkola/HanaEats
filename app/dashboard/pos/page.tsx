@@ -19,7 +19,7 @@ interface MenuItem {
   category_name: string; is_available: boolean; is_halal: boolean;
   variant_count: number; addon_group_count: number;
 }
-interface TableRow { id: number; table_number: string; status: string; }
+interface TableRow { id: number; table_number: string; status: string; capacity: number; }
 interface CartItem {
   key: string; item_id: number; item_name: string; quantity: number;
   unit_price: number; note: string;
@@ -867,7 +867,7 @@ export default function POSPage() {
               <Select value={tableId} onValueChange={(v) => v && setTableId(v)}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Table" /></SelectTrigger>
                 <SelectContent>
-                  {tables.map(t => <SelectItem key={t.id} value={String(t.id)} className="text-xs">Table {t.table_number}</SelectItem>)}
+                  {tables.map(t => <SelectItem key={t.id} value={String(t.id)} className="text-xs">Table {t.table_number} · {t.capacity} seats</SelectItem>)}
                 </SelectContent>
               </Select>
             )}

@@ -45,15 +45,21 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
-        const qty = parseFloat(String(body.quantity || 0));
+        const rawQty = parseFloat(String(body.quantity || 0));
+        const movementType = body.movement_type || "adjustment";
+        // Wastage always reduces stock — the magnitude the user enters ("5 kg wasted")
+        // is a quantity, not a signed delta, so it must not depend on them remembering
+        // to type it as negative. "adjustment"/"opening" keep the signed value as-is
+        // since those are meant to set/correct stock in either direction.
+        const delta = movementType === "wastage" ? -Math.abs(rawQty) : rawQty;
         await client.query(
           `UPDATE ingredients SET current_stock = current_stock + $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3`,
-          [qty, id, tenantId]
+          [delta, id, tenantId]
         );
         await client.query(
           `INSERT INTO stock_movements (tenant_id, ingredient_id, movement_type, quantity, unit_cost, notes, created_by)
            VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-          [tenantId, id, body.movement_type || "adjustment", qty,
+          [tenantId, id, movementType, delta,
            body.unit_cost ? parseFloat(String(body.unit_cost)) : null,
            body.notes || null, session.user.id || null]
         );

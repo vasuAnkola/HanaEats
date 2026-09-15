@@ -259,16 +259,25 @@ export default function IngredientsPage() {
               Current stock: <strong className="text-gray-900">{selected ? parseFloat(String(selected.stock_quantity)).toFixed(3) : 0} {selected?.unit}</strong>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-600">Quantity Change</label>
-              <Input type="number" step="0.001" placeholder="Use negative to remove stock" value={adjForm.quantity} onChange={e => setAdjForm(f => ({ ...f, quantity: e.target.value }))} />
-              <p className="text-[11px] text-gray-400">Positive = add stock, Negative = remove stock</p>
-            </div>
-            <div className="space-y-1.5">
               <label className="text-xs font-medium text-gray-600">Movement Type</label>
               <Select value={adjForm.movement_type} onValueChange={v => v && setAdjForm(f => ({ ...f, movement_type: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{MOVE_TYPES.map(t => <SelectItem key={t} value={t} className="capitalize">{t}</SelectItem>)}</SelectContent>
               </Select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-600">{adjForm.movement_type === "wastage" ? "Quantity Wasted" : "Quantity Change"}</label>
+              <Input
+                type="number" step="0.001"
+                placeholder={adjForm.movement_type === "wastage" ? "e.g. 5" : "Use negative to remove stock"}
+                value={adjForm.quantity}
+                onChange={e => setAdjForm(f => ({ ...f, quantity: e.target.value }))}
+              />
+              <p className="text-[11px] text-gray-400">
+                {adjForm.movement_type === "wastage"
+                  ? "Always subtracted from stock — enter the amount wasted as a positive number."
+                  : "Positive = add stock, Negative = remove stock"}
+              </p>
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-gray-600">Notes (optional)</label>
