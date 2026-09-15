@@ -11,7 +11,7 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const user = await queryOne(
-    `SELECT id, name, email, role, language FROM users WHERE id = $1`,
+    `SELECT id, name, email, role, language, (welcome_tour_seen_at IS NOT NULL) AS has_seen_welcome_tour FROM users WHERE id = $1`,
     [session.user.id]
   );
   return NextResponse.json(user);
@@ -22,7 +22,15 @@ export async function PATCH(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { language, name, current_password, new_password } = body;
+  const { language, name, current_password, new_password, welcome_tour_seen } = body;
+
+  if (welcome_tour_seen !== undefined) {
+    const user = await queryOne(
+      `UPDATE users SET welcome_tour_seen_at = $1 WHERE id = $2 RETURNING id, (welcome_tour_seen_at IS NOT NULL) AS has_seen_welcome_tour`,
+      [welcome_tour_seen ? new Date().toISOString() : null, session.user.id]
+    );
+    return NextResponse.json(user);
+  }
 
   if (language && !SUPPORTED_LANGUAGES.includes(language)) {
     return NextResponse.json({ error: "Unsupported language" }, { status: 400 });

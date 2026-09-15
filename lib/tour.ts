@@ -55,30 +55,29 @@ export function getTourSlides(role: UserRole): TourSlide[] {
   return TOURS[role] ?? [];
 }
 
-function storageKey(userId: string) {
-  return `hanaeats_tour_seen_${userId}`;
-}
-
-export function useWelcomeTour(userId: string) {
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    try {
-      const seen = localStorage.getItem(storageKey(userId));
-      if (!seen) setOpen(true);
-    } catch {
-      // localStorage unavailable — skip silently, don't block the dashboard
-    }
-  }, [userId]);
+// "Seen" is persisted server-side on the user's own row (see /api/account,
+// welcome_tour_seen_at) rather than in localStorage, which resets on a cleared
+// browser or a different device and made the tour reappear for accounts that
+// had already dismissed it. `hasSeenTour` comes from the server-rendered layout.
+export function useWelcomeTour(userId: string, hasSeenTour: boolean) {
+  const [open, setOpen] = useState(!hasSeenTour);
 
   function close() {
     setOpen(false);
-    try { localStorage.setItem(storageKey(userId), "1"); } catch {}
+    fetch("/api/account", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ welcome_tour_seen: true }),
+    }).catch(() => {});
   }
 
   function restart() {
-    try { localStorage.removeItem(storageKey(userId)); } catch {}
     setOpen(true);
+    fetch("/api/account", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ welcome_tour_seen: false }),
+    }).catch(() => {});
   }
 
   return { open, close, restart };

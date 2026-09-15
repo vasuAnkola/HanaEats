@@ -108,6 +108,15 @@ export default function OrdersPage() {
   const [appliedVoucher, setAppliedVoucher] = useState<{ id: number; name: string; discount_type: string; discount_value: number } | null>(null);
   const [voucherChecking, setVoucherChecking] = useState(false);
   const [voucherError, setVoucherError] = useState("");
+  const [activePromotions, setActivePromotions] = useState<{ id: number; name: string; discount_type: string; discount_value: number; applies_to: string }[]>([]);
+  const [selectedPromotionId, setSelectedPromotionId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!outletId) return;
+    fetch(`/api/promotions/active?outlet_id=${outletId}`).then(r => r.ok ? r.json() : []).then(d => {
+      setActivePromotions(Array.isArray(d) ? d.filter((p: { applies_to: string }) => p.applies_to === "all") : []);
+    }).catch(() => setActivePromotions([]));
+  }, [outletId]);
 
   useEffect(() => {
     fetch("/api/outlets").then(r => r.json()).then(d => {
@@ -286,6 +295,7 @@ export default function OrdersPage() {
     setAmountPaid(parseFloat(String(order.total)).toFixed(2));
     setPayRef(""); setPayError(""); setPaySuccess(null);
     setVoucherCode(""); setAppliedVoucher(null); setVoucherError("");
+    setSelectedPromotionId(activePromotions[0]?.id ?? null);
     setPayDialog(true);
   }
 
@@ -297,6 +307,11 @@ export default function OrdersPage() {
   const payOrderTotal = parseFloat(String(payOrder?.total ?? 0));
   const payDiscountAmount = appliedVoucher
     ? computeDiscountPreview(appliedVoucher.discount_type, appliedVoucher.discount_value, payOrderTotal)
+    : selectedPromotionId
+    ? (() => {
+        const p = activePromotions.find(x => x.id === selectedPromotionId);
+        return p ? computeDiscountPreview(p.discount_type, p.discount_value, payOrderTotal) : 0;
+      })()
     : 0;
   const payNetTotal = parseFloat((payOrderTotal - payDiscountAmount).toFixed(2));
 
@@ -312,6 +327,7 @@ export default function OrdersPage() {
     if (!data.valid) { setVoucherError(data.reason ?? "Invalid voucher"); return; }
     const voucher = { id: data.voucher.id, name: data.voucher.name, discount_type: data.voucher.discount_type, discount_value: parseFloat(data.voucher.discount_value) };
     setAppliedVoucher(voucher);
+    setSelectedPromotionId(null);
     const discount = computeDiscountPreview(voucher.discount_type, voucher.discount_value, payOrderTotal);
     setAmountPaid((payOrderTotal - discount).toFixed(2));
   }
@@ -330,6 +346,7 @@ export default function OrdersPage() {
       body: JSON.stringify({
         order_id: payOrder.id, outlet_id: parseInt(outletId), amount_paid: paid,
         voucher_id: appliedVoucher?.id,
+        promotion_id: !appliedVoucher ? selectedPromotionId : undefined,
         splits: [{ method: payMethod, amount: paid, reference: payRef || undefined }],
       }),
     });
@@ -758,7 +775,7 @@ export default function OrdersPage() {
                   </div>
                   {payDiscountAmount > 0 && (
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-emerald-700">Discount ({appliedVoucher?.name})</span>
+                      <span className="text-emerald-700">Discount ({appliedVoucher?.name ?? activePromotions.find(p => p.id === selectedPromotionId)?.name})</span>
                       <span className="font-semibold text-emerald-700">−{payDiscountAmount.toFixed(2)}</span>
                     </div>
                   )}
@@ -769,6 +786,12 @@ export default function OrdersPage() {
                 </div>
 
                 <div className="space-y-2">
+                  {activePromotions.length > 0 && !appliedVoucher && (
+                    <label className="flex items-center gap-2 text-xs bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      <input type="checkbox" checked={!!selectedPromotionId} onChange={e => setSelectedPromotionId(e.target.checked ? activePromotions[0].id : null)} />
+                      <span className="text-amber-800">🎉 {activePromotions[0].name} active — apply {activePromotions[0].discount_type === "percentage" ? `${activePromotions[0].discount_value}% off` : `${activePromotions[0].discount_value} off`}</span>
+                    </label>
+                  )}
                   {appliedVoucher ? (
                     <div className="flex items-center justify-between text-xs bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
                       <span className="text-emerald-800 font-medium">Voucher &quot;{appliedVoucher.name}&quot; applied</span>
