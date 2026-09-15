@@ -12,10 +12,11 @@ import type { UserRole } from "@/lib/auth";
 interface WelcomeTourProps {
   userId: string;
   role: UserRole;
+  hasSeenTour: boolean;
 }
 
-export function WelcomeTour({ userId, role }: WelcomeTourProps) {
-  const { open, close } = useWelcomeTour(userId);
+export function WelcomeTour({ userId, role, hasSeenTour }: WelcomeTourProps) {
+  const { open, close } = useWelcomeTour(userId, hasSeenTour);
   const [step, setStep] = useState(0);
   const [sidebarTour, setSidebarTour] = useState(false);
   const slides = getTourSlides(role);
