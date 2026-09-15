@@ -29,6 +29,13 @@ export async function POST(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: Object.values(parsed.error.flatten().fieldErrors).flat()[0] ?? "Invalid input" }, { status: 400 });
   }
 
+  const owned = await queryOne(
+    `SELECT mi.id FROM menu_items mi JOIN menu_categories mc ON mc.id = mi.category_id
+     WHERE mi.id = $1 AND mc.tenant_id = $2`,
+    [id, session.user.tenantId]
+  );
+  if (!owned) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   const { name, is_required, max_select, display_order, add_ons } = parsed.data;
   const group = await queryOne(
     `INSERT INTO menu_add_on_groups (item_id, name, is_required, max_select, display_order) VALUES ($1,$2,$3,$4,$5) RETURNING *`,

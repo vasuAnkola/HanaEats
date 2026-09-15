@@ -49,17 +49,20 @@ export async function POST(req: NextRequest) {
 
   if (!outlet_id) return NextResponse.json({ error: "outlet_id required" }, { status: 400 });
 
-  // Check no existing open shift for this cashier at this outlet
-  const existing = await queryOne(
-    `SELECT id FROM shift_sessions WHERE outlet_id=$1 AND cashier_id=$2 AND status='open'`,
-    [outlet_id, session.user.id]
-  );
-  if (existing) return NextResponse.json({ error: "You already have an open shift" }, { status: 409 });
-
-  const row = await queryOne(
-    `INSERT INTO shift_sessions (outlet_id, tenant_id, cashier_id, opening_float)
-     VALUES ($1, $2, $3, $4) RETURNING *`,
-    [outlet_id, session.user.tenantId, session.user.id, opening_float]
-  );
-  return NextResponse.json(row, { status: 201 });
+  try {
+    const row = await queryOne(
+      `INSERT INTO shift_sessions (outlet_id, tenant_id, cashier_id, opening_float)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [outlet_id, session.user.tenantId, session.user.id, opening_float]
+    );
+    return NextResponse.json(row, { status: 201 });
+  } catch (err) {
+    // uq_shift_sessions_open_cashier (sql/020) rejects a second concurrently-open
+    // shift for the same cashier/outlet — catches the double-click/double-tab race
+    // that a plain check-then-insert can't.
+    if (err instanceof Error && "code" in err && (err as { code: string }).code === "23505") {
+      return NextResponse.json({ error: "You already have an open shift" }, { status: 409 });
+    }
+    throw err;
+  }
 }

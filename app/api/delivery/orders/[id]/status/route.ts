@@ -12,6 +12,15 @@ const PLATFORM_TO_ORDER_STATUS: Record<string, string> = {
   cancelled: "cancelled",
 };
 
+// Legal forward/cancel transitions — prevents an already-delivered order from
+// being pushed backward, or a completed order silently reopening.
+const LEGAL_PLATFORM_TRANSITIONS: Record<string, string[]> = {
+  accepted: ["preparing", "cancelled"],
+  preparing: ["ready", "cancelled"],
+  ready: ["picked_up", "cancelled"],
+  picked_up: ["delivered"],
+};
+
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session || !["super_admin", "admin", "manager", "cashier", "kitchen"].includes(session.user.role)) {
@@ -26,6 +35,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    const current = await client.query(
+      `SELECT platform_status FROM delivery_orders WHERE id = $1 AND tenant_id = $2`,
+      [id, session.user.tenantId]
+    );
+    if (!current.rows[0]) throw new Error("Not found");
+    const allowedNext = LEGAL_PLATFORM_TRANSITIONS[current.rows[0].platform_status] ?? [];
+    if (!allowedNext.includes(platform_status)) {
+      throw new Error(`Can't move a delivery order from "${current.rows[0].platform_status}" to "${platform_status}"`);
+    }
+
     const doRes = await client.query(
       `UPDATE delivery_orders SET platform_status = $1 WHERE id = $2 AND tenant_id = $3 RETURNING order_id`,
       [platform_status, id, session.user.tenantId]

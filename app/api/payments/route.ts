@@ -82,9 +82,13 @@ export async function POST(req: NextRequest) {
     const today = businessDateStr(await getTenantTimezone(session.user.tenantId));
 
     if (voucher_id) {
+      // FOR UPDATE locks this voucher row for the rest of the transaction, so two
+      // concurrent payments against the same near-limit voucher serialize instead
+      // of both reading used_count < max_uses and both committing over the limit.
       const v = await client.query(
         `SELECT * FROM vouchers WHERE id=$1 AND tenant_id=$2 AND is_active=TRUE
-           AND (valid_from IS NULL OR valid_from <= $3) AND (valid_until IS NULL OR valid_until >= $3)`,
+           AND (valid_from IS NULL OR valid_from <= $3) AND (valid_until IS NULL OR valid_until >= $3)
+           FOR UPDATE`,
         [voucher_id, session.user.tenantId, today]
       );
       const voucher = v.rows[0];

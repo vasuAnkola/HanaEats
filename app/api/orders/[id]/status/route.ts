@@ -19,16 +19,40 @@ const ORDER_TO_PLATFORM_STATUS: Record<string, string> = {
   cancelled: "cancelled",
 };
 
+// Legal forward/cancel transitions through this endpoint. "closed" is set
+// exclusively by the payments route on successful checkout — it is never a
+// valid target here, and every other transition must follow the KDS flow in
+// order (no skipping straight from pending to ready/served, no moving a
+// served/closed/cancelled order backward).
+const LEGAL_TRANSITIONS: Record<string, string[]> = {
+  pending: ["preparing", "cancelled"],
+  preparing: ["ready", "cancelled"],
+  ready: ["served", "cancelled"],
+};
+
 type Params = { params: Promise<{ id: string }> };
 
 export async function PATCH(req: NextRequest, { params }: Params) {
   const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || !["super_admin", "admin", "manager", "cashier", "waiter", "kitchen"].includes(session.user.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const { id } = await params;
   const body = await req.json();
   const parsed = Schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+
+  const current = await queryOne<{ status: string }>(
+    `SELECT status FROM orders WHERE id = $1 AND tenant_id = $2`,
+    [id, session.user.tenantId]
+  );
+  if (!current) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const allowedNext = LEGAL_TRANSITIONS[current.status] ?? [];
+  if (!allowedNext.includes(parsed.data.status)) {
+    return NextResponse.json({ error: `Can't move an order from "${current.status}" to "${parsed.data.status}"` }, { status: 400 });
+  }
 
   const order = await queryOne(
     `UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3 RETURNING *`,

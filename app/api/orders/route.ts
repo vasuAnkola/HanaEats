@@ -90,11 +90,65 @@ export async function POST(req: NextRequest) {
     if (existing) return NextResponse.json(existing, { status: 200 });
   }
 
-  // Calculate totals
-  let subtotal = 0;
+  // Re-price every line server-side from the catalog — never trust client-submitted
+  // prices. Every item ordered through POS/QR originates from a real menu_items row,
+  // so a missing/foreign item_id is treated as invalid rather than trusted as-is.
+  const repriced: {
+    item_id: number; item_name: string; quantity: number; unit_price: number; note?: string;
+    variants: { variant_name: string; option_name: string; price_modifier: number }[];
+    addons: { addon_name: string; price: number; quantity: number }[];
+  }[] = [];
+
   for (const item of items) {
-    const variantTotal = (item.variants ?? []).reduce((s, v) => s + v.price_modifier, 0);
-    const addonTotal = (item.addons ?? []).reduce((s, a) => s + a.price * a.quantity, 0);
+    if (!item.item_id) {
+      return NextResponse.json({ error: "Every order item must reference a real menu item" }, { status: 400 });
+    }
+    const menuItem = await queryOne<{ id: number; name: string; price: string }>(
+      `SELECT mi.id, mi.name, mi.price FROM menu_items mi
+       JOIN menu_categories mc ON mc.id = mi.category_id
+       WHERE mi.id = $1 AND mc.tenant_id = $2`,
+      [item.item_id, tenantId]
+    );
+    if (!menuItem) {
+      return NextResponse.json({ error: `Menu item ${item.item_id} not found` }, { status: 400 });
+    }
+
+    const repricedVariants: { variant_name: string; option_name: string; price_modifier: number }[] = [];
+    for (const v of item.variants ?? []) {
+      const opt = await queryOne<{ price_modifier: string }>(
+        `SELECT mvo.price_modifier FROM menu_variant_options mvo
+         JOIN menu_variants mv ON mv.id = mvo.variant_id
+         WHERE mv.item_id = $1 AND mv.name = $2 AND mvo.name = $3`,
+        [item.item_id, v.variant_name, v.option_name]
+      );
+      if (!opt) return NextResponse.json({ error: `Invalid variant "${v.variant_name}: ${v.option_name}"` }, { status: 400 });
+      repricedVariants.push({ variant_name: v.variant_name, option_name: v.option_name, price_modifier: parseFloat(opt.price_modifier) });
+    }
+
+    const repricedAddons: { addon_name: string; price: number; quantity: number }[] = [];
+    for (const a of item.addons ?? []) {
+      const addon = await queryOne<{ price: string }>(
+        `SELECT mao.price FROM menu_add_ons mao
+         JOIN menu_add_on_groups mag ON mag.id = mao.group_id
+         WHERE mag.item_id = $1 AND mao.name = $2`,
+        [item.item_id, a.addon_name]
+      );
+      if (!addon) return NextResponse.json({ error: `Invalid add-on "${a.addon_name}"` }, { status: 400 });
+      repricedAddons.push({ addon_name: a.addon_name, price: parseFloat(addon.price), quantity: a.quantity });
+    }
+
+    repriced.push({
+      item_id: menuItem.id, item_name: menuItem.name, quantity: item.quantity,
+      unit_price: parseFloat(menuItem.price), note: item.note,
+      variants: repricedVariants, addons: repricedAddons,
+    });
+  }
+
+  // Calculate totals from the re-priced, catalog-verified lines
+  let subtotal = 0;
+  for (const item of repriced) {
+    const variantTotal = item.variants.reduce((s, v) => s + v.price_modifier, 0);
+    const addonTotal = item.addons.reduce((s, a) => s + a.price * a.quantity, 0);
     subtotal += (item.unit_price + variantTotal + addonTotal) * item.quantity;
   }
   const taxAmount = parseFloat(((subtotal * tax_rate) / 100).toFixed(2));
@@ -113,25 +167,25 @@ export async function POST(req: NextRequest) {
     );
     const order = orderRes.rows[0];
 
-    for (const item of items) {
-      const variantTotal = (item.variants ?? []).reduce((s, v) => s + v.price_modifier, 0);
-      const addonTotal = (item.addons ?? []).reduce((s, a) => s + a.price * a.quantity, 0);
+    for (const item of repriced) {
+      const variantTotal = item.variants.reduce((s, v) => s + v.price_modifier, 0);
+      const addonTotal = item.addons.reduce((s, a) => s + a.price * a.quantity, 0);
       const lineTotal = parseFloat(((item.unit_price + variantTotal + addonTotal) * item.quantity).toFixed(2));
 
       const itemRes = await client.query(
         `INSERT INTO order_items (order_id, item_id, item_name, quantity, unit_price, total_price, note)
          VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
-        [order.id, item.item_id ?? null, item.item_name, item.quantity, item.unit_price, lineTotal, item.note ?? null]
+        [order.id, item.item_id, item.item_name, item.quantity, item.unit_price, lineTotal, item.note ?? null]
       );
       const orderItemId = itemRes.rows[0].id;
 
-      for (const v of (item.variants ?? [])) {
+      for (const v of item.variants) {
         await client.query(
           `INSERT INTO order_item_variants (order_item_id, variant_name, option_name, price_modifier) VALUES ($1,$2,$3,$4)`,
           [orderItemId, v.variant_name, v.option_name, v.price_modifier]
         );
       }
-      for (const a of (item.addons ?? [])) {
+      for (const a of item.addons) {
         await client.query(
           `INSERT INTO order_item_addons (order_item_id, addon_name, price, quantity) VALUES ($1,$2,$3,$4)`,
           [orderItemId, a.addon_name, a.price, a.quantity]

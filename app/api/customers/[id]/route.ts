@@ -44,9 +44,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       "UPDATE customers SET loyalty_points = $1 WHERE id = $2 AND tenant_id = $3",
       [newBalance, id, session.user.tenantId]
     );
+    // Record the amount actually applied (after clamping to a non-negative balance),
+    // not the raw amount the staff member typed — otherwise the ledger can show a
+    // deduction larger than the balance actually dropped, making it arithmetically
+    // inconsistent with balance_after.
+    const actualDelta = Math.abs(newBalance - current);
     const tx = await query(
       "INSERT INTO loyalty_transactions (tenant_id, customer_id, type, points, balance_after, notes, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
-      [session.user.tenantId, id, txType, Math.abs(parseInt(String(points))), newBalance, notes || null, session.user.id]
+      [session.user.tenantId, id, txType, actualDelta, newBalance, notes || null, session.user.id]
     );
     return NextResponse.json(tx[0]);
   }

@@ -112,7 +112,9 @@ export default function StaffPage() {
   }
 
   async function clockOut(id: number) {
-    await fetch("/api/attendance", { method:"PATCH", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ action:"clock_out", attendance_id:id }) });
+    const res = await fetch("/api/attendance", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ action:"clock_out", attendance_id:id }) });
+    const data = await res.json();
+    if (!res.ok) { setError(data.error ?? "Failed to clock out"); return; }
     loadAttendance();
   }
 

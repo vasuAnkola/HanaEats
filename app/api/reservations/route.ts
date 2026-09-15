@@ -42,6 +42,26 @@ export async function POST(req: NextRequest) {
   const reservation_number = "RES-" + Date.now().toString(36).toUpperCase();
   const tenantId = session.user.tenantId;
 
+  const outlet = await queryOne("SELECT id FROM outlets WHERE id = $1 AND tenant_id = $2", [outlet_id, tenantId]);
+  if (!outlet) return NextResponse.json({ error: "Outlet not found" }, { status: 404 });
+
+  if (table_id) {
+    const table = await queryOne<{ capacity: number }>(
+      "SELECT capacity FROM outlet_tables WHERE id = $1 AND outlet_id = $2 AND tenant_id = $3",
+      [table_id, outlet_id, tenantId]
+    );
+    if (!table) return NextResponse.json({ error: "Table not found" }, { status: 404 });
+    if (party_size && party_size > table.capacity) {
+      return NextResponse.json({ error: `This table seats ${table.capacity}, not ${party_size}` }, { status: 400 });
+    }
+    const clash = await queryOne(
+      `SELECT id FROM reservations WHERE table_id = $1 AND reservation_date = $2 AND reservation_time = $3
+       AND status IN ('pending','confirmed','seated')`,
+      [table_id, reservation_date, reservation_time]
+    );
+    if (clash) return NextResponse.json({ error: "This table already has a reservation at that date and time" }, { status: 409 });
+  }
+
   const reservation = await queryOne(
     `INSERT INTO reservations
       (tenant_id, outlet_id, reservation_number, customer_name, customer_email,

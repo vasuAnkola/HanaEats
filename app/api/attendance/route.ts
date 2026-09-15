@@ -33,14 +33,18 @@ export async function POST(req: NextRequest) {
   }
   const targetUserId = user_id || session.user.id;
   if (!outlet_id) return NextResponse.json({ error: "outlet_id required" }, { status: 400 });
-  const open = await query(
-    "SELECT id FROM attendance WHERE user_id = $1 AND tenant_id = $2 AND clock_out IS NULL",
-    [targetUserId, session.user.tenantId]
-  );
-  if (open.length > 0) return NextResponse.json({ error: "User already clocked in" }, { status: 400 });
-  const rows = await query(
-    "INSERT INTO attendance (tenant_id, user_id, outlet_id) VALUES ($1, $2, $3) RETURNING *",
-    [session.user.tenantId, targetUserId, outlet_id]
-  );
-  return NextResponse.json(rows[0], { status: 201 });
+  try {
+    const rows = await query(
+      "INSERT INTO attendance (tenant_id, user_id, outlet_id) VALUES ($1, $2, $3) RETURNING *",
+      [session.user.tenantId, targetUserId, outlet_id]
+    );
+    return NextResponse.json(rows[0], { status: 201 });
+  } catch (err) {
+    // uq_attendance_open_user (sql/020) rejects a second concurrently-open
+    // attendance record for the same user — catches the double clock-in race.
+    if (err instanceof Error && "code" in err && (err as { code: string }).code === "23505") {
+      return NextResponse.json({ error: "User already clocked in" }, { status: 400 });
+    }
+    throw err;
+  }
 }

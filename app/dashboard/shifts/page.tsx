@@ -15,6 +15,7 @@ interface Shift {
   closing_float: number | null; opening_at: string; closing_at: string | null;
   status: string; notes: string | null;
   cash_collected?: number; total_sales?: number; order_count?: number;
+  expected_cash?: number; variance?: number | null;
 }
 
 export default function ShiftsPage() {
@@ -31,6 +32,7 @@ export default function ShiftsPage() {
   const [closeNotes, setCloseNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [expectedCash, setExpectedCash] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("/api/outlets").then(r => r.json()).then(d => {
@@ -146,7 +148,12 @@ export default function ShiftsPage() {
 
           <div className="flex items-center gap-2">
             {openShift ? (
-              <Button className="bg-red-600 hover:bg-red-700 text-white gap-2 h-9" onClick={() => { setError(""); setCloseDialog(true); }}>
+              <Button className="bg-red-600 hover:bg-red-700 text-white gap-2 h-9" onClick={async () => {
+                setError(""); setExpectedCash(null); setCloseDialog(true);
+                const res = await fetch(`/api/shifts/${openShift.id}`);
+                const data = await res.json();
+                if (res.ok) setExpectedCash(parseFloat(data.expected_cash ?? 0));
+              }}>
                 <Square className="w-3.5 h-3.5" /> Close Shift
               </Button>
             ) : (
@@ -201,9 +208,23 @@ export default function ShiftsPage() {
           <DialogHeader><DialogTitle>Close Shift</DialogTitle></DialogHeader>
           <div className="space-y-3 py-2">
             {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
+            {expectedCash != null && (
+              <p className="text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+                Expected cash in drawer: <span className="font-semibold text-gray-700">{expectedCash.toFixed(2)}</span> (opening float + cash payments this shift)
+              </p>
+            )}
             <div>
               <label className="text-xs font-medium text-gray-600">Closing Cash in Drawer</label>
               <Input type="number" min="0" step="0.01" className="mt-1" value={closingFloat} onChange={e => setClosingFloat(e.target.value)} />
+              {expectedCash != null && closingFloat !== "" && (
+                <p className={`text-xs mt-1 ${Math.abs((parseFloat(closingFloat) || 0) - expectedCash) < 0.005 ? "text-gray-400" : (parseFloat(closingFloat) || 0) > expectedCash ? "text-emerald-600" : "text-red-600"}`}>
+                  {(() => {
+                    const v = (parseFloat(closingFloat) || 0) - expectedCash;
+                    if (Math.abs(v) < 0.005) return "Matches expected — no variance";
+                    return `${v > 0 ? "Over" : "Short"} by ${Math.abs(v).toFixed(2)}`;
+                  })()}
+                </p>
+              )}
             </div>
             <div>
               <label className="text-xs font-medium text-gray-600">Notes (optional)</label>
@@ -241,6 +262,14 @@ export default function ShiftsPage() {
                 <div className="flex justify-between px-4 py-2.5 text-sm"><span className="text-gray-500">Cash Collected</span><span className="font-medium">{parseFloat(String(selectedShift.cash_collected ?? 0)).toFixed(2)}</span></div>
                 {selectedShift.closing_float != null && (
                   <div className="flex justify-between px-4 py-2.5 text-sm"><span className="text-gray-500">Closing Float</span><span className="font-medium">{parseFloat(String(selectedShift.closing_float)).toFixed(2)}</span></div>
+                )}
+                {selectedShift.variance != null && (
+                  <div className="flex justify-between px-4 py-2.5 text-sm">
+                    <span className="text-gray-500">Variance {selectedShift.variance === 0 ? "" : selectedShift.variance > 0 ? "(over)" : "(short)"}</span>
+                    <span className={`font-semibold ${selectedShift.variance === 0 ? "text-gray-700" : selectedShift.variance > 0 ? "text-emerald-600" : "text-red-600"}`}>
+                      {selectedShift.variance > 0 ? "+" : ""}{selectedShift.variance.toFixed(2)}
+                    </span>
+                  </div>
                 )}
                 <div className="flex justify-between px-4 py-2.5 text-sm"><span className="text-gray-500">Opened</span><span className="text-gray-700 text-xs">{new Date(selectedShift.opening_at).toLocaleString("en-GB")}</span></div>
                 {selectedShift.closing_at && (

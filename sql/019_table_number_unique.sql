@@ -11,5 +11,12 @@ SET table_number = t.table_number || '-' || ranked.rn
 FROM ranked
 WHERE t.id = ranked.id AND ranked.rn > 1;
 
-ALTER TABLE outlet_tables
-  ADD CONSTRAINT uq_outlet_tables_outlet_number UNIQUE (outlet_id, table_number);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'uq_outlet_tables_outlet_number'
+  ) THEN
+    ALTER TABLE outlet_tables
+      ADD CONSTRAINT uq_outlet_tables_outlet_number UNIQUE (outlet_id, table_number);
+  END IF;
+END $$;

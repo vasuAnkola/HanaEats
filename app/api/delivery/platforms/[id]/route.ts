@@ -35,9 +35,15 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const { id } = await params;
-  await queryOne(
-    `DELETE FROM delivery_platforms WHERE id = $1 AND tenant_id = $2 RETURNING id`,
+  // A hard DELETE here would cascade-delete every delivery_orders row for this
+  // platform (platform_id ON DELETE CASCADE) — silently destroying order/customer
+  // history despite the disconnect dialog promising "Existing orders are kept."
+  // Deactivate and clear the credential instead: blocks new webhook traffic
+  // (the webhook route 403s on is_active=false) without losing past orders.
+  const row = await queryOne(
+    `UPDATE delivery_platforms SET is_active = false, api_key = NULL WHERE id = $1 AND tenant_id = $2 RETURNING id`,
     [id, session.user.tenantId]
   );
+  if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ ok: true });
 }

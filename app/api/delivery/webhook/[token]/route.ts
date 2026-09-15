@@ -86,6 +86,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     return NextResponse.json({ order_id: order.id, order_number: order.order_number, delivery_order: deliveryOrderRes.rows[0] }, { status: 201 });
   } catch (err) {
     await client.query("ROLLBACK");
+    // A concurrent retry can race past the pre-check above and lose the unique
+    // (platform_id, external_order_id) race here — treat that as the same
+    // "already recorded this order" case, not a failure, so a retrying platform
+    // gets back the real order instead of a 500 it will just keep retrying on.
+    if (err instanceof Error && "code" in err && (err as { code: string }).code === "23505") {
+      const dup = await queryOne<{ order_id: number }>(
+        `SELECT order_id FROM delivery_orders WHERE platform_id = $1 AND external_order_id = $2`,
+        [platform.id, external_order_id]
+      );
+      if (dup) {
+        const order = await queryOne(`SELECT id, order_number FROM orders WHERE id = $1`, [dup.order_id]);
+        return NextResponse.json({ order_id: dup.order_id, order_number: (order as { order_number: string } | null)?.order_number, duplicate: true }, { status: 200 });
+      }
+    }
     console.error("[delivery-webhook] transaction failed:", err);
     return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
   } finally {
